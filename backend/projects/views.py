@@ -40,7 +40,7 @@ def update_project_schedule(project, offer=None):
     """
     import logging
     logger = logging.getLogger(__name__)
-    
+
     logger.info(
         f"update_project_schedule called for project {project.id}",
         extra={
@@ -51,7 +51,7 @@ def update_project_schedule(project, offer=None):
             'final_cost': float(project.final_cost) if project.final_cost else None,
         }
     )
-    
+
     try:
         from financial.models import Expense
         from maintenance.models import ScheduledMaintenance, PaymentSchedule
@@ -92,7 +92,7 @@ def update_project_schedule(project, offer=None):
                 'created_by': project.created_by,
             }
         )
-        
+
         if created:
             logger.info(
                 f"ScheduledMaintenance created for project {project.id}",
@@ -133,7 +133,7 @@ def update_project_schedule(project, offer=None):
         total_amount = project.final_cost or project.estimated_cost or Decimal('0.00')
         installments = project.installments or 1
         advance_payment = project.advance_payment or Decimal('0.00')
-        
+
         # 🔧 DEBUG: Log payment details για debugging
         logger.info(
             f"update_project_schedule: Payment details for project {project.id}",
@@ -148,18 +148,14 @@ def update_project_schedule(project, offer=None):
         )
 
         # Επιλογή κατηγορίας
-        category = 'project'
-        if 'συντήρηση' in project.title.lower() or 'επισκευή' in project.title.lower():
-            category = 'maintenance_project'
-        elif 'ανακαίνιση' in project.title.lower():
-            category = 'renovation'
-        elif 'αναβάθμιση' in project.title.lower():
-            category = 'upgrade'
+        # 🔧 FIX: Χρήση standard κατηγορίας 'maintenance' για να εμφανίζονται σωστά στην έκδοση κοινοχρήστων
+        # Οι κατηγορίες 'project', 'renovation' κλπ δεν αναγνωρίζονται από το export module
+        category = 'maintenance'
 
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         # 🛡️ ΠΡΟΣΤΑΣΙΑ ΥΠΑΡΧΟΥΣΩΝ ΔΑΠΑΝΩΝ (Phase 1 - Oct 8, 2025)
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # 
+        #
         # ΠΡΟΒΛΗΜΑ: Η διαγραφή δαπανών χωρίς έλεγχο προκαλεί:
         # - Απώλεια πληρωμών
         # - Χάσιμο transactions
@@ -170,19 +166,19 @@ def update_project_schedule(project, offer=None):
         # 2. Είναι πρόσφατες (< 24 ώρες)
         # 3. Δεν έχουν συνδεθεί με πληρωμές
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
+
         from django.utils import timezone
         from datetime import timedelta
         import logging
-        
+
         logger = logging.getLogger(__name__)
-        
+
         # Βρες υπάρχουσες δαπάνες
         old_expenses = Expense.objects.filter(
             building=project.building,
             title__icontains=project.title
         )
-        
+
         logger.info(
             f"🔍 Checking for existing expenses for project '{project.title}'",
             extra={
@@ -191,15 +187,15 @@ def update_project_schedule(project, offer=None):
                 'existing_expenses_count': old_expenses.count(),
             }
         )
-        
+
         if old_expenses.exists():
             logger.info(f"   Found {old_expenses.count()} existing expenses: {list(old_expenses.values('id', 'title', 'amount', 'date', 'paid_amount', 'created_at'))}")
-            
+
             # Έλεγχος 1: Έχουν πληρωθεί;
             paid_expenses = old_expenses.exclude(
                 paid_amount__isnull=True
             ).exclude(paid_amount=0)
-            
+
             if paid_expenses.exists():
                 logger.warning(
                     f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {paid_expenses.count()} πληρωμένες δαπάνες "
@@ -209,11 +205,11 @@ def update_project_schedule(project, offer=None):
                 # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
                 logger.info("   ❌ Aborting expense creation due to paid expenses")
                 return
-            
+
             # Έλεγχος 2: Είναι παλιές (> 24 ώρες);
             cutoff_time = timezone.now() - timedelta(hours=24)
             old_cutoff_expenses = old_expenses.filter(created_at__lt=cutoff_time)
-            
+
             if old_cutoff_expenses.exists():
                 logger.warning(
                     f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {old_cutoff_expenses.count()} παλιές δαπάνες (>24h) "
@@ -223,12 +219,12 @@ def update_project_schedule(project, offer=None):
                 # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
                 logger.info("   ❌ Aborting expense creation due to old expenses (>24h)")
                 return
-            
+
             # Έλεγχος 3: Έχουν συνδεθεί με πληρωμές μέσω maintenance;
             expenses_with_receipts = old_expenses.filter(
                 maintenance_payment_receipts__isnull=False
             ).distinct()
-            
+
             if expenses_with_receipts.exists():
                 logger.warning(
                     f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {expenses_with_receipts.count()} δαπάνες με συνδεδεμένες πληρωμές "
@@ -238,14 +234,14 @@ def update_project_schedule(project, offer=None):
                 # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
                 logger.info("   ❌ Aborting expense creation due to expenses with receipts")
                 return
-            
+
             # Αν όλοι οι έλεγχοι πέρασαν, κάνε log και διέγραψε
             logger.info(
                 f"✅ ΑΣΦΑΛΗΣ ΔΙΑΓΡΑΦΗ: {old_expenses.count()} νέες, μη-πληρωμένες δαπάνες "
                 f"για το έργο '{project.title}' θα διαγραφούν και θα ξαναδημιουργηθούν."
             )
             logger.debug(f"   Δαπάνες προς διαγραφή: {list(old_expenses.values('id', 'title', 'amount', 'date'))}")
-            
+
             # Διαγραφή μόνο αν πέρασε όλους τους ελέγχους
             deleted_count = old_expenses.count()
             old_expenses.delete()
@@ -354,7 +350,7 @@ def update_project_schedule(project, offer=None):
             #
             # ΠΑΡΑΔΕΙΓΜΑ:
             # - Προκαταβολή: 01/10/2025 (Οκτώβριος)
-            # - Δόση 1: 01/11/2025 (Νοέμβριος) 
+            # - Δόση 1: 01/11/2025 (Νοέμβριος)
             # - Δόση 2: 01/12/2025 (Δεκέμβριος)
             # - κλπ...
             #
@@ -463,13 +459,13 @@ def update_project_schedule(project, offer=None):
                 "project_id": str(project.id),
             },
         )
-        
+
         # Μέτρηση δημιουργημένων δαπανών
         created_expenses = Expense.objects.filter(
             building=project.building,
             title__icontains=project.title
         )
-        
+
         logger.info(
             f"✅ update_project_schedule completed successfully for project {project.id}",
             extra={
@@ -481,7 +477,7 @@ def update_project_schedule(project, offer=None):
                 'expenses_list': list(created_expenses.values('id', 'title', 'amount', 'date')),
             }
         )
-        
+
     except Exception as e:
         # Log the error but don't fail the project approval
         logger.error(
@@ -511,7 +507,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-    
+
     def perform_destroy(self, instance):
         """
         🔴 ΚΡΙΣΙΜΗ ΛΟΓΙΚΗ ΔΙΑΓΡΑΦΗΣ
@@ -519,14 +515,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Όταν διαγράφεται ένα έργο, πρέπει να διαγραφούν και:
         1. Οι δαπάνες που δημιουργήθηκαν από αυτό (project_expenses)
         2. Το ScheduledMaintenance που συνδέεται με αυτό
-        
+
         ΠΡΟΣΟΧΗ: Το Expense.project έχει on_delete=SET_NULL, οπότε
         πρέπει να διαγράψουμε manual τις δαπάνες.
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         """
         import logging
         logger = logging.getLogger(__name__)
-        
+
         logger.info(
             f"🗑️ Deleting project {instance.id}: '{instance.title}'",
             extra={
@@ -535,12 +531,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 'building_id': instance.building_id,
             }
         )
-        
+
         # Βρες τις δαπάνες που συνδέονται με αυτό το έργο
         from financial.models import Expense
         related_expenses = Expense.objects.filter(project=instance)
         expenses_count = related_expenses.count()
-        
+
         if expenses_count > 0:
             logger.info(
                 f"   Found {expenses_count} expenses related to project {instance.id}",
@@ -550,17 +546,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     'expenses_list': list(related_expenses.values('id', 'title', 'amount', 'date')),
                 }
             )
-            
+
             # Διαγραφή των δαπανών
             related_expenses.delete()
             logger.info(f"   ✓ Deleted {expenses_count} related expenses")
         else:
             logger.info(f"   ✓ No related expenses found")
-        
+
         # Βρες το ScheduledMaintenance που συνδέεται με αυτό το έργο
         from maintenance.models import ScheduledMaintenance
         scheduled_maintenance = ScheduledMaintenance.objects.filter(linked_project=instance).first()
-        
+
         if scheduled_maintenance:
             logger.info(
                 f"   Found ScheduledMaintenance {scheduled_maintenance.id} linked to project {instance.id}",
@@ -574,7 +570,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             logger.info(f"   ✓ Deleted linked ScheduledMaintenance")
         else:
             logger.info(f"   ✓ No linked ScheduledMaintenance found")
-        
+
         # Τώρα διέγραψε το έργο
         instance.delete()
         logger.info(f"✅ Project {instance.id} deleted successfully")
@@ -802,26 +798,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """Εγκρίνει μια προσφορά και ενημερώνει το έργο"""
         project = self.get_object()
         offer_id = request.data.get('offer_id')
-        
+
         if not offer_id:
             return Response({'error': 'offer_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         offer = get_object_or_404(Offer, id=offer_id, project=project)
-        
+
         with transaction.atomic():
             # Εγκρίνει την επιλεγμένη προσφορά
             offer.status = 'accepted'
             offer.reviewed_at = timezone.now()
             offer.reviewed_by = request.user
             offer.save()
-            
+
             # Απορρίπτει τις άλλες προσφορές
             Offer.objects.filter(project=project).exclude(id=offer.id).update(
                 status='rejected',
                 reviewed_at=timezone.now(),
                 reviewed_by=request.user
             )
-            
+
             # Ενημερώνει το έργο με όλα τα πεδία πληρωμής και στοιχεία συνεργείου
             project.selected_contractor = offer.contractor_name
             project.final_cost = offer.amount
@@ -834,10 +830,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             # για να τα περάσουμε στο ScheduledMaintenance
             project.selected_offer = offer
             project.save()
-            
+
             # Ενημερώνει το σχήμα "Προγραμματισμός έργου" στο financial και maintenance modules
             update_project_schedule(project, offer)
-        
+
         publish_building_event(
             building_id=project.building_id,
             event_type='offer.approved',
@@ -872,7 +868,7 @@ class OfferViewSet(viewsets.ModelViewSet):
         """Create offer with detailed logging"""
         import logging
         logger = logging.getLogger(__name__)
-        
+
         logger.info(
             f"Offer creation attempt by user {request.user.id}",
             extra={
@@ -882,7 +878,7 @@ class OfferViewSet(viewsets.ModelViewSet):
                 'building_id': request.data.get('project') and self._get_project_building_id(request.data.get('project')),
             }
         )
-        
+
         try:
             response = super().create(request, *args, **kwargs)
             offer_id = response.data.get('id') if hasattr(response, 'data') else None
@@ -933,7 +929,7 @@ class OfferViewSet(viewsets.ModelViewSet):
         """
         import logging
         logger = logging.getLogger(__name__)
-        
+
         offer = self.get_object()
         logger.info(
             f"Approving offer {offer.id} for project {offer.project.id}",
@@ -945,7 +941,7 @@ class OfferViewSet(viewsets.ModelViewSet):
                 'user_id': request.user.id,
             }
         )
-        
+
         with transaction.atomic():
             # ΒΗΜΑ 1: Εγκρίνει την προσφορά
             offer.status = 'accepted'
@@ -963,8 +959,8 @@ class OfferViewSet(viewsets.ModelViewSet):
             # ΒΗΜΑ 3: Ενημερώνει το έργο με ΟΛΑ τα payment fields
             # ⚠️ ΚΡΙΣΙΜΟ: Πρέπει να αντιγραφούν ΟΛΑ τα πεδία από την προσφορά
             project = offer.project
-            
-            # 🔧 FIX: Αν το payment_method είναι 'installments' αλλά installments είναι None, 
+
+            # 🔧 FIX: Αν το payment_method είναι 'installments' αλλά installments είναι None,
             # χρησιμοποιούμε προεπιλεγμένη τιμή 1 (αλλά θα πρέπει να έχει οριστεί από τον χρήστη)
             installments_value = offer.installments
             if offer.payment_method == 'installments' and (not installments_value or installments_value < 1):
@@ -973,7 +969,7 @@ class OfferViewSet(viewsets.ModelViewSet):
                     f"Using default value 1, but this should be set by the user."
                 )
                 installments_value = 1
-            
+
             logger.info(
                 f"Updating project {project.id} with payment details",
                 extra={
@@ -985,7 +981,7 @@ class OfferViewSet(viewsets.ModelViewSet):
                     'amount': float(offer.amount) if offer.amount else None,
                 }
             )
-            
+
             project.selected_contractor = offer.contractor_name  # ΑΠΑΡΑΙΤΗΤΟ για ScheduledMaintenance
             project.final_cost = offer.amount                    # ΑΠΑΡΑΙΤΗΤΟ για δαπάνες
             project.payment_method = offer.payment_method        # ΑΠΑΡΑΙΤΗΤΟ για τύπο πληρωμής
@@ -1014,7 +1010,7 @@ class OfferViewSet(viewsets.ModelViewSet):
                 'project_final_cost': float(project.final_cost) if project.final_cost else None,
             }
         )
-        
+
         publish_building_event(
             building_id=offer.project.building_id,
             event_type='offer.approved',
