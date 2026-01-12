@@ -314,6 +314,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     if (apiMonthlyTarget !== null) {
       if (apiMonthlyTarget > 0) {
         resolvedMonthlyAmount = apiMonthlyTarget;
+      } else if (baseInfo.monthlyAmount > 0 && showReserveFund) {
+        resolvedMonthlyAmount = baseInfo.monthlyAmount;
       } else if (apiReserve !== null && apiReserve > 0) {
         resolvedMonthlyAmount = apiReserve;
       } else if (apiReserveFallback !== null && apiReserveFallback > 0) {
@@ -395,19 +397,37 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     }
 
     aptWithFinancial.forEach((apt: any) => {
-      const aptAmount = perApartmentAmounts[apt.id] || {};
-      const commonMills = apt.participation_mills || 0;
-      const apartmentReserveFund = reserveFundInfo.monthlyAmount > 0
-        ? reserveFundInfo.monthlyAmount * (commonMills / 1000)
-        : 0;
-      const commonAmountWithoutReserve = Math.max(
+      const share = (effectiveShares as Record<string, Share> | undefined)?.[apt.id]
+        || (effectiveShares as Record<string, Share> | undefined)?.[(apt as any).apartment_id];
+      const breakdown = share?.breakdown || {};
+      const residentTotal = toNumber(breakdown.resident_expenses ?? 0);
+      const ownerTotal = toNumber(breakdown.owner_expenses ?? 0);
+      const elevatorAmount = Math.max(0, toNumber(breakdown.elevator_expenses || 0));
+      const heatingAmount = Math.max(0, toNumber(breakdown.heating_expenses || 0));
+
+      const fallbackCommon = Math.max(
         0,
-        (aptAmount.common || 0) + (aptAmount.other || 0) + (aptAmount.coowner || 0)
+        toNumber(breakdown.general_expenses || 0) +
+          toNumber(breakdown.equal_share_expenses || 0) +
+          toNumber(breakdown.individual_expenses || 0)
       );
-      const ownerExpensesTotal = (apt as any).owner_expenses || 0;
-      const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
-      const elevatorAmount = aptAmount.elevator || 0;
-      const heatingAmount = aptAmount.heating || 0;
+
+      const commonAmountWithoutReserve = residentTotal > 0
+        ? Math.max(0, residentTotal - elevatorAmount - heatingAmount)
+        : fallbackCommon;
+
+      const commonMills = toNumber(apt.participation_mills ?? share?.participation_mills ?? 0);
+      const reserveFromShare = toNumber(breakdown.reserve_fund_contribution ?? 0);
+      const apartmentReserveFund = reserveFromShare > 0
+        ? reserveFromShare
+        : reserveFundInfo.monthlyAmount > 0
+          ? Math.max(0, toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000))
+          : 0;
+
+      const ownerExpensesOnlyProjects = ownerTotal > 0
+        ? ownerTotal
+        : Math.max(0, toNumber((apt as any).owner_expenses || 0));
+
       const previousSigned = toNumber(apt.previous_balance ?? 0);
       const previousAbs = Math.abs(previousSigned);
 
@@ -416,7 +436,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     });
 
     return totals;
-  }, [aptWithFinancial, perApartmentAmounts, reserveFundInfo.monthlyAmount]);
+  }, [aptWithFinancial, effectiveShares, reserveFundInfo.monthlyAmount]);
 
   const totalExpenses = useMemo<number>(() => resolvedTotals.monthlySubtotal, [resolvedTotals]);
 
@@ -467,7 +487,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   }, [resolvedTotals.grandTotal]);
 
   const buildExportParams = useCallback(() => ({
-    state,
+    state: {
+      ...state,
+      shares: effectiveShares as any,
+      advancedShares: effectiveAdvancedShares as any,
+    },
     buildingName,
     buildingAddress: props.buildingAddress,
     buildingCity: props.buildingCity,
@@ -494,6 +518,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     buildingId,
   }), [
     state,
+    effectiveShares,
+    effectiveAdvancedShares,
     buildingName,
     props.buildingAddress,
     props.buildingCity,

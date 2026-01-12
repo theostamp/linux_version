@@ -18,6 +18,8 @@ export interface Share {
     equal_share_expenses?: number;
     individual_expenses?: number;
     reserve_fund_contribution?: number;
+    owner_expenses?: number;
+    resident_expenses?: number;
   };
 }
 
