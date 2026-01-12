@@ -257,10 +257,21 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const reserveFundInfo = useMemo<ReserveFundInfo>(() => {
     const advancedShares = effectiveAdvancedShares || {};
-    const goal = Number((advancedShares as any)?.reserve_fund_goal || 0);
-    const duration = Number((advancedShares as any)?.reserve_fund_duration || 0);
-    const startDate = (advancedShares as any)?.reserve_fund_start_date;
-    const targetDate = (advancedShares as any)?.reserve_fund_target_date;
+    const apiGoal = typeof monthlyExpenses?.reserve_fund_goal === 'number'
+      ? toNumber(monthlyExpenses.reserve_fund_goal)
+      : null;
+    const apiDuration = typeof monthlyExpenses?.reserve_fund_duration_months === 'number'
+      ? toNumber(monthlyExpenses.reserve_fund_duration_months)
+      : null;
+
+    const goal = apiGoal !== null
+      ? apiGoal
+      : Number((advancedShares as any)?.reserve_fund_goal || 0);
+    const duration = apiDuration !== null
+      ? apiDuration
+      : Number((advancedShares as any)?.reserve_fund_duration || 0);
+    const startDate = monthlyExpenses?.reserve_fund_start_date || (advancedShares as any)?.reserve_fund_start_date;
+    const targetDate = monthlyExpenses?.reserve_fund_target_date || (advancedShares as any)?.reserve_fund_target_date;
     let showReserveFund = true;
 
     if (selectedMonth && startDate) {
@@ -288,17 +299,33 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       progressPercentage,
     };
 
+    const apiMonthlyTarget = typeof monthlyExpenses?.reserve_fund_monthly_target === 'number'
+      ? toNumber(monthlyExpenses.reserve_fund_monthly_target)
+      : null;
     const apiReserve = typeof monthlyExpenses?.reserve_fund_contribution === 'number'
       ? toNumber(monthlyExpenses.reserve_fund_contribution)
       : null;
     const apiReserveFallback = typeof monthlyExpenses?.reserve_monthly_contribution === 'number'
       ? toNumber(monthlyExpenses.reserve_monthly_contribution)
       : null;
-    const resolvedMonthlyAmount = apiReserve !== null
-      ? apiReserve
-      : apiReserveFallback !== null
-        ? apiReserveFallback
-        : baseInfo.monthlyAmount;
+
+    let resolvedMonthlyAmount = baseInfo.monthlyAmount;
+
+    if (apiMonthlyTarget !== null) {
+      if (apiMonthlyTarget > 0) {
+        resolvedMonthlyAmount = apiMonthlyTarget;
+      } else if (apiReserve !== null && apiReserve > 0) {
+        resolvedMonthlyAmount = apiReserve;
+      } else if (apiReserveFallback !== null && apiReserveFallback > 0) {
+        resolvedMonthlyAmount = apiReserveFallback;
+      } else {
+        resolvedMonthlyAmount = 0;
+      }
+    } else if (apiReserve !== null) {
+      resolvedMonthlyAmount = apiReserve;
+    } else if (apiReserveFallback !== null) {
+      resolvedMonthlyAmount = apiReserveFallback;
+    }
 
     if (resolvedMonthlyAmount !== baseInfo.monthlyAmount) {
       return {
@@ -524,10 +551,37 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
         }
       }
 
-      if (typeof monthlyExpenses?.reserve_fund_contribution === 'number') {
-        const diff = Math.abs(toNumber(monthlyExpenses.reserve_fund_contribution) - reserveFundInfo.monthlyAmount);
+      const apiReserveTarget = typeof monthlyExpenses?.reserve_fund_monthly_target === 'number'
+        ? toNumber(monthlyExpenses.reserve_fund_monthly_target)
+        : null;
+      const apiReserveContribution = typeof monthlyExpenses?.reserve_fund_contribution === 'number'
+        ? toNumber(monthlyExpenses.reserve_fund_contribution)
+        : null;
+      const apiReserveLegacy = typeof monthlyExpenses?.reserve_monthly_contribution === 'number'
+        ? toNumber(monthlyExpenses.reserve_monthly_contribution)
+        : null;
+
+      if (apiReserveTarget !== null) {
+        const diff = Math.abs(apiReserveTarget - reserveFundInfo.monthlyAmount);
         if (diff > tolerance) {
-          warnings.push(`Διαφορά στο αποθεματικό: σύνοψη ${formatValue(monthlyExpenses.reserve_fund_contribution)}€ vs υπολογισμός ${formatValue(reserveFundInfo.monthlyAmount)}€.`);
+          warnings.push(`Διαφορά στο αποθεματικό: στόχος ${formatValue(apiReserveTarget)}€ vs υπολογισμός ${formatValue(reserveFundInfo.monthlyAmount)}€.`);
+        }
+      } else if (apiReserveContribution !== null) {
+        const diff = Math.abs(apiReserveContribution - reserveFundInfo.monthlyAmount);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στο αποθεματικό: σύνοψη ${formatValue(apiReserveContribution)}€ vs υπολογισμός ${formatValue(reserveFundInfo.monthlyAmount)}€.`);
+        }
+      } else if (apiReserveLegacy !== null) {
+        const diff = Math.abs(apiReserveLegacy - reserveFundInfo.monthlyAmount);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στο αποθεματικό: σύνοψη ${formatValue(apiReserveLegacy)}€ vs υπολογισμός ${formatValue(reserveFundInfo.monthlyAmount)}€.`);
+        }
+      }
+
+      if (apiReserveTarget !== null && apiReserveContribution !== null) {
+        const diff = Math.abs(apiReserveTarget - apiReserveContribution);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στόχου αποθεματικού vs είσπραξης: στόχος ${formatValue(apiReserveTarget)}€ vs είσπραξη ${formatValue(apiReserveContribution)}€.`);
         }
       }
 

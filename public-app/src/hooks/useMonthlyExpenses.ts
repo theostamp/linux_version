@@ -37,6 +37,11 @@ export interface MonthlyExpenses {
   management_fee_per_apartment: number;  // Changed from management_fees
   total_management_cost: number;         // Added this field
   reserve_fund_contribution: number;
+  reserve_fund_goal?: number;
+  reserve_fund_duration_months?: number;
+  reserve_fund_monthly_target?: number;
+  reserve_fund_start_date?: string | null;
+  reserve_fund_target_date?: string | null;
   previous_month_expenses: number;
   previous_month_name: string;
   current_month_name: string;
