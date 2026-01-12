@@ -169,6 +169,26 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     return items;
   }, [effectiveShares]);
 
+  const shareExpenseTotals = useMemo<ExpenseBreakdown>(() => {
+    const totals: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
+    Object.values(effectiveShares as { [key: string]: Share }).forEach((share) => {
+      const bd = share.breakdown || {};
+      totals.common += toNumber(bd.general_expenses);
+      totals.elevator += toNumber(bd.elevator_expenses);
+      totals.heating += toNumber(bd.heating_expenses);
+      totals.other += toNumber(bd.equal_share_expenses);
+      totals.coownership += toNumber(bd.individual_expenses);
+    });
+    return totals;
+  }, [effectiveShares]);
+
+  const reserveFromShares = useMemo(() => {
+    return Object.values(effectiveShares as { [key: string]: Share }).reduce(
+      (sum, share) => sum + toNumber(share?.breakdown?.reserve_fund_contribution ?? 0),
+      0
+    );
+  }, [effectiveShares]);
+
   const expenseSplitRatios = useMemo(() => {
     const totals = (effectiveAdvancedShares as any)?.expense_totals || {};
     const ratio = (residentValue: any, totalValue: any) => {
@@ -189,6 +209,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const expenseBreakdown = useMemo<ExpenseBreakdown>(() => {
     const breakdown: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
+    const shareTotalsSum = Object.values(shareExpenseTotals).reduce((sum, value) => sum + value, 0);
+
+    if (shareTotalsSum > 0) {
+      return shareExpenseTotals;
+    }
 
     if (effectiveAdvancedShares?.expense_totals) {
       const { general, elevator, heating, equal_share, individual } = effectiveAdvancedShares.expense_totals;
@@ -215,7 +240,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     }
 
     return breakdown;
-  }, [monthlyExpenses, effectiveAdvancedShares, state.totalExpenses, selectedMonth]);
+  }, [monthlyExpenses, effectiveAdvancedShares, shareExpenseTotals, state.totalExpenses, selectedMonth]);
 
   const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
     let finalFee = 0;
@@ -295,10 +320,9 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       if (targetDate && selected > new Date(targetDate)) showReserveFund = false;
     }
 
-    const reserveFromShares = Object.values((effectiveShares as Record<string, Share>) || {}).reduce(
-      (sum, share) => sum + toNumber(share?.breakdown?.reserve_fund_contribution ?? 0),
-      0
-    );
+    if (reserveFromShares > 0) {
+      showReserveFund = true;
+    }
 
     let monthlyAmount = 0;
     if (showReserveFund && goal > 0 && duration > 0) {
@@ -307,11 +331,14 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
     const actualReserveCollected = Number((advancedShares as any)?.actual_reserve_collected || 0);
     const progressPercentage = goal > 0 ? Math.min(100, (actualReserveCollected / goal) * 100) : 0;
+    const displayText = goal > 0 && duration > 0
+      ? `Στόχος ${formatAmount(goal)}€ σε ${duration} δόσεις`
+      : 'Αποθεματικό Ταμείο';
 
     const baseInfo = {
       monthlyAmount,
       totalContribution: monthlyAmount,
-      displayText: `Στόχος ${formatAmount(goal)}€ σε ${duration} δόσεις`,
+      displayText,
       goal,
       duration,
       monthsRemaining: duration,
@@ -329,40 +356,40 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       ? toNumber(monthlyExpenses.reserve_monthly_contribution)
       : null;
 
-    let resolvedMonthlyAmount = baseInfo.monthlyAmount;
+    let resolvedMonthlyAmount = reserveFromShares > 0 ? reserveFromShares : baseInfo.monthlyAmount;
 
-    if (apiMonthlyTarget !== null) {
-      if (apiMonthlyTarget > 0) {
-        resolvedMonthlyAmount = apiMonthlyTarget;
-      } else if (baseInfo.monthlyAmount > 0 && showReserveFund) {
-        resolvedMonthlyAmount = baseInfo.monthlyAmount;
-      } else if (apiReserve !== null && apiReserve > 0) {
+    if (reserveFromShares <= 0) {
+      if (apiMonthlyTarget !== null) {
+        if (apiMonthlyTarget > 0) {
+          resolvedMonthlyAmount = apiMonthlyTarget;
+        } else if (baseInfo.monthlyAmount > 0 && showReserveFund) {
+          resolvedMonthlyAmount = baseInfo.monthlyAmount;
+        } else if (apiReserve !== null && apiReserve > 0) {
+          resolvedMonthlyAmount = apiReserve;
+        } else if (apiReserveFallback !== null && apiReserveFallback > 0) {
+          resolvedMonthlyAmount = apiReserveFallback;
+        } else {
+          resolvedMonthlyAmount = 0;
+        }
+      } else if (apiReserve !== null) {
         resolvedMonthlyAmount = apiReserve;
-      } else if (apiReserveFallback !== null && apiReserveFallback > 0) {
+      } else if (apiReserveFallback !== null) {
         resolvedMonthlyAmount = apiReserveFallback;
-      } else {
-        resolvedMonthlyAmount = 0;
       }
-    } else if (apiReserve !== null) {
-      resolvedMonthlyAmount = apiReserve;
-    } else if (apiReserveFallback !== null) {
-      resolvedMonthlyAmount = apiReserveFallback;
     }
 
-    if (showReserveFund && resolvedMonthlyAmount <= 0 && reserveFromShares > 0) {
-      resolvedMonthlyAmount = reserveFromShares;
-    }
+    const totalContribution = reserveFromShares > 0 ? reserveFromShares : resolvedMonthlyAmount;
 
-    if (resolvedMonthlyAmount !== baseInfo.monthlyAmount) {
+    if (resolvedMonthlyAmount !== baseInfo.monthlyAmount || totalContribution !== baseInfo.totalContribution) {
       return {
         ...baseInfo,
         monthlyAmount: resolvedMonthlyAmount,
-        totalContribution: resolvedMonthlyAmount
+        totalContribution
       };
     }
 
     return baseInfo;
-  }, [effectiveAdvancedShares, effectiveShares, selectedMonth, monthlyExpenses]);
+  }, [effectiveAdvancedShares, reserveFromShares, selectedMonth, monthlyExpenses]);
 
   const previousBalanceTotals = useMemo(() => {
     const signed = aptWithFinancial.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);
