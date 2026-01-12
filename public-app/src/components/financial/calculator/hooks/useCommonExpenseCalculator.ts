@@ -204,7 +204,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
     let finalFee = 0;
-    const apartmentsCount = Object.keys(state.shares).length;
+    const apartmentsCount = Object.keys((effectiveShares as Record<string, Share>) || {}).length;
 
     console.log('🔍 DEBUG managementFeeInfo: Starting calculation with:', {
       selectedMonth,
@@ -214,6 +214,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       managementFeePerApartment: monthlyExpenses?.management_fee_per_apartment,
       apartmentsCount,
       stateShares: Object.keys(state.shares),
+      effectiveShares: Object.keys((effectiveShares as Record<string, Share>) || {}),
       stateAdvancedShares: !!state.advancedShares
     });
 
@@ -252,13 +253,14 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     console.log('💰 DEBUG managementFeeInfo: Final result:', result);
 
     return result;
-  }, [monthlyExpenses, state.advancedShares, state.shares, managementFeePerApartment, selectedMonth]);
+  }, [monthlyExpenses, state.advancedShares, state.shares, managementFeePerApartment, selectedMonth, effectiveShares]);
 
   const reserveFundInfo = useMemo<ReserveFundInfo>(() => {
-    const goal = Number(state.advancedShares?.reserve_fund_goal || 0);
-    const duration = Number(state.advancedShares?.reserve_fund_duration || 0);
-    const startDate = state.advancedShares?.reserve_fund_start_date;
-    const targetDate = state.advancedShares?.reserve_fund_target_date;
+    const advancedShares = effectiveAdvancedShares || {};
+    const goal = Number((advancedShares as any)?.reserve_fund_goal || 0);
+    const duration = Number((advancedShares as any)?.reserve_fund_duration || 0);
+    const startDate = (advancedShares as any)?.reserve_fund_start_date;
+    const targetDate = (advancedShares as any)?.reserve_fund_target_date;
     let showReserveFund = true;
 
     if (selectedMonth && startDate) {
@@ -272,10 +274,10 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       monthlyAmount = goal / duration;
     }
 
-    const actualReserveCollected = Number(state.advancedShares?.actual_reserve_collected || 0);
+    const actualReserveCollected = Number((advancedShares as any)?.actual_reserve_collected || 0);
     const progressPercentage = goal > 0 ? Math.min(100, (actualReserveCollected / goal) * 100) : 0;
 
-    return {
+    const baseInfo = {
       monthlyAmount,
       totalContribution: monthlyAmount,
       displayText: `Στόχος ${formatAmount(goal)}€ σε ${duration} δόσεις`,
@@ -285,13 +287,111 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       actualReserveCollected,
       progressPercentage,
     };
-  }, [state.advancedShares, selectedMonth]);
 
-  const totalExpenses = useMemo<number>(() => {
-    const basic = Object.values(expenseBreakdown).reduce((s, v) => s + v, 0);
-    const hasAnyExpenses = basic > 0;
-    return basic + managementFeeInfo.totalFee + (hasAnyExpenses ? reserveFundInfo.monthlyAmount : 0);
-  }, [expenseBreakdown, managementFeeInfo, reserveFundInfo]);
+    const apiReserve = typeof monthlyExpenses?.reserve_fund_contribution === 'number'
+      ? toNumber(monthlyExpenses.reserve_fund_contribution)
+      : null;
+    const apiReserveFallback = typeof monthlyExpenses?.reserve_monthly_contribution === 'number'
+      ? toNumber(monthlyExpenses.reserve_monthly_contribution)
+      : null;
+    const resolvedMonthlyAmount = apiReserve !== null
+      ? apiReserve
+      : apiReserveFallback !== null
+        ? apiReserveFallback
+        : baseInfo.monthlyAmount;
+
+    if (resolvedMonthlyAmount !== baseInfo.monthlyAmount) {
+      return {
+        ...baseInfo,
+        monthlyAmount: resolvedMonthlyAmount,
+        totalContribution: resolvedMonthlyAmount
+      };
+    }
+
+    return baseInfo;
+  }, [effectiveAdvancedShares, selectedMonth, monthlyExpenses]);
+
+  const previousBalanceTotals = useMemo(() => {
+    const signed = aptWithFinancial.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);
+    const abs = aptWithFinancial.reduce((sum: number, apt: any) => sum + Math.abs(toNumber(apt.previous_balance ?? 0)), 0);
+    return { signed, abs };
+  }, [aptWithFinancial]);
+
+  const resolvedTotals = useMemo(() => {
+    const expenseBreakdownTotal = Object.values(expenseBreakdown).reduce((s, v) => s + v, 0);
+    const expensesFromBreakdown = monthlyExpenses?.expense_breakdown
+      ? monthlyExpenses.expense_breakdown.reduce((sum: number, exp: any) => sum + toNumber(exp.amount ?? exp.share_amount ?? 0), 0)
+      : null;
+
+    const totalExpensesMonth = typeof monthlyExpenses?.total_expenses_month === 'number'
+      ? toNumber(monthlyExpenses.total_expenses_month)
+      : expensesFromBreakdown !== null
+        ? expensesFromBreakdown
+        : expenseBreakdownTotal;
+
+    const managementTotal = typeof monthlyExpenses?.total_management_cost === 'number'
+      ? toNumber(monthlyExpenses.total_management_cost)
+      : managementFeeInfo.totalFee;
+
+    const previousFromApi = typeof monthlyExpenses?.previous_obligations === 'number'
+      ? toNumber(monthlyExpenses.previous_obligations)
+      : typeof monthlyExpenses?.previous_balances === 'number'
+        ? toNumber(monthlyExpenses.previous_balances)
+        : null;
+
+    const monthlySubtotalFromSummary = typeof monthlyExpenses?.current_month_expenses === 'number'
+      ? toNumber(monthlyExpenses.current_month_expenses)
+      : null;
+    const monthlySubtotalFromParts = totalExpensesMonth + managementTotal + reserveFundInfo.monthlyAmount;
+    const monthlySubtotal = monthlySubtotalFromSummary !== null ? monthlySubtotalFromSummary : monthlySubtotalFromParts;
+
+    const previousTotal = previousFromApi !== null ? previousFromApi : previousBalanceTotals.signed;
+    const grandTotal = monthlySubtotal + previousTotal;
+
+    return {
+      expenseBreakdownTotal,
+      expensesFromBreakdown,
+      totalExpensesMonth,
+      managementTotal,
+      monthlySubtotalFromSummary,
+      monthlySubtotalFromParts,
+      monthlySubtotal,
+      previousTotal,
+      grandTotal,
+    };
+  }, [expenseBreakdown, managementFeeInfo.totalFee, monthlyExpenses, previousBalanceTotals.signed, reserveFundInfo.monthlyAmount]);
+
+  const apartmentTotals = useMemo(() => {
+    const totals = { signed: 0, abs: 0 };
+    if (!aptWithFinancial.length) {
+      return totals;
+    }
+
+    aptWithFinancial.forEach((apt: any) => {
+      const aptAmount = perApartmentAmounts[apt.id] || {};
+      const commonMills = apt.participation_mills || 0;
+      const apartmentReserveFund = reserveFundInfo.monthlyAmount > 0
+        ? reserveFundInfo.monthlyAmount * (commonMills / 1000)
+        : 0;
+      const commonAmountWithoutReserve = Math.max(
+        0,
+        (aptAmount.common || 0) + (aptAmount.other || 0) + (aptAmount.coowner || 0)
+      );
+      const ownerExpensesTotal = (apt as any).owner_expenses || 0;
+      const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
+      const elevatorAmount = aptAmount.elevator || 0;
+      const heatingAmount = aptAmount.heating || 0;
+      const previousSigned = toNumber(apt.previous_balance ?? 0);
+      const previousAbs = Math.abs(previousSigned);
+
+      totals.signed += commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousSigned + ownerExpensesOnlyProjects + apartmentReserveFund;
+      totals.abs += commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousAbs + ownerExpensesOnlyProjects + apartmentReserveFund;
+    });
+
+    return totals;
+  }, [aptWithFinancial, perApartmentAmounts, reserveFundInfo.monthlyAmount]);
+
+  const totalExpenses = useMemo<number>(() => resolvedTotals.monthlySubtotal, [resolvedTotals]);
 
   const getCategoryDisplayName = (category: string) => {
     const categoryMap: Record<string, string> = {
@@ -333,56 +433,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     return grouped;
   }, [effectiveAdvancedShares]);
 
-  const getTotalPreviousBalance = useCallback(() => {
-    console.log('🔍 DEBUG getTotalPreviousBalance called with aptWithFinancial:', {
-      length: aptWithFinancial.length,
-      sampleData: aptWithFinancial.length > 0 ? aptWithFinancial[0] : 'No data',
-      allPreviousBalances: aptWithFinancial.map(apt => ({
-        id: apt.id,
-        previous_balance: apt.previous_balance,
-        abs_previous_balance: Math.abs(apt.previous_balance ?? 0),
-        aptData: apt
-      }))
-    });
-
-    // Log the first 3 apartments in detail
-    if (aptWithFinancial.length > 0) {
-      console.log('🔍 DEBUG First 3 apartments detailed data:', aptWithFinancial.slice(0, 3).map(apt => ({
-        id: apt.id,
-        apartment_number: apt.apartment_number,
-        previous_balance: apt.previous_balance,
-        current_balance: apt.current_balance,
-        expense_share: apt.expense_share,
-        allFields: Object.keys(apt),
-        sampleValues: {
-          previous_balance: apt.previous_balance,
-          current_balance: apt.current_balance,
-          expense_share: apt.expense_share,
-          net_obligation: apt.net_obligation,
-          total_obligations: apt.total_obligations,
-          total_payments: apt.total_payments
-        }
-      })));
-    }
-
-    const total = aptWithFinancial.reduce((sum: number, apt: any) => sum + Math.abs(apt.previous_balance ?? 0), 0);
-
-    console.log('🔍 DEBUG getTotalPreviousBalance result:', total);
-    console.log('🔍 DEBUG getTotalPreviousBalance calculation details:', {
-      total,
-      apartmentsCount: aptWithFinancial.length,
-      individualBalances: aptWithFinancial.map(apt => ({
-        id: apt.id,
-        previous_balance: apt.previous_balance,
-        abs_previous_balance: Math.abs(apt.previous_balance ?? 0)
-      }))
-    });
-    return total;
-  }, [aptWithFinancial]);
+  const getTotalPreviousBalance = useCallback(() => resolvedTotals.previousTotal, [resolvedTotals.previousTotal]);
 
   const getFinalTotalExpenses = useCallback(() => {
-      return totalExpenses + getTotalPreviousBalance();
-  }, [totalExpenses, getTotalPreviousBalance]);
+      return resolvedTotals.grandTotal;
+  }, [resolvedTotals.grandTotal]);
 
   const buildExportParams = useCallback(() => ({
     state,
@@ -441,6 +496,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
+      validateData({ notify: true });
       let sheetFile: File | null = null;
       try {
         const exportParams = buildExportParams();
@@ -474,11 +530,12 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     } finally {
       setIsSaving(false);
     }
-  }, [buildExportParams, state, buildingId, totalExpenses, saveCommonExpenseSheet, onClose]);
+  }, [buildExportParams, state, buildingId, totalExpenses, saveCommonExpenseSheet, onClose, validateData]);
 
   const handlePrint = () => window.print();
 
   const handleExport = useCallback(async (format: 'pdf' | 'excel' | 'jpg') => {
+    validateData({ notify: true });
     const commonParams = buildExportParams();
 
     if (format === 'pdf') {
@@ -488,21 +545,126 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     } else if (format === 'jpg') {
       await exportToJPG(commonParams);
     }
-  }, [buildExportParams, reserveFundInfo, getGroupedExpenses]);
+  }, [buildExportParams, reserveFundInfo, getGroupedExpenses, validateData]);
 
-  const validateData = useCallback(() => {
-    const allTotalsMatch = true;
-    if (allTotalsMatch) {
-        toast.success('✅ Έλεγχος δεδομένων επιτυχής!');
-    } else {
-        toast.error('❌ Βρέθηκαν διαφορές στα σύνολα.');
+  const computeValidation = useCallback((): ValidationResult => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const tolerance = 0.5;
+
+    const formatValue = (value: number) => formatAmount(toNumber(value));
+    const hasSummary = !!monthlyExpenses;
+
+    if (!hasSummary) {
+      warnings.push('Δεν υπάρχουν δεδομένα σύνοψης από το API· χρησιμοποιούνται τοπικοί υπολογισμοί.');
     }
-    setValidationResult({ isValid: allTotalsMatch, message: 'Validation result', details: { totalExpenses: 0, tenantExpensesTotal: 0, ownerExpensesTotal: 0, reserveFundTotal: 0, payableTotal: 0, differences: [] } });
-  }, []);
+
+    if (!aptWithFinancial.length) {
+      warnings.push('Δεν υπάρχουν δεδομένα διαμερισμάτων για δεύτερη επαλήθευση.');
+    }
+
+    if (hasSummary) {
+      if (resolvedTotals.expensesFromBreakdown !== null && typeof monthlyExpenses?.total_expenses_month === 'number') {
+        const diff = Math.abs(resolvedTotals.totalExpensesMonth - resolvedTotals.expensesFromBreakdown);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στις δαπάνες μήνα: σύνοψη ${formatValue(resolvedTotals.totalExpensesMonth)}€ vs ανάλυση ${formatValue(resolvedTotals.expensesFromBreakdown)}€.`);
+        }
+      }
+
+      if (typeof monthlyExpenses?.total_management_cost === 'number') {
+        const diff = Math.abs(toNumber(monthlyExpenses.total_management_cost) - managementFeeInfo.totalFee);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στο κόστος διαχείρισης: σύνοψη ${formatValue(monthlyExpenses.total_management_cost)}€ vs υπολογισμός ${formatValue(managementFeeInfo.totalFee)}€.`);
+        }
+      }
+
+      if (typeof monthlyExpenses?.reserve_fund_contribution === 'number') {
+        const diff = Math.abs(toNumber(monthlyExpenses.reserve_fund_contribution) - reserveFundInfo.monthlyAmount);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στο αποθεματικό: σύνοψη ${formatValue(monthlyExpenses.reserve_fund_contribution)}€ vs υπολογισμός ${formatValue(reserveFundInfo.monthlyAmount)}€.`);
+        }
+      }
+
+      const previousFromApi = typeof monthlyExpenses?.previous_obligations === 'number'
+        ? toNumber(monthlyExpenses.previous_obligations)
+        : typeof monthlyExpenses?.previous_balances === 'number'
+          ? toNumber(monthlyExpenses.previous_balances)
+          : null;
+
+      if (previousFromApi !== null) {
+        const diff = Math.abs(previousFromApi - previousBalanceTotals.signed);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στις παλαιότερες οφειλές: σύνοψη ${formatValue(previousFromApi)}€ vs διαμερίσματα ${formatValue(previousBalanceTotals.signed)}€.`);
+        }
+      }
+
+      if (resolvedTotals.monthlySubtotalFromSummary !== null) {
+        const diff = Math.abs(resolvedTotals.monthlySubtotalFromSummary - resolvedTotals.monthlySubtotalFromParts);
+        if (diff > tolerance) {
+          warnings.push(`Διαφορά στο μηνιαίο σύνολο: σύνοψη ${formatValue(resolvedTotals.monthlySubtotalFromSummary)}€ vs άθροισμα επιμέρους ${formatValue(resolvedTotals.monthlySubtotalFromParts)}€.`);
+        }
+      }
+    }
+
+    if (aptWithFinancial.length) {
+      const diff = Math.abs(resolvedTotals.grandTotal - apartmentTotals.signed);
+      if (diff > tolerance) {
+        errors.push(`Διαφορά στο τελικό σύνολο: σύνοψη ${formatValue(resolvedTotals.grandTotal)}€ vs διαμερίσματα ${formatValue(apartmentTotals.signed)}€.`);
+      }
+
+      const creditDiff = Math.abs(apartmentTotals.signed - apartmentTotals.abs);
+      if (creditDiff > tolerance) {
+        warnings.push('Υπάρχουν πιστωτικά υπόλοιπα· το άθροισμα με πρόσημο διαφέρει από το απόλυτο.');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.length ? errors : undefined,
+      warnings: warnings.length ? warnings : undefined,
+      message: errors.length
+        ? 'Βρέθηκαν αποκλίσεις στα σύνολα.'
+        : warnings.length
+          ? 'Βρέθηκαν μικρές αποκλίσεις στα σύνολα.'
+          : 'Όλα τα σύνολα είναι συνεπή.'
+    };
+  }, [
+    aptWithFinancial.length,
+    apartmentTotals.abs,
+    apartmentTotals.signed,
+    managementFeeInfo.totalFee,
+    monthlyExpenses,
+    previousBalanceTotals.signed,
+    reserveFundInfo.monthlyAmount,
+    resolvedTotals,
+  ]);
+
+  const validateData = useCallback((options?: { notify?: boolean }) => {
+    const result = computeValidation();
+    setValidationResult(result);
+
+    if (options?.notify !== false) {
+      if (result.errors?.length) {
+        toast.error(`❌ ${result.message}`);
+      } else if (result.warnings?.length) {
+        toast.warning(`⚠️ ${result.message}`);
+      } else {
+        toast.success(`✅ ${result.message}`);
+      }
+    }
+
+    return result;
+  }, [computeValidation]);
+
+  useEffect(() => {
+    if (!props.isOpen) return;
+    setValidationResult(computeValidation());
+  }, [props.isOpen, computeValidation]);
 
   const handleSendToAll = useCallback(async () => {
     setIsSending(true);
     try {
+      validateData({ notify: true });
       const commonParams = {
         state,
         buildingId,
@@ -552,6 +714,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     getFinalTotalExpenses,
     getTotalPreviousBalance,
     getGroupedExpenses,
+    validateData,
   ]);
 
   return {

@@ -350,13 +350,12 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   }, [state.advancedShares, selectedMonth]);
 
   const totalPreviousBalance = useMemo(() => {
-    return aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance ?? 0), 0);
+    return aptWithFinancial.reduce((sum, apt) => sum + toNumber(apt.previous_balance ?? 0), 0);
   }, [aptWithFinancial]);
 
   const totalExpensesForSheet = useMemo(() => {
     const basic = Object.values(expenseBreakdown).reduce((sum, value) => sum + value, 0);
-    const hasAnyExpenses = basic > 0;
-    return basic + managementFeeInfo.totalFee + (hasAnyExpenses ? reserveFundInfo.monthlyAmount : 0);
+    return basic + managementFeeInfo.totalFee + reserveFundInfo.monthlyAmount;
   }, [expenseBreakdown, managementFeeInfo, reserveFundInfo]);
 
   const getTotalPreviousBalance = useCallback(() => totalPreviousBalance, [totalPreviousBalance]);
@@ -580,7 +579,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       };
 
       const issueTotalPreviousBalance = Object.values(issueShares).reduce(
-        (sum: number, share: any) => sum + Math.abs(Number(share.previous_balance || 0)),
+        (sum: number, share: any) => sum + toNumber(share.previous_balance || 0),
         0
       );
 
@@ -1085,7 +1084,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 <td class="font-bold">${formatAmount(Object.values(currentState.shares).length * 1.0)}€</td>
                 <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.breakdown?.reserve_fund || 0), 0))}€</td>
                 <td class="font-bold text-primary">${formatAmount(currentState.totalExpenses)}€</td>
-                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + Math.abs(s.previous_balance || 0), 0))}€</td>
+                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + toNumber(s.previous_balance || 0), 0))}€</td>
                 </tr>
             </tbody>
           </table>

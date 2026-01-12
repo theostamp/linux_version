@@ -216,7 +216,32 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
 
       {validationResult && (
         <div className={`border rounded-lg p-4 ${validationResult.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-            {/* ... Validation results ... */}
+            <div className="flex items-center gap-2 mb-2">
+              {validationResult.isValid ? (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              )}
+              <span className="text-sm font-semibold text-gray-800">
+                {validationResult.message || 'Έλεγχος δεδομένων'}
+              </span>
+            </div>
+
+            {validationResult.errors && validationResult.errors.length > 0 && (
+              <ul className="list-disc pl-5 text-sm text-red-700 space-y-1">
+                {validationResult.errors.map((error, index) => (
+                  <li key={`validation-error-${index}`}>{error}</li>
+                ))}
+              </ul>
+            )}
+
+            {validationResult.warnings && validationResult.warnings.length > 0 && (
+              <ul className="list-disc pl-5 text-sm text-yellow-800 space-y-1 mt-2">
+                {validationResult.warnings.map((warning, index) => (
+                  <li key={`validation-warning-${index}`}>{warning}</li>
+                ))}
+              </ul>
+            )}
         </div>
       )}
 

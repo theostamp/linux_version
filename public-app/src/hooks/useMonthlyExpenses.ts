@@ -33,6 +33,7 @@ export interface ExpenseBreakdownGrouped {
 
 export interface MonthlyExpenses {
   total_expenses_month: number;
+  current_month_expenses?: number; // ✅ ΝΕΟ: Σύνολο μηνιαίων υποχρεώσεων (χωρίς παλαιότερες)
   management_fee_per_apartment: number;  // Changed from management_fees
   total_management_cost: number;         // Added this field
   reserve_fund_contribution: number;
@@ -55,6 +56,7 @@ export interface MonthlyExpenses {
   reserve_progress_percentage: number;
   apartment_count: number;
   has_monthly_activity: boolean;
+  previous_obligations?: number; // ✅ ΝΕΟ: Παλαιότερες οφειλές από summary
   expense_breakdown?: ExpenseBreakdownItem[];  // ← Flat list για backward compatibility
   expense_breakdown_grouped?: ExpenseBreakdownGrouped;  // ← ΝΕΟ: Ιεραρχικά ομαδοποιημένα
 }

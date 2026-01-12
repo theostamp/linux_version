@@ -11,7 +11,7 @@ import {
   Share
 } from '../types/financial';
 import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
-import { formatAmount } from './formatters';
+import { formatAmount, toNumber } from './formatters';
 import { getPeriodInfo, getPaymentDueDate } from './periodHelpers';
 
 interface JpgGeneratorParams {
@@ -428,7 +428,7 @@ export const exportToJPG = async (
               <tbody>
                 ${(aptWithFinancial && aptWithFinancial.length > 0) ? aptWithFinancial.map((apt, index) => {
                   const aptAmount = perApartmentAmounts[apt.id] || {};
-                  const previousBalance = Math.abs(apt.previous_balance || 0);
+                  const previousBalance = toNumber(apt.previous_balance || 0);
                   const commonMills = apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
 
@@ -441,7 +441,7 @@ export const exportToJPG = async (
                   );
                   const ownerExpensesTotal = (apt as any).owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
-                  const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
+                  const totalAmount = commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
 
                   // ✅ Logging για debugging
                   console.log('JPG Row ${index}:', {
@@ -471,7 +471,7 @@ export const exportToJPG = async (
                 <!-- Totals Row -->
                 <tr style="background: #f3f4f6; font-weight: bold;">
                   <td colspan="2" style="padding: 4px 3px; text-align: left; border: 1px solid #e5e7eb; font-weight: bold;">ΣΥΝΟΛΑ</td>
-                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance || 0), 0))}€</td>
+                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + toNumber(apt.previous_balance || 0), 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
                     try {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
@@ -497,7 +497,7 @@ export const exportToJPG = async (
                     try {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
                       const commonMills = apt.participation_mills || 0;
-                      const previousBalance = Math.abs(apt.previous_balance || 0);
+                      const previousBalance = toNumber(apt.previous_balance || 0);
                       const ownerExpensesTotal = (apt as any).owner_expenses || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                       const commonAmountWithoutReserve = Math.max(

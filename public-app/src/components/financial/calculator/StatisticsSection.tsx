@@ -271,7 +271,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
   const getTotalPreviousBalance = () => {
     return Object.values(state.shares).reduce((sum: number, s: any) => {
       const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
-      return sum + Math.abs(apartmentData?.previous_balance ?? 0);
+      return sum + toNumber(apartmentData?.previous_balance ?? 0);
     }, 0);
   };
 

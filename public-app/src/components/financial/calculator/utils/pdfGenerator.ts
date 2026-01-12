@@ -520,7 +520,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 <tbody>
                   ${aptWithFinancial.map(apt => {
                     const aptAmount = perApartmentAmounts[apt.id] || {};
-                    const previousBalance = Math.abs(apt.previous_balance || 0);
+                    const previousBalance = toNumber(apt.previous_balance || 0);
                     const commonMills = apt.participation_mills || 0;
                     const elevatorMills = apt.participation_mills || 0;
                     const heatingMills = apt.heating_mills || apt.participation_mills || 0;
@@ -548,7 +548,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                   <!-- Totals Row -->
                   <tr style="background: #f3f4f6; font-weight: bold;">
                     <td colspan="2" class="text-left font-bold">ΣΥΝΟΛΑ</td>
-                    <td class="text-right font-bold">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance || 0), 0))}€</td>
+                    <td class="text-right font-bold">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + toNumber(apt.previous_balance || 0), 0))}€</td>
                     <td class="font-bold">${Math.round(aptWithFinancial.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0))}</td>
                     <td class="font-bold">${Math.round(aptWithFinancial.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0))}</td>
                     <td class="font-bold">${Math.round(aptWithFinancial.reduce((sum, apt) => sum + (apt.heating_mills || apt.participation_mills || 0), 0))}</td>
