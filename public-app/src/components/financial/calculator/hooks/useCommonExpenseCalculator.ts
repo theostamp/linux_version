@@ -303,6 +303,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     const apiDuration = typeof monthlyExpenses?.reserve_fund_duration_months === 'number'
       ? toNumber(monthlyExpenses.reserve_fund_duration_months)
       : null;
+    const reserveFromAdvanced = toNumber(
+      (advancedShares as any)?.reserve_contribution
+        ?? (advancedShares as any)?.reserve_fund_monthly_total
+        ?? 0
+    );
 
     const goal = apiGoal !== null
       ? apiGoal
@@ -320,7 +325,9 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       if (targetDate && selected > new Date(targetDate)) showReserveFund = false;
     }
 
-    if (reserveFromShares > 0) {
+    const reserveFromSharesOrAdvanced = reserveFromShares > 0 ? reserveFromShares : reserveFromAdvanced;
+
+    if (reserveFromSharesOrAdvanced > 0) {
       showReserveFund = true;
     }
 
@@ -356,9 +363,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       ? toNumber(monthlyExpenses.reserve_monthly_contribution)
       : null;
 
-    let resolvedMonthlyAmount = reserveFromShares > 0 ? reserveFromShares : baseInfo.monthlyAmount;
+    let resolvedMonthlyAmount = reserveFromSharesOrAdvanced > 0
+      ? reserveFromSharesOrAdvanced
+      : baseInfo.monthlyAmount;
 
-    if (reserveFromShares <= 0) {
+    if (reserveFromSharesOrAdvanced <= 0) {
       if (apiMonthlyTarget !== null) {
         if (apiMonthlyTarget > 0) {
           resolvedMonthlyAmount = apiMonthlyTarget;
@@ -378,7 +387,9 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       }
     }
 
-    const totalContribution = reserveFromShares > 0 ? reserveFromShares : resolvedMonthlyAmount;
+    const totalContribution = reserveFromSharesOrAdvanced > 0
+      ? reserveFromSharesOrAdvanced
+      : resolvedMonthlyAmount;
 
     if (resolvedMonthlyAmount !== baseInfo.monthlyAmount || totalContribution !== baseInfo.totalContribution) {
       return {
