@@ -493,60 +493,6 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     buildingId,
   ]);
 
-  const handleSave = useCallback(async () => {
-    setIsSaving(true);
-    try {
-      validateData({ notify: true });
-      let sheetFile: File | null = null;
-      try {
-        const exportParams = buildExportParams();
-        const jpgResult = await exportToJPG(exportParams, {
-          skipDownload: true,
-          skipKiosk: true,
-          returnBlob: true,
-          silent: true
-        });
-        if (jpgResult?.blob && jpgResult?.fileName) {
-          sheetFile = new File([jpgResult.blob], jpgResult.fileName, { type: 'image/jpeg' });
-        }
-      } catch (error) {
-        console.error('Failed to generate common expense sheet file:', error);
-      }
-
-      const saveData = {
-        building_id: buildingId,
-        period_data: { name: getPeriodInfo(state), start_date: state.customPeriod.startDate, end_date: state.customPeriod.endDate },
-        shares: state.shares,
-        total_expenses: totalExpenses,
-        advanced: state.advancedShares !== null,
-        advanced_options: state.advancedOptions,
-        sheet_attachment: sheetFile
-      };
-      await saveCommonExpenseSheet(saveData);
-      toast.success('Το φύλλο κοινοχρήστων αποθηκεύθηκε επιτυχώς!');
-      onClose();
-    } catch (error: any) {
-      toast.error('Σφάλμα: ' + error.message);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [buildExportParams, state, buildingId, totalExpenses, saveCommonExpenseSheet, onClose, validateData]);
-
-  const handlePrint = () => window.print();
-
-  const handleExport = useCallback(async (format: 'pdf' | 'excel' | 'jpg') => {
-    validateData({ notify: true });
-    const commonParams = buildExportParams();
-
-    if (format === 'pdf') {
-      await exportToPDF(commonParams);
-    } else if (format === 'excel') {
-      await exportToExcel({...commonParams, reserveFundDetails: reserveFundInfo, getGroupedExpenses});
-    } else if (format === 'jpg') {
-      await exportToJPG(commonParams);
-    }
-  }, [buildExportParams, reserveFundInfo, getGroupedExpenses, validateData]);
-
   const computeValidation = useCallback((): ValidationResult => {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -660,6 +606,60 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     if (!props.isOpen) return;
     setValidationResult(computeValidation());
   }, [props.isOpen, computeValidation]);
+
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      validateData({ notify: true });
+      let sheetFile: File | null = null;
+      try {
+        const exportParams = buildExportParams();
+        const jpgResult = await exportToJPG(exportParams, {
+          skipDownload: true,
+          skipKiosk: true,
+          returnBlob: true,
+          silent: true
+        });
+        if (jpgResult?.blob && jpgResult?.fileName) {
+          sheetFile = new File([jpgResult.blob], jpgResult.fileName, { type: 'image/jpeg' });
+        }
+      } catch (error) {
+        console.error('Failed to generate common expense sheet file:', error);
+      }
+
+      const saveData = {
+        building_id: buildingId,
+        period_data: { name: getPeriodInfo(state), start_date: state.customPeriod.startDate, end_date: state.customPeriod.endDate },
+        shares: state.shares,
+        total_expenses: totalExpenses,
+        advanced: state.advancedShares !== null,
+        advanced_options: state.advancedOptions,
+        sheet_attachment: sheetFile
+      };
+      await saveCommonExpenseSheet(saveData);
+      toast.success('Το φύλλο κοινοχρήστων αποθηκεύθηκε επιτυχώς!');
+      onClose();
+    } catch (error: any) {
+      toast.error('Σφάλμα: ' + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [buildExportParams, state, buildingId, totalExpenses, saveCommonExpenseSheet, onClose, validateData]);
+
+  const handlePrint = () => window.print();
+
+  const handleExport = useCallback(async (format: 'pdf' | 'excel' | 'jpg') => {
+    validateData({ notify: true });
+    const commonParams = buildExportParams();
+
+    if (format === 'pdf') {
+      await exportToPDF(commonParams);
+    } else if (format === 'excel') {
+      await exportToExcel({...commonParams, reserveFundDetails: reserveFundInfo, getGroupedExpenses});
+    } else if (format === 'jpg') {
+      await exportToJPG(commonParams);
+    }
+  }, [buildExportParams, reserveFundInfo, getGroupedExpenses, validateData]);
 
   const handleSendToAll = useCallback(async () => {
     setIsSending(true);

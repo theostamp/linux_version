@@ -1161,6 +1161,24 @@ class FinancialDashboardService:
                     month=prev_month
                 ).first()
 
+                if not prev_monthly_balance:
+                    try:
+                        from .monthly_balance_service import MonthlyBalanceService
+                        balance_service = MonthlyBalanceService(self.building)
+                        prev_monthly_balance = balance_service.create_or_update_monthly_balance(
+                            prev_year,
+                            prev_month,
+                            recalculate=False
+                        )
+                    except Exception as exc:
+                        logger.warning(
+                            "Failed to backfill MonthlyBalance for %02d/%d (building=%s). Falling back to calculated balance.",
+                            prev_month,
+                            prev_year,
+                            apartment.building_id,
+                            exc_info=exc
+                        )
+
                 if prev_monthly_balance:
                     # Χρήση του carry_forward από το MonthlyBalance
                     # Πρέπει να το κατανείμουμε στο διαμέρισμα βάση χιλιοστών
@@ -2568,7 +2586,7 @@ class AdvancedCommonExpenseCalculator:
                     'variable_cost': Decimal('0.00'),
                     'consumption_hours': Decimal('0.00')
                 },
-                'previous_balance': apartment.current_balance or Decimal('0.00'),
+                'previous_balance': historical_balance,
                 'total_due': Decimal('0.00')
             }
 
