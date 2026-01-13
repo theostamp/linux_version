@@ -1197,9 +1197,40 @@ class FinancialDashboardService:
                     logger.debug(f"   Apartment ratio: {apartment.participation_mills}/{total_participation_mills}")
                     logger.debug(f"   Apartment previous_balance: €{previous_balance:.2f}")
                 else:
-                    # Fallback: Χρήση calculated_balance (υπολογισμός από Expense records)
-                    previous_balance = calculated_balance
-                    logger.warning(f" No MonthlyBalance found for {prev_month:02d}/{prev_year}, using calculated_balance: €{previous_balance:.2f}")
+                    # Fallback: Manual calculation strictly < month_start to avoid double counting current expenses
+                    # calculated_balance from BalanceCalculationService might be inclusive of start date
+
+                    # 1. Expenses πριν τον μήνα
+                    prev_expenses = Expense.objects.filter(
+                        building_id=self.building_id,
+                        date__lt=month_start
+                    )
+                    if self.building.financial_system_start_date:
+                        prev_expenses = prev_expenses.filter(date__gte=self.building.financial_system_start_date)
+
+                    prev_expenses_share = Decimal('0.00')
+                    total_mills = total_participation_mills or 1000
+
+                    for exp in prev_expenses:
+                        # Calculate share
+                        if exp.category == 'management_fees':
+                            share = exp.amount / safe_apartment_count
+                        else:
+                            share = (Decimal(apartment.participation_mills or 0) / Decimal(total_mills)) * exp.amount
+                        prev_expenses_share += share
+
+                    # 2. Payments πριν τον μήνα
+                    prev_payments = Payment.objects.filter(
+                        apartment=apartment,
+                        date__lt=month_start
+                    )
+                    if self.building.financial_system_start_date:
+                        prev_payments = prev_payments.filter(date__gte=self.building.financial_system_start_date)
+
+                    prev_payments_total = prev_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+                    previous_balance = prev_expenses_share - prev_payments_total
+                    logger.warning(f" No MonthlyBalance found for {prev_month:02d}/{prev_year}, calculated manual previous_balance: €{previous_balance:.2f}")
 
                 # 1.1. Υπολογισμός previous balance διαχωρισμένο σε resident/owner
                 previous_resident_expenses = Decimal('0.00')
