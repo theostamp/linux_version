@@ -1885,28 +1885,68 @@ class ReportService:
 
     def generate_pdf_report(self, report_type, **kwargs):
         """Δημιουργία PDF αναφοράς"""
-        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.pagesizes import A4, landscape
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib import colors
         from io import BytesIO
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        import os
+
+        # Προσπάθεια φόρτωσης γραμματοσειράς που υποστηρίζει Ελληνικά
+        font_name = 'Helvetica'  # Default fallback
+        try:
+            # Συνήθη paths για fonts σε Linux containers
+            font_paths = [
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                '/usr/share/fonts/ttf-dejavu/DejaVuSans.ttf',
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+                'DejaVuSans.ttf'
+            ]
+            for path in font_paths:
+                if os.path.exists(path):
+                    pdfmetrics.registerFont(TTFont('DejaVuSans', path))
+                    font_name = 'DejaVuSans'
+                    break
+        except Exception:
+            pass
 
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+        # Επιλογή προσανατολισμού
+        if report_type == 'common_expenses':
+            doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        else:
+            doc = SimpleDocTemplate(buffer, pagesize=A4)
+
         elements = []
 
         # Στυλ
         styles = getSampleStyleSheet()
+        # Ενημέρωση γραμματοσειράς στα στυλ
+        for style_name in styles.byName:
+            styles[style_name].fontName = font_name
+
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
+            fontName=font_name,
             fontSize=16,
             spaceAfter=30,
             alignment=1  # Center
         )
 
+        normal_style = styles['Normal']
+        heading2_style = styles['Heading2']
+
         # Τίτλος
-        title = Paragraph(f"Αναφορά: {self.building.name}", title_style)
+        title_text = f"Αναφορά: {self.building.name}"
+        if report_type == 'common_expenses':
+            period = kwargs.get('period', '-')
+            title_text = f"Φύλλο Κοινοχρήστων: {period}"
+
+        title = Paragraph(title_text, title_style)
         elements.append(title)
         elements.append(Spacer(1, 20))
 
@@ -1916,40 +1956,161 @@ class ReportService:
             table_data = [['Ημερομηνία', 'Τύπος', 'Περιγραφή', 'Ποσό', 'Υπόλοιπο']]
             for transaction in data:
                 table_data.append([
-                    transaction.date.strftime('%d/%m/%Y'),
-                    transaction.get_type_display(),
-                    transaction.description[:50] + '...' if len(transaction.description) > 50 else transaction.description,
-                    f"€{transaction.amount}",
-                    f"€{transaction.balance_after}"
+                    transaction.get('date', ''),
+                    transaction.get('type_display', transaction.get('type')),
+                    transaction.get('description', '')[:50],
+                    f"€{transaction.get('amount', 0)}",
+                    f"€{transaction.get('balance_after', 0)}"
                 ])
+
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(table)
 
         elif report_type == 'apartment_balances':
             data = self.generate_apartment_balance_report(**kwargs)
             # Δημιουργία πίνακα οφειλών
             table_data = [['Διαμέρισμα', 'Ιδιοκτήτης', 'Χιλιοστά', 'Οφειλή', 'Τελευταία Είσπραξη']]
             for item in data:
+                last_payment = item.get('last_payment_date')
+                last_payment_str = last_payment.strftime('%d/%m/%Y') if last_payment else '-'
                 table_data.append([
                     item['apartment_number'],
                     item['owner_name'],
-                    item['participation_mills'],
+                    str(item['participation_mills']),
                     f"€{item['current_balance']}",
-                    item['last_payment_date'].strftime('%d/%m/%Y') if item['last_payment_date'] else '-'
+                    last_payment_str
                 ])
 
-        # Δημιουργία πίνακα
-        table = Table(table_data)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(table)
 
-        elements.append(table)
+        elif report_type == 'common_expenses':
+            # 1. Υπολογισμός Δεδομένων
+            period = kwargs.get('period')
+            s_date_str = None
+            e_date_str = None
+
+            if period:
+                from datetime import date
+                import calendar
+                try:
+                    year, month = map(int, period.split('-'))
+                    s_date_str = date(year, month, 1).strftime('%Y-%m-%d')
+                    last_day = calendar.monthrange(year, month)[1]
+                    e_date_str = date(year, month, last_day).strftime('%Y-%m-%d')
+                except:
+                    pass
+
+            calculator = AdvancedCommonExpenseCalculator(
+                self.building_id,
+                period_start_date=s_date_str,
+                period_end_date=e_date_str
+            )
+            results = calculator.calculate_advanced_shares()
+
+            # 2. Πίνακας Συγκεντρωτικών Δαπανών
+            elements.append(Paragraph("Ανάλυση Δαπανών", heading2_style))
+            elements.append(Spacer(1, 10))
+
+            expense_table_data = [['Κατηγορία', 'Περιγραφή', 'Ποσό']]
+            total_expenses = 0.0
+
+            category_map = dict(Expense.EXPENSE_CATEGORIES)
+
+            all_expenses = []
+            for cat, exp_list in results['expense_details'].items():
+                all_expenses.extend(exp_list)
+
+            # Sort by date
+            all_expenses.sort(key=lambda x: x.get('date') or '')
+
+            for exp in all_expenses:
+                cat_display = category_map.get(exp['category'], exp['category'])
+                amount = float(exp['amount'])
+                expense_table_data.append([
+                    Paragraph(cat_display, normal_style),
+                    Paragraph(exp['title'], normal_style),
+                    f"€{amount:.2f}"
+                ])
+                total_expenses += amount
+
+            expense_table_data.append(['', 'ΣΥΝΟΛΟ', f"€{total_expenses:.2f}"])
+
+            t_exp = Table(expense_table_data, colWidths=[150, 400, 100])
+            t_exp.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
+                ('GRID', (0, 0), (-1, -2), 0.5, colors.grey),
+                ('LINEBELOW', (0, -1), (-1, -1), 1, colors.black),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('FONT-WEIGHT', (0, -1), (-1, -1), 'BOLD'),
+            ]))
+            elements.append(t_exp)
+            elements.append(Spacer(1, 30))
+
+            # 3. Πίνακας Κατανομής
+            elements.append(Paragraph("Κατανομή ανά Διαμέρισμα", heading2_style))
+            elements.append(Spacer(1, 10))
+
+            headers = ['Διαμ.', 'Ένοικος', 'Χιλιοστά', 'Θέρμανση', 'Κοινόχρηστα', 'Ανελκυστήρας', 'Σύνολο']
+            dist_data = [headers]
+
+            for apt_id, share in results['shares'].items():
+                bd = share['breakdown']
+                heating = float(bd.get('heating_expenses', 0))
+                general = float(bd.get('general_expenses', 0))
+                elevator = float(bd.get('elevator_expenses', 0))
+                total = float(share['total_amount'])
+
+                row = [
+                    share['apartment_number'],
+                    Paragraph(share['owner_name'], normal_style),
+                    f"{share['participation_mills']}",
+                    f"€{heating:.2f}",
+                    f"€{general:.2f}",
+                    f"€{elevator:.2f}",
+                    f"€{total:.2f}"
+                ]
+                dist_data.append(row)
+
+            t_dist = Table(dist_data, colWidths=[50, 230, 60, 100, 100, 100, 100])
+            t_dist.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+                ('ALIGN', (3, 0), (-1, -1), 'RIGHT'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(t_dist)
 
         # Δημιουργία PDF
         doc.build(elements)
