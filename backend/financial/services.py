@@ -77,9 +77,15 @@ class CommonExpenseCalculator:
         for apartment in self.apartments:
             # ✅ ΜIGRATED: Use BalanceCalculationService
             from .balance_service import BalanceCalculationService
+
+            # 🔧 FIX: Χρήση period_start_date αντί για period_end_date
+            # Αν υπάρχουν ήδη transactions για τον μήνα (π.χ. επανέκδοση), το period_end_date
+            # θα τα συμπεριλάβει, προκαλώντας διπλοχρέωση όταν προστεθούν ξανά τα expenses.
+            target_date = self.period_start_date if self.period_start_date else self.period_end_date
+
             historical_balance = BalanceCalculationService.calculate_historical_balance(
-                apartment, self.period_end_date
-            ) if self.period_end_date else (apartment.current_balance or Decimal('0.00'))
+                apartment, target_date
+            ) if target_date else (apartment.current_balance or Decimal('0.00'))
 
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
@@ -2748,9 +2754,14 @@ class AdvancedCommonExpenseCalculator:
         for apartment in self.apartments:
             # ✅ MIGRATED: Use BalanceCalculationService
             from .balance_service import BalanceCalculationService
+
+            # 🔧 FIX: Χρήση period_start_date αντί για period_end_date
+            # Αποφυγή διπλοχρέωσης αν υπάρχουν ήδη transactions για την περίοδο
+            target_date = self.period_start_date if self.period_start_date else self.period_end_date
+
             historical_balance = BalanceCalculationService.calculate_historical_balance(
-                apartment, self.period_end_date
-            ) if self.period_end_date else (apartment.current_balance or Decimal('0.00'))
+                apartment, target_date
+            ) if target_date else (apartment.current_balance or Decimal('0.00'))
 
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
