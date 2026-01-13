@@ -3,6 +3,7 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 from django.contrib.auth import get_user_model
 from django_tenants.utils import schema_context
 from django_tenants.test.cases import TenantTestCase
+from unittest.mock import patch
 
 from buildings.models import Building
 from .models import Project, Offer
@@ -69,4 +70,58 @@ class ProjectsEndpointsTests(TenantTestCase):
             self.assertTrue(isinstance(resp.data, (list, dict)))
 
 
-# Create your tests here.
+class ProjectTransactionTests(TenantTestCase):
+    @classmethod
+    def setup_tenant(cls, tenant):
+        tenant.schema_name = 'demo_trans'
+        tenant.name = 'Demo Transaction Tenant'
+        tenant.save()
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        with schema_context('demo_trans'):
+            self.manager = User.objects.create_user(email='manager@example.com', password='testpass', is_staff=True)
+            self.building = Building.objects.create(
+                name='Test Building', address='Test St 1', city='Athens', postal_code='10000'
+            )
+            self.project = Project.objects.create(
+                title='Roof Repair',
+                description='Fix the roof',
+                building=self.building,
+                created_by=self.manager,
+                status='planning',
+                estimated_cost=1000
+            )
+            self.offer = Offer.objects.create(
+                project=self.project,
+                contractor_name='Bob the Builder',
+                amount=1000.00,
+                status='submitted'
+            )
+
+    def test_approve_offer_rollback_on_error(self):
+        """Test that project approval is rolled back if schedule creation fails"""
+        with schema_context('demo_trans'):
+            url = f'/api/projects/projects/{self.project.id}/approve_offer/'
+            data = {'offer_id': str(self.offer.id)}
+            request = self.factory.post(url, data, format='json')
+            force_authenticate(request, user=self.manager)
+
+            view = ProjectViewSet.as_view({'post': 'approve_offer'})
+
+            # Mock update_project_schedule to raise an exception
+            with patch('projects.views.update_project_schedule') as mock_schedule:
+                mock_schedule.side_effect = Exception("Simulated Database Error")
+
+                # The view should raise the exception because of the 'raise' we added
+                with self.assertRaises(Exception):
+                    view(request, pk=self.project.id)
+
+            # Refresh objects from DB
+            self.project.refresh_from_db()
+            self.offer.refresh_from_db()
+
+            # Assertions: Statuses should NOT have changed
+            self.assertEqual(self.project.status, 'planning', "Project status should have rolled back to planning")
+            self.assertEqual(self.offer.status, 'submitted', "Offer status should have rolled back to submitted")
+            self.assertIsNone(self.project.selected_contractor, "Selected contractor should be None")

@@ -1,10 +1,10 @@
-from django.views.decorators.csrf import ensure_csrf_cookie 
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 import random
 from datetime import datetime
-   # type: ignonor
-   
-   
+   # type: ignore
+
+
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
@@ -51,11 +51,11 @@ def community_messages(request):
         hour = datetime.now().hour
         weather_messages = [
             "Καλημέρα! Ένα όμορφο πρωινό στην πολυκατοικία μας! 🌅",
-            "Καλησπέρα! Μια υπέροχη ημέρα στην κοινότητα μας! 🌆", 
+            "Καλησπέρα! Μια υπέροχη ημέρα στην κοινότητα μας! 🌆",
             "Καλησπέρα! Απολαύστε το απόγευμα! 🌇",
             "Καληνύχτα! Καλό βράδυ σε όλους! 🌙"
         ]
-        
+
         if hour < 12:
             return weather_messages[0]
         if hour < 18:
@@ -67,15 +67,15 @@ def community_messages(request):
     try:
         # Get all messages and randomize
         all_messages = (
-            COMMUNITY_MESSAGES + 
-            GENERAL_MESSAGES + 
+            COMMUNITY_MESSAGES +
+            GENERAL_MESSAGES +
             [get_weather_message()]
         )
-        
+
         # Shuffle and pick random message
         random.shuffle(all_messages)
         random_message = all_messages[0]
-        
+
         return JsonResponse({
             "content": random_message,
             "timestamp": datetime.now().isoformat(),
@@ -85,7 +85,7 @@ def community_messages(request):
     except Exception as error:
         # Fallback message
         fallback_message = "Καλώς ήρθατε στην πολυκατοικία μας! 🏠"
-        
+
         return JsonResponse({
             "content": fallback_message,
             "timestamp": datetime.now().isoformat(),

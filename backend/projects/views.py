@@ -174,10 +174,8 @@ def update_project_schedule(project, offer=None):
         logger = logging.getLogger(__name__)
 
         # Βρες υπάρχουσες δαπάνες
-        old_expenses = Expense.objects.filter(
-            building=project.building,
-            title__icontains=project.title
-        )
+        # 🔧 FIX: Χρήση project link αντί για title search για ακρίβεια
+        old_expenses = Expense.objects.filter(project=project)
 
         logger.info(
             f"🔍 Checking for existing expenses for project '{project.title}'",
@@ -206,19 +204,9 @@ def update_project_schedule(project, offer=None):
                 logger.info("   ❌ Aborting expense creation due to paid expenses")
                 return
 
-            # Έλεγχος 2: Είναι παλιές (> 24 ώρες);
-            cutoff_time = timezone.now() - timedelta(hours=24)
-            old_cutoff_expenses = old_expenses.filter(created_at__lt=cutoff_time)
-
-            if old_cutoff_expenses.exists():
-                logger.warning(
-                    f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {old_cutoff_expenses.count()} παλιές δαπάνες (>24h) "
-                    f"για το έργο '{project.title}'. ΔΕΝ διαγράφονται!"
-                )
-                logger.info(f"   Παλιές δαπάνες: {list(old_cutoff_expenses.values('id', 'title', 'created_at'))}")
-                # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
-                logger.info("   ❌ Aborting expense creation due to old expenses (>24h)")
-                return
+            # 🔧 FIX: Αφαιρέθηκε ο έλεγχος 24 ωρών.
+            # Επιτρέπουμε την ενημέρωση παλιών δαπανών ΑΝ δεν έχουν πληρωθεί.
+            # Αυτό διορθώνει το πρόβλημα ασυμφωνίας ποσών όταν αλλάζει το έργο.
 
             # Έλεγχος 3: Έχουν συνδεθεί με πληρωμές μέσω maintenance;
             expenses_with_receipts = old_expenses.filter(
@@ -479,7 +467,6 @@ def update_project_schedule(project, offer=None):
         )
 
     except Exception as e:
-        # Log the error but don't fail the project approval
         logger.error(
             f"Failed to update project schedule for project {project.id}: {e}",
             extra={
@@ -489,6 +476,7 @@ def update_project_schedule(project, offer=None):
             },
             exc_info=True
         )
+        raise  # Re-raise to trigger transaction rollback in approve_offer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -507,73 +495,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-
-    def perform_destroy(self, instance):
-        """
-        🔴 ΚΡΙΣΙΜΗ ΛΟΓΙΚΗ ΔΙΑΓΡΑΦΗΣ
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        Όταν διαγράφεται ένα έργο, πρέπει να διαγραφούν και:
-        1. Οι δαπάνες που δημιουργήθηκαν από αυτό (project_expenses)
-        2. Το ScheduledMaintenance που συνδέεται με αυτό
-
-        ΠΡΟΣΟΧΗ: Το Expense.project έχει on_delete=SET_NULL, οπότε
-        πρέπει να διαγράψουμε manual τις δαπάνες.
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-
-        logger.info(
-            f"🗑️ Deleting project {instance.id}: '{instance.title}'",
-            extra={
-                'project_id': str(instance.id),
-                'project_title': instance.title,
-                'building_id': instance.building_id,
-            }
-        )
-
-        # Βρες τις δαπάνες που συνδέονται με αυτό το έργο
-        from financial.models import Expense
-        related_expenses = Expense.objects.filter(project=instance)
-        expenses_count = related_expenses.count()
-
-        if expenses_count > 0:
-            logger.info(
-                f"   Found {expenses_count} expenses related to project {instance.id}",
-                extra={
-                    'project_id': str(instance.id),
-                    'expenses_count': expenses_count,
-                    'expenses_list': list(related_expenses.values('id', 'title', 'amount', 'date')),
-                }
-            )
-
-            # Διαγραφή των δαπανών
-            related_expenses.delete()
-            logger.info(f"   ✓ Deleted {expenses_count} related expenses")
-        else:
-            logger.info(f"   ✓ No related expenses found")
-
-        # Βρες το ScheduledMaintenance που συνδέεται με αυτό το έργο
-        from maintenance.models import ScheduledMaintenance
-        scheduled_maintenance = ScheduledMaintenance.objects.filter(linked_project=instance).first()
-
-        if scheduled_maintenance:
-            logger.info(
-                f"   Found ScheduledMaintenance {scheduled_maintenance.id} linked to project {instance.id}",
-                extra={
-                    'project_id': str(instance.id),
-                    'scheduled_maintenance_id': scheduled_maintenance.id,
-                    'scheduled_maintenance_title': scheduled_maintenance.title,
-                }
-            )
-            scheduled_maintenance.delete()
-            logger.info(f"   ✓ Deleted linked ScheduledMaintenance")
-        else:
-            logger.info(f"   ✓ No linked ScheduledMaintenance found")
-
-        # Τώρα διέγραψε το έργο
-        instance.delete()
-        logger.info(f"✅ Project {instance.id} deleted successfully")
 
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):

@@ -107,11 +107,11 @@ def sync_vote_todo(sender, instance: ProjectVote, created, **kwargs):
             assigned_to=None,
             created_by=instance.project.created_by,
         )
-        
+
         # Δημιουργία ανακοίνωσης για ψηφοφορία (μόνο για την πρώτη ψήφο)
         if instance.project.votes.count() == 1:
             create_vote_announcement(instance.project)
-    
+
     publish_building_event(
         building_id=instance.project.building_id,
         event_type="project.vote",
@@ -129,7 +129,7 @@ def create_project_announcement(project: Project):
     """Δημιουργεί ανακοίνωση για νέο έργο"""
     try:
         from announcements.models import Announcement
-        
+
         # Δημιουργία ανακοίνωσης για το νέο έργο
         announcement = Announcement.objects.create(
             building=project.building,
@@ -155,7 +155,7 @@ def create_project_announcement(project: Project):
             start_date=project.created_at.date(),
             end_date=project.deadline or None,
         )
-        
+
         # Ενημέρωση με WebSocket
         publish_building_event(
             building_id=project.building_id,
@@ -166,7 +166,7 @@ def create_project_announcement(project: Project):
                 "is_urgent": announcement.is_urgent,
             },
         )
-        
+
     except Exception as e:
         # Log the error but don't fail the project creation
         import logging
@@ -178,9 +178,9 @@ def create_offer_announcement(offer: Offer):
     """Δημιουργεί ανακοίνωση για νέα προσφορά"""
     try:
         from announcements.models import Announcement
-        
+
         project = offer.project
-        
+
         # Έλεγχος αν υπάρχει ανακοίνωση συνέλευσης για αυτό το έργο
         # Αν υπάρχει, ενημερώνουμε αυτήν αντί να δημιουργούμε ξεχωριστή
         assembly_announcement = None
@@ -196,14 +196,14 @@ def create_offer_announcement(offer: Offer):
                 )
                 .first()
             )
-        
+
         if assembly_announcement:
             # Ενημέρωση ανακοίνωσης συνέλευσης με πλήθος προσφορών
             offers_count = project.offers.filter(status='submitted').count()
-            
+
             # Προσθήκη/ενημέρωση πληροφορίας για προσφορές στην περιγραφή
             current_description = assembly_announcement.description
-            
+
             # Έλεγχος αν υπάρχει ήδη πληροφορία για προσφορές
             if "προσφορές" in current_description.lower() or "προσφορά" in current_description.lower():
                 # Ενημέρωση υπάρχουσας αναφοράς
@@ -224,11 +224,11 @@ def create_offer_announcement(offer: Offer):
                 # Προσθήκη νέας πληροφορίας για προσφορές
                 offers_info = f"\n\n**Προσφορές:** Έχουν συγκεντρωθεί {offers_count} {'προσφορά' if offers_count == 1 else 'προσφορές'} προς έγκριση."
                 current_description = current_description + offers_info
-            
+
             assembly_announcement.description = current_description
             assembly_announcement.updated_at = timezone.now()
             assembly_announcement.save(update_fields=['description', 'updated_at'])
-            
+
             # Ενημέρωση με WebSocket
             publish_building_event(
                 building_id=project.building_id,
@@ -240,7 +240,7 @@ def create_offer_announcement(offer: Offer):
                 },
             )
             return  # Τελείωσε η ενημέρωση
-        
+
         # Αν δεν υπάρχει ανακοίνωση συνέλευσης, δημιουργούμε ξεχωριστή για προσφορές
         # Έλεγχος αν υπάρχει ήδη ανακοίνωση για προσφορές αυτού του έργου
         existing_announcement = Announcement.objects.filter(
@@ -248,11 +248,11 @@ def create_offer_announcement(offer: Offer):
             title__icontains=f"Νέα Προσφορά για: {offer.project.title}",
             is_active=True
         ).first()
-        
+
         if existing_announcement:
             # Ενημέρωση υπάρχουσας ανακοίνωσης - προσθήκη νέας προσφοράς
             current_description = existing_announcement.description
-            
+
             # Προσθήκη νέας προσφοράς στη λίστα
             new_offer = f"""
 
@@ -268,17 +268,17 @@ def create_offer_announcement(offer: Offer):
 
 Η προσφορά βρίσκεται υπό αξιολόγηση.
 """
-            
+
             # Προσθέτουμε τη νέα προσφορά πριν το "Η προσφορά βρίσκεται υπό αξιολόγηση"
             if "Η προσφορά βρίσκεται υπό αξιολόγηση" in current_description:
                 parts = current_description.split("Η προσφορά βρίσκεται υπό αξιολόγηση")
                 existing_announcement.description = parts[0] + new_offer + "\n" + "Η προσφορά βρίσκεται υπό αξιολόγηση" + parts[1]
             else:
                 existing_announcement.description = current_description + new_offer
-            
+
             existing_announcement.updated_at = timezone.now()
             existing_announcement.save(update_fields=['description', 'updated_at'])
-            
+
             # Ενημέρωση με WebSocket
             publish_building_event(
                 building_id=offer.project.building_id,
@@ -290,7 +290,7 @@ def create_offer_announcement(offer: Offer):
                 },
             )
             return  # Τελείωσε η ενημέρωση
-        
+
         # ΔΗΜΙΟΥΡΓΙΑ νέας ανακοίνωσης (πρώτη προσφορά για αυτό το έργο)
         announcement = Announcement.objects.create(
             building=offer.project.building,
@@ -316,7 +316,7 @@ def create_offer_announcement(offer: Offer):
             start_date=offer.submitted_at.date(),
             end_date=offer.project.tender_deadline,
         )
-        
+
         # Ενημέρωση με WebSocket
         publish_building_event(
             building_id=offer.project.building_id,
@@ -327,7 +327,7 @@ def create_offer_announcement(offer: Offer):
                 "is_urgent": announcement.is_urgent,
             },
         )
-        
+
     except Exception as e:
         # Log the error but don't fail the offer creation
         import logging
@@ -555,24 +555,24 @@ def create_project_vote(project: Project):
     """Δημιουργεί αυτόματα ψηφοφορία για έγκριση έργου"""
     try:
         from votes.models import Vote
-        
+
         # Έλεγχος αν υπάρχει ήδη ψηφοφορία για αυτό το έργο
         existing_vote = Vote.objects.filter(
             Q(project=project) | Q(agenda_item__linked_project=project),
             is_active=True,
         ).first()
-        
+
         if existing_vote:
             # Αν υπάρχει ήδη ενεργή ψηφοφορία, δεν δημιουργούμε νέα
             return
-        
+
         # Προσδιορισμός end_date: προτεραιότητα σε general_assembly_date, μετά deadline, μετά None
         end_date = None
         if project.general_assembly_date:
             end_date = project.general_assembly_date
         elif project.deadline:
             end_date = project.deadline
-        
+
         # Δημιουργία νέας ψηφοφορίας
         vote = Vote.objects.create(
             building=project.building,
@@ -596,7 +596,7 @@ def create_project_vote(project: Project):
             is_urgent=True,
             min_participation=0,  # Default - μπορεί να αλλάξει από τον διαχειριστή
         )
-        
+
         # Ενημέρωση με WebSocket
         publish_building_event(
             building_id=project.building_id,
@@ -608,7 +608,7 @@ def create_project_vote(project: Project):
                 "is_urgent": vote.is_urgent,
             },
         )
-        
+
     except Exception as e:
         # Log the error but don't fail the project creation
         import logging
@@ -659,7 +659,7 @@ def deactivate_assembly_announcement(project: Project):
             assembly_date = project.linked_assembly.scheduled_date
         elif project.general_assembly_date:
             assembly_date = project.general_assembly_date
-        
+
         if not assembly_date:
             return
 
@@ -784,12 +784,12 @@ def cleanup_project_related_objects(sender, instance: Project, **kwargs):
     """
     Καθαρισμός ΟΛΩΝ των συνδεδεμένων objects όταν διαγράφεται ένα Project:
     - Ανακοινώσεις (Notifications)
-    - Ψηφοφορίες (Votes) 
+    - Ψηφοφορίες (Votes)
     - Δαπάνες (Expenses) που δεν έχουν πληρωθεί
     """
     import logging
     logger = logging.getLogger(__name__)
-    
+
     try:
         # 1. Διαγραφή Ανακοινώσεων
         try:
@@ -804,7 +804,7 @@ def cleanup_project_related_objects(sender, instance: Project, **kwargs):
                 logger.info(f"✅ Διαγράφηκαν {notif_count} ανακοινώσεις για project '{instance.title}'")
         except Exception as e:
             logger.error(f"❌ Σφάλμα διαγραφής ανακοινώσεων: {e}")
-        
+
         # 2. Διαγραφή Ψηφοφοριών
         try:
             # Προσπάθεια import voting module (αν υπάρχει)
@@ -822,12 +822,12 @@ def cleanup_project_related_objects(sender, instance: Project, **kwargs):
                 logger.info("ℹ️ Voting module δεν βρέθηκε - παράλειψη")
         except Exception as e:
             logger.error(f"❌ Σφάλμα διαγραφής ψηφοφοριών: {e}")
-        
+
         # 3. Διαγραφή Δαπανών (ΜΟΝΟ αν δεν έχουν πληρωθεί)
         try:
             from financial.models import Expense
             project_expenses = Expense.objects.filter(project=instance)
-            
+
             # Έλεγχος για πληρωμένες δαπάνες
             expenses_with_payments = []
             for exp in project_expenses:
@@ -837,7 +837,7 @@ def cleanup_project_related_objects(sender, instance: Project, **kwargs):
                         expenses_with_payments.append(exp)
                 except:
                     pass
-            
+
             if expenses_with_payments:
                 logger.warning(
                     f"⚠️ ΠΡΟΣΤΑΣΙΑ: {len(expenses_with_payments)} δαπάνες με πληρωμές δεν διαγράφονται"
@@ -849,8 +849,19 @@ def cleanup_project_related_objects(sender, instance: Project, **kwargs):
                     logger.info(f"✅ Διαγράφηκαν {expenses_count} δαπάνες για project '{instance.title}'")
         except Exception as e:
             logger.error(f"❌ Σφάλμα διαγραφής δαπανών: {e}")
-        
+
+        # 4. Διαγραφή ScheduledMaintenance
+        try:
+            from maintenance.models import ScheduledMaintenance
+            maintenance_task = ScheduledMaintenance.objects.filter(linked_project=instance).first()
+            if maintenance_task:
+                maintenance_task.delete()
+                logger.info(f"✅ Διαγράφηκε ScheduledMaintenance για project '{instance.title}'")
+        except Exception as e:
+            # Μπορεί να μην υπάρχει το maintenance app ή το μοντέλο
+            logger.warning(f"⚠️ Αδυναμία διαγραφής ScheduledMaintenance (ίσως δεν υπάρχει): {e}")
+
         logger.info(f"✅ Cleanup ολοκληρώθηκε για project '{instance.title}' (ID: {instance.id})")
-        
+
     except Exception as e:
         logger.error(f"❌ Σφάλμα γενικού cleanup για project {instance.id}: {e}")
