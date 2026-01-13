@@ -693,9 +693,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 )
 
             with transaction.atomic():
-                # ΒΗΜΑ 1: Διαγραφή υπαρχουσών δαπανών
-                deleted_count = current_expenses.count()
-                current_expenses.delete()
+                # ΒΗΜΑ 1: Αφήνουμε την update_project_schedule να διαχειριστεί τη διαγραφή
+                # (περιέχει ελέγχους για πληρωμένες δαπάνες που δεν πρέπει να διαγραφούν)
+                deleted_count = 0
 
                 # ΒΗΜΑ 2: Εύρεση εγκεκριμένης προσφοράς
                 approved_offer = project.offers.filter(status='accepted').first()

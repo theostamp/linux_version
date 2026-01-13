@@ -831,6 +831,11 @@ def cleanup_project_related_objects(sender, instance: Project, **kwargs):
             # Έλεγχος για πληρωμένες δαπάνες
             expenses_with_payments = []
             for exp in project_expenses:
+                # Έλεγχος 1: Έχει πληρωθεί ποσό;
+                if exp.paid_amount and exp.paid_amount > 0:
+                    expenses_with_payments.append(exp)
+                    continue
+
                 # Έλεγχος αν υπάρχουν receipts από maintenance
                 try:
                     if exp.linked_service_receipts.exists():
