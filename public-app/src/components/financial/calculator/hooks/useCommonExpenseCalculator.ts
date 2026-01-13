@@ -189,6 +189,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     );
   }, [effectiveShares]);
 
+  const reserveFromAdvanced = useMemo(() => {
+    const advanced = effectiveAdvancedShares as any;
+    return toNumber(advanced?.reserve_contribution ?? advanced?.reserve_fund_monthly_total ?? 0);
+  }, [effectiveAdvancedShares]);
+
   const expenseSplitRatios = useMemo(() => {
     const totals = (effectiveAdvancedShares as any)?.expense_totals || {};
     const ratio = (residentValue: any, totalValue: any) => {
@@ -303,11 +308,6 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     const apiDuration = typeof monthlyExpenses?.reserve_fund_duration_months === 'number'
       ? toNumber(monthlyExpenses.reserve_fund_duration_months)
       : null;
-    const reserveFromAdvanced = toNumber(
-      (advancedShares as any)?.reserve_contribution
-        ?? (advancedShares as any)?.reserve_fund_monthly_total
-        ?? 0
-    );
 
     const goal = apiGoal !== null
       ? apiGoal
@@ -400,7 +400,13 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     }
 
     return baseInfo;
-  }, [effectiveAdvancedShares, reserveFromShares, selectedMonth, monthlyExpenses]);
+  }, [effectiveAdvancedShares, reserveFromAdvanced, reserveFromShares, selectedMonth, monthlyExpenses]);
+
+  const reserveSummaryAmount = useMemo(() => {
+    if (reserveFromShares > 0) return reserveFromShares;
+    if (reserveFromAdvanced > 0) return reserveFromAdvanced;
+    return reserveFundInfo.monthlyAmount || 0;
+  }, [reserveFromShares, reserveFromAdvanced, reserveFundInfo.monthlyAmount]);
 
   const previousBalanceTotals = useMemo(() => {
     const signed = aptWithFinancial.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);
@@ -869,7 +875,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   return {
     isSaving, isSending, showHeatingModal, setShowHeatingModal, heatingBreakdown, setHeatingBreakdown,
     validationResult, setValidationResult, aptWithFinancial, occupantsByApartmentId, perApartmentAmounts,
-    expenseBreakdown, managementFeeInfo, reserveFundInfo, expenseSplitRatios, totalExpenses, handleSave, handlePrint,
+    expenseBreakdown, managementFeeInfo, reserveFundInfo, reserveSummaryAmount, expenseSplitRatios, totalExpenses, handleSave, handlePrint,
     handleExport, handleSendToAll, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses,
     // Expose month-specific sources so the modal can render consistent tables for the selected month
     effectiveShares,

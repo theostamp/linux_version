@@ -117,6 +117,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     expenseBreakdown,
     managementFeeInfo,
     reserveFundInfo,
+    reserveSummaryAmount,
     expenseSplitRatios,
     totalExpenses,
     handleSave,
@@ -367,6 +368,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                 expenseBreakdown={expenseBreakdown}
                 managementFeeInfo={managementFeeInfo}
                 reserveFundInfo={reserveFundInfo}
+                reserveSummaryAmount={reserveSummaryAmount}
                 expenseSplitRatios={expenseSplitRatios}
                 totalExpenses={totalExpenses}
                 perApartmentAmounts={perApartmentAmounts}

@@ -71,6 +71,21 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
     buildingId
   } = params;
 
+  const reserveTotalFromShares = Object.values(perApartmentAmounts || {}).reduce(
+    (sum, amount) => sum + toNumber((amount as any)?.reserve || 0),
+    0
+  );
+  const reserveTotalForDisplay = reserveTotalFromShares > 0
+    ? reserveTotalFromShares
+    : (reserveFundInfo.monthlyAmount || 0);
+  const expenseItemsTotal = monthlyExpenses?.expense_breakdown
+    ? monthlyExpenses.expense_breakdown.reduce((sum: number, exp: any) => sum + toNumber(exp.amount || 0), 0)
+    : 0;
+  const totalForDisplay = expenseItemsTotal
+    + (managementFeeInfo.totalFee || 0)
+    + reserveTotalForDisplay
+    + (getTotalPreviousBalance() || 0);
+
   if (typeof window === 'undefined') {
     toast.error('Η εξαγωγή PDF δεν είναι διαθέσιμη στον server');
     return;
@@ -450,7 +465,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                     <span style="font-weight: bold; font-size: 11px; color: #dc2626; margin-right: 4px;">Δ</span>
                     <span class="label">Αποθεματικό Ταμείο</span>
                   </div>
-                  <span class="amount">${formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
+                  <span class="amount">${formatAmount(reserveTotalForDisplay)}€</span>
                 </div>
 
                 <div class="expense-item">
@@ -466,7 +481,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                   <div>
                     <span class="label">ΣΥΝΟΛΟ</span>
                   </div>
-                  <span class="amount">${formatAmount(getFinalTotalExpenses() || 0)}€</span>
+                  <span class="amount">${formatAmount(totalForDisplay)}€</span>
                 </div>
               </div>
 

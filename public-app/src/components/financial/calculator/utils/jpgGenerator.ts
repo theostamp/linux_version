@@ -182,6 +182,7 @@ export const exportToJPG = async (
       },
       { previous: 0, common: 0, elevator: 0, heating: 0, owner: 0, reserve: 0, total: 0 }
     );
+    const reserveTotalForDisplay = exportTotals.reserve > 0 ? exportTotals.reserve : (reserveFundInfo.monthlyAmount || 0);
 
     const htmlContent = `
         <div style="
@@ -394,7 +395,7 @@ export const exportToJPG = async (
               ">
                 <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
                 <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">Αποθεματικό Ταμείο</span>
-                <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
+                <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(reserveTotalForDisplay)}€</span>
               </div>
 
               <div style="
@@ -430,7 +431,7 @@ export const exportToJPG = async (
                   // Κόστος διαχείρισης
                   (managementFeeInfo.totalFee || 0) +
                   // Αποθεματικό
-                  (reserveFundInfo.monthlyAmount || 0) +
+                  (reserveTotalForDisplay || 0) +
                   // Παλαιότερες οφειλές
                   (getTotalPreviousBalance() || 0)
                 )}€</span>

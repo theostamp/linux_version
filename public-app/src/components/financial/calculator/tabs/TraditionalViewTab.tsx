@@ -27,6 +27,7 @@ interface TraditionalViewTabProps {
   expenseBreakdown: ExpenseBreakdown;
   managementFeeInfo: ManagementFeeInfo;
   reserveFundInfo: ReserveFundInfo;
+  reserveSummaryAmount?: number;
   expenseSplitRatios: ExpenseSplitRatios;
   totalExpenses: number;
   perApartmentAmounts: PerApartmentAmounts;
@@ -54,6 +55,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     expenseBreakdown,
     managementFeeInfo,
     reserveFundInfo,
+    reserveSummaryAmount,
     expenseSplitRatios,
     totalExpenses,
     perApartmentAmounts,
@@ -105,6 +107,13 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     return items;
   }, [monthlyExpenses, expectedExpenseTotal]);
 
+  const reserveForDisplay = React.useMemo(() => {
+    if (typeof reserveSummaryAmount === 'number' && reserveSummaryAmount > 0) {
+      return reserveSummaryAmount;
+    }
+    return reserveFundInfo.monthlyAmount || 0;
+  }, [reserveSummaryAmount, reserveFundInfo.monthlyAmount]);
+
   const displayedExpensesTotal = React.useMemo(() => {
     const fallbackBreakdownTotal = monthlyExpenses?.expense_breakdown
       ? monthlyExpenses.expense_breakdown.reduce((sum, expense) => sum + (expense.amount || 0), 0)
@@ -120,13 +129,13 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     total += managementFeeInfo.totalFee || 0;
 
     // Πρόσθεσε αποθεματικό
-    total += reserveFundInfo.monthlyAmount || 0;
+    total += reserveForDisplay;
 
     // Πρόσθεσε παλαιότερες οφειλές
     total += getTotalPreviousBalance() || 0;
 
     return total;
-  }, [expectedExpenseTotal, monthlyExpenses, managementFeeInfo.totalFee, reserveFundInfo.monthlyAmount, getTotalPreviousBalance]);
+  }, [expectedExpenseTotal, monthlyExpenses, managementFeeInfo.totalFee, reserveForDisplay, getTotalPreviousBalance]);
 
   const showOwnerExpenses = (expenseBreakdown.other || 0) + (expenseBreakdown.coownership || 0) > 0;
 
@@ -170,7 +179,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
               <GroupedExpenseBreakdown
                 groupedExpenses={monthlyExpenses.expense_breakdown_grouped}
                 managementFee={managementFeeInfo.totalFee || 0}
-                reserveFund={reserveFundInfo.monthlyAmount || 0}
+                reserveFund={reserveForDisplay}
                 previousBalance={getTotalPreviousBalance() || 0}
               />
             ) : (
@@ -210,7 +219,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                         <span className="text-xs font-bold text-red-600 flex-shrink-0">Δ</span>
                         <p className="text-xs font-semibold text-gray-700">Αποθεματικό Ταμείο</p>
                     </div>
-                    <span className="text-xs font-bold text-blue-600">{formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
+                    <span className="text-xs font-bold text-blue-600">{formatAmount(reserveForDisplay)}€</span>
                 </div>
 
                 <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
