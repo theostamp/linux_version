@@ -664,8 +664,6 @@ class FinancialDashboardService:
         management_fees_snapshot = total_management_cost
 
         # Δαπάνες αυτού του μήνα
-        from datetime import date
-
         if month:
             # Parse YYYY-MM
             try:
@@ -977,7 +975,6 @@ class FinancialDashboardService:
             # For snapshot view, current obligations should include management costs and reserve fund
             # ΔΙΟΡΘΩΣΗ: Μη διπλό μέτρημα - τα management fees περιλαμβάνονται ήδη στο total_expenses_this_month
             # Αφαιρούμε τα management fees από το total_management_cost για να αποφύγουμε διπλό μέτρημα
-            from datetime import date
             if month:
                 year, mon = map(int, month.split('-'))
                 month_start = date(year, mon, 1)
