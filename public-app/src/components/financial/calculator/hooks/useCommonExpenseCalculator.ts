@@ -494,6 +494,9 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
           toNumber(breakdown.equal_share_expenses || 0) +
           toNumber(breakdown.individual_expenses || 0)
       );
+      const fallbackCommonAdjusted = ownerTotal > 0 && residentTotal === 0
+        ? 0
+        : fallbackCommon;
 
       const residentElevator = elevatorAmount * expenseSplitRatios.elevator;
       const residentHeating = heatingAmount * expenseSplitRatios.heating;
@@ -502,7 +505,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
       const commonAmountWithoutReserve = residentTotal > 0
         ? Math.max(0, residentTotal - displayElevator - displayHeating)
-        : fallbackCommon;
+        : fallbackCommonAdjusted;
 
       const commonMills = toNumber(apt.participation_mills ?? share?.participation_mills ?? 0);
       const reserveFromShare = toNumber(breakdown.reserve_fund_contribution ?? 0);

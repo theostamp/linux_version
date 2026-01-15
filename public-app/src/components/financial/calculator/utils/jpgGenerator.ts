@@ -140,13 +140,16 @@ export const exportToJPG = async (
           toNumber(breakdown.equal_share_expenses ?? aptAmount.other ?? 0) +
           toNumber(breakdown.individual_expenses ?? aptAmount.coowner ?? 0)
       );
+      const fallbackCommonAdjusted = ownerTotal > 0 && residentTotal === 0
+        ? 0
+        : fallbackCommon;
       const residentElevator = elevatorAmount * resolvedSplitRatios.elevator;
       const residentHeating = heatingAmount * resolvedSplitRatios.heating;
       const displayElevator = residentTotal > 0 ? residentElevator : elevatorAmount;
       const displayHeating = residentTotal > 0 ? residentHeating : heatingAmount;
       const commonAmountWithoutReserve = residentTotal > 0
         ? Math.max(0, residentTotal - displayElevator - displayHeating)
-        : fallbackCommon;
+        : fallbackCommonAdjusted;
       const reserveFromShare = toNumber(breakdown.reserve_fund_contribution ?? 0);
       const apartmentReserveFund = reserveFromShare > 0
         ? reserveFromShare

@@ -49,13 +49,16 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
         toNumber(breakdown.equal_share_expenses || 0) +
         toNumber(breakdown.individual_expenses || 0)
     );
+    const fallbackCommonAdjusted = ownerTotal > 0 && residentTotal === 0
+      ? 0
+      : fallbackCommon;
     const residentElevator = elevatorAmount * ratios.elevator;
     const residentHeating = heatingAmount * ratios.heating;
     const displayElevator = residentTotal > 0 ? residentElevator : elevatorAmount;
     const displayHeating = residentTotal > 0 ? residentHeating : heatingAmount;
     const commonAmountWithoutReserve = residentTotal > 0
       ? Math.max(0, residentTotal - displayElevator - displayHeating)
-      : fallbackCommon;
+      : fallbackCommonAdjusted;
     const commonMills = toNumber(apartmentData?.participation_mills ?? share.participation_mills ?? 0);
     const reserveFromShare = toNumber(breakdown.reserve_fund_contribution ?? 0);
     const apartmentReserveFund = reserveFromShare > 0
