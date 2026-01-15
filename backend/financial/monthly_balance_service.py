@@ -200,6 +200,17 @@ class MonthlyBalanceService:
         
         Αυτό είναι το κλειδί της μεταφοράς υπολοίπων!
         """
+        # Normalize financial_system_start_date to the earliest expense month if needed.
+        oldest_expense = Expense.objects.filter(
+            building=self.building
+        ).order_by('date').first()
+        if oldest_expense and oldest_expense.date:
+            earliest_month = oldest_expense.date.replace(day=1)
+            if (self.building.financial_system_start_date is None or
+                self.building.financial_system_start_date > earliest_month):
+                self.building.financial_system_start_date = earliest_month
+                self.building.save(update_fields=['financial_system_start_date'])
+
         # Υπολογισμός προηγούμενου μήνα
         prev_month = month - 1
         prev_year = year
@@ -217,7 +228,28 @@ class MonthlyBalanceService:
 
         if prev_balance:
             # Χρησιμοποιούμε το carry_forward από προηγούμενο μήνα
-            return prev_balance.carry_forward
+            previous_obligations = prev_balance.carry_forward or Decimal('0.00')
+            if previous_obligations == 0:
+                month_start = date(year, month, 1)
+                has_prior_expenses = Expense.objects.filter(
+                    building=self.building,
+                    date__lt=month_start
+                ).exists()
+                if has_prior_expenses:
+                    apartments = Apartment.objects.filter(building=self.building)
+                    total_balance = Decimal('0.00')
+                    for apartment in apartments:
+                        total_balance += BalanceCalculationService.calculate_historical_balance(
+                            apartment=apartment,
+                            end_date=month_start,
+                            include_management_fees=True,
+                            include_reserve_fund=True
+                        )
+                    previous_obligations = total_balance if total_balance > 0 else Decimal('0.00')
+                    if previous_obligations != prev_balance.carry_forward:
+                        prev_balance.carry_forward = previous_obligations
+                        prev_balance.save(update_fields=['carry_forward'])
+            return previous_obligations
 
         # Αν δεν υπάρχει MonthlyBalance, χτίζουμε την αλυσίδα προς τα πίσω
         # ώστε το carry_forward να προκύψει από την ίδια (συνεπή) λογική.

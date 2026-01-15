@@ -293,9 +293,12 @@ def create_transactions_for_expense(sender, instance, created, **kwargs):
         try:
             with transaction.atomic():
                 building = instance.building
-                if building and not building.financial_system_start_date and instance.date:
-                    building.financial_system_start_date = instance.date.replace(day=1)
-                    building.save(update_fields=['financial_system_start_date'])
+                if building and instance.date:
+                    expense_month_start = instance.date.replace(day=1)
+                    if (not building.financial_system_start_date or
+                        building.financial_system_start_date > expense_month_start):
+                        building.financial_system_start_date = expense_month_start
+                        building.save(update_fields=['financial_system_start_date'])
                 # Καλούμε τη μέθοδο που δημιουργεί συναλλαγές για όλα τα διαμερίσματα
                 instance._create_apartment_transactions()
                 print(f"✅ Expense Signal: Δημιουργήθηκαν συναλλαγές για δαπάνη '{instance.title}'")

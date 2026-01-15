@@ -87,13 +87,15 @@ class BalanceCalculationService:
         building = apartment.building
         system_start_date = building.financial_system_start_date
 
-        if system_start_date is None:
-            # If missing, infer from the earliest expense to avoid zeroing valid history.
-            oldest_expense = Expense.objects.filter(
-                building_id=apartment.building_id
-            ).order_by('date').first()
-            if oldest_expense and oldest_expense.date:
-                system_start_date = oldest_expense.date.replace(day=1)
+        # Infer/repair start date from earliest expense when missing or too recent.
+        oldest_expense = Expense.objects.filter(
+            building_id=apartment.building_id
+        ).order_by('date').first()
+        earliest_month = oldest_expense.date.replace(day=1) if oldest_expense and oldest_expense.date else None
+
+        if system_start_date is None or (earliest_month and system_start_date > earliest_month):
+            if earliest_month:
+                system_start_date = earliest_month
                 building.financial_system_start_date = system_start_date
                 building.save(update_fields=['financial_system_start_date'])
                 logger.info(
