@@ -679,6 +679,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         expense_ids: expenseIds
       };
 
+      const issueAptWithFinancial = aptWithFinancial.map((apt) => {
+        const share = issueShares[apt.id] || issueShares[(apt as any).apartment_id];
+        const sharePrevious = (share as any)?.previous_balance;
+        if (sharePrevious === undefined || sharePrevious === null) return apt;
+        return { ...apt, previous_balance: toNumber(sharePrevious) };
+      });
+
       let sheetFile: File | null = null;
       try {
         const exportParams = {
@@ -701,7 +708,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           managementFeeInfo: issueManagementFeeInfo,
           groupedExpenses: {},
           perApartmentAmounts: issuePerApartmentAmounts,
-          aptWithFinancial,
+          aptWithFinancial: issueAptWithFinancial,
           totalExpenses: issueTotalExpensesForSheet,
           getFinalTotalExpenses: getIssueFinalTotalExpenses,
           getTotalPreviousBalance: getIssueTotalPreviousBalance,
