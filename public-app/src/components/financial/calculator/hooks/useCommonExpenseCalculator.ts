@@ -418,11 +418,38 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     return reserveFundInfo.monthlyAmount || 0;
   }, [reserveFromShares, reserveFromAdvanced, reserveFundInfo.monthlyAmount]);
 
+  const previousBalanceAdjustment = useMemo(() => {
+    const previousFromApi = typeof monthlyExpenses?.previous_obligations === 'number'
+      ? toNumber(monthlyExpenses.previous_obligations)
+      : typeof monthlyExpenses?.previous_balances === 'number'
+        ? toNumber(monthlyExpenses.previous_balances)
+        : null;
+    if (previousFromApi === null) return null;
+    if (managementFeeInfo.feePerApartment <= 0) return null;
+
+    const signedTotal = aptWithFinancial.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);
+    const diff = signedTotal - previousFromApi;
+
+    // If the diff is basically one management-fee cycle, subtract it from carryover display.
+    if (Math.abs(diff - managementFeeInfo.totalFee) <= 0.5) {
+      return managementFeeInfo.feePerApartment;
+    }
+    return null;
+  }, [aptWithFinancial, managementFeeInfo.feePerApartment, managementFeeInfo.totalFee, monthlyExpenses]);
+
+  const aptWithFinancialAdjusted = useMemo(() => {
+    if (!previousBalanceAdjustment) return aptWithFinancial;
+    return aptWithFinancial.map((apt: any) => ({
+      ...apt,
+      previous_balance: toNumber(apt.previous_balance ?? 0) - previousBalanceAdjustment
+    }));
+  }, [aptWithFinancial, previousBalanceAdjustment]);
+
   const previousBalanceTotals = useMemo(() => {
-    const signed = aptWithFinancial.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);
-    const abs = aptWithFinancial.reduce((sum: number, apt: any) => sum + Math.abs(toNumber(apt.previous_balance ?? 0)), 0);
+    const signed = aptWithFinancialAdjusted.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);
+    const abs = aptWithFinancialAdjusted.reduce((sum: number, apt: any) => sum + Math.abs(toNumber(apt.previous_balance ?? 0)), 0);
     return { signed, abs };
-  }, [aptWithFinancial]);
+  }, [aptWithFinancialAdjusted]);
 
   const resolvedTotals = useMemo(() => {
     const expenseBreakdownTotal = Object.values(expenseBreakdown).reduce((s, v) => s + v, 0);
@@ -479,7 +506,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       return totals;
     }
 
-    aptWithFinancial.forEach((apt: any) => {
+    aptWithFinancialAdjusted.forEach((apt: any) => {
       const share = (effectiveShares as Record<string, Share> | undefined)?.[apt.id]
         || (effectiveShares as Record<string, Share> | undefined)?.[(apt as any).apartment_id];
       const breakdown = share?.breakdown || {};
@@ -528,7 +555,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     });
 
     return totals;
-  }, [aptWithFinancial, effectiveShares, expenseSplitRatios, reserveFundInfo.monthlyAmount]);
+  }, [aptWithFinancialAdjusted, effectiveShares, expenseSplitRatios, reserveFundInfo.monthlyAmount]);
 
   const totalExpenses = useMemo<number>(() => resolvedTotals.monthlySubtotal, [resolvedTotals]);
 
@@ -603,7 +630,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     managementFeeInfo,
     groupedExpenses: getGroupedExpenses(),
     perApartmentAmounts,
-    aptWithFinancial,
+    aptWithFinancial: aptWithFinancialAdjusted,
     totalExpenses,
     getFinalTotalExpenses,
     getTotalPreviousBalance,
@@ -632,7 +659,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     managementFeeInfo,
     getGroupedExpenses,
     perApartmentAmounts,
-    aptWithFinancial,
+    aptWithFinancialAdjusted,
     totalExpenses,
     getFinalTotalExpenses,
     getTotalPreviousBalance,
@@ -860,7 +887,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
         managementFeeInfo,
         groupedExpenses: getGroupedExpenses(),
         perApartmentAmounts,
-        aptWithFinancial,
+        aptWithFinancial: aptWithFinancialAdjusted,
         totalExpenses,
         getFinalTotalExpenses,
         getTotalPreviousBalance,
@@ -883,7 +910,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     reserveFundInfo,
     managementFeeInfo,
     perApartmentAmounts,
-    aptWithFinancial,
+    aptWithFinancialAdjusted,
     totalExpenses,
     getFinalTotalExpenses,
     getTotalPreviousBalance,
@@ -893,7 +920,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   return {
     isSaving, isSending, showHeatingModal, setShowHeatingModal, heatingBreakdown, setHeatingBreakdown,
-    validationResult, setValidationResult, aptWithFinancial, occupantsByApartmentId, perApartmentAmounts,
+    validationResult, setValidationResult, aptWithFinancial: aptWithFinancialAdjusted, occupantsByApartmentId, perApartmentAmounts,
     expenseBreakdown, managementFeeInfo, reserveFundInfo, reserveSummaryAmount, expenseSplitRatios, totalExpenses, handleSave, handlePrint,
     handleExport, handleSendToAll, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses,
     // Expose month-specific sources so the modal can render consistent tables for the selected month
