@@ -182,6 +182,13 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     return totals;
   }, [effectiveShares]);
 
+  const managementFeesFromShares = useMemo(() => {
+    return Object.values(effectiveShares as { [key: string]: Share }).reduce(
+      (sum, share) => sum + toNumber((share.breakdown as any)?.management_fee ?? 0),
+      0
+    );
+  }, [effectiveShares]);
+
   const reserveFromShares = useMemo(() => {
     return Object.values(effectiveShares as { [key: string]: Share }).reduce(
       (sum, share) => sum + toNumber(share?.breakdown?.reserve_fund_contribution ?? 0),
@@ -217,7 +224,10 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     const shareTotalsSum = Object.values(shareExpenseTotals).reduce((sum, value) => sum + value, 0);
 
     if (shareTotalsSum > 0) {
-      return shareExpenseTotals;
+      return {
+        ...shareExpenseTotals,
+        common: Math.max(0, shareExpenseTotals.common - managementFeesFromShares),
+      };
     }
 
     if (effectiveAdvancedShares?.expense_totals) {
@@ -245,7 +255,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     }
 
     return breakdown;
-  }, [monthlyExpenses, effectiveAdvancedShares, shareExpenseTotals, state.totalExpenses, selectedMonth]);
+  }, [monthlyExpenses, effectiveAdvancedShares, shareExpenseTotals, managementFeesFromShares, state.totalExpenses, selectedMonth]);
 
   const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
     let finalFee = 0;
@@ -426,7 +436,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
         ? expensesFromBreakdown
         : expenseBreakdownTotal;
 
-    const managementTotal = typeof monthlyExpenses?.total_management_cost === 'number'
+    const managementTotal = typeof monthlyExpenses?.total_management_cost === 'number' && monthlyExpenses.total_management_cost > 0
       ? toNumber(monthlyExpenses.total_management_cost)
       : managementFeeInfo.totalFee;
 
@@ -440,7 +450,12 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       ? toNumber(monthlyExpenses.current_month_expenses)
       : null;
     const monthlySubtotalFromParts = totalExpensesMonth + managementTotal + reserveFundInfo.monthlyAmount;
-    const monthlySubtotal = monthlySubtotalFromSummary !== null ? monthlySubtotalFromSummary : monthlySubtotalFromParts;
+    const subtotalDiff = monthlySubtotalFromSummary !== null
+      ? Math.abs(monthlySubtotalFromSummary - monthlySubtotalFromParts)
+      : null;
+    const monthlySubtotal = subtotalDiff !== null && subtotalDiff <= 0.5
+      ? monthlySubtotalFromSummary
+      : monthlySubtotalFromParts;
 
     const previousTotal = previousFromApi !== null ? previousFromApi : previousBalanceTotals.signed;
     const grandTotal = monthlySubtotal + previousTotal;
@@ -497,9 +512,10 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
           ? Math.max(0, toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000))
           : 0;
 
+      const fallbackOwnerExpenses = Math.max(0, toNumber((apt as any).owner_expenses || 0));
       const ownerExpensesOnlyProjects = ownerTotal > 0
-        ? ownerTotal
-        : Math.max(0, toNumber((apt as any).owner_expenses || 0));
+        ? Math.max(0, ownerTotal)
+        : Math.max(0, fallbackOwnerExpenses - apartmentReserveFund);
 
       const previousSigned = toNumber(apt.previous_balance ?? 0);
       const previousAbs = Math.abs(previousSigned);

@@ -12,7 +12,7 @@ Purpose: Ensure all monthly charges are created consistently and automatically
 
 import logging
 from decimal import Decimal
-from datetime import date, timedelta
+from datetime import date
 from typing import List, Dict, Any, Optional
 from dateutil.relativedelta import relativedelta
 
@@ -22,7 +22,7 @@ from django.utils import timezone
 from buildings.models import Building
 from apartments.models import Apartment
 from .models import Expense, Transaction
-from .utils.date_helpers import is_date_in_reserve_fund_timeline, get_month_first_day
+from .utils.date_helpers import get_month_first_day
 
 logger = logging.getLogger(__name__)
 
@@ -151,10 +151,27 @@ class MonthlyChargeService:
         
         Reserve fund ξεκινάει από reserve_fund_start_date και έχει duration
         """
-        # Χρήση της κεντρικής date helper function
-        if not is_date_in_reserve_fund_timeline(target_month, building):
+        has_goal_plan = bool(building.reserve_fund_goal and building.reserve_fund_duration_months)
+        has_fixed_contribution = bool(building.reserve_contribution_per_apartment and building.reserve_contribution_per_apartment > 0)
+
+        if not has_goal_plan and not has_fixed_contribution:
             return False
-        
+
+        if not building.reserve_fund_start_date:
+            return False
+
+        start_date = building.reserve_fund_start_date
+        end_date = None
+        if building.reserve_fund_target_date:
+            end_date = building.reserve_fund_target_date
+        elif building.reserve_fund_duration_months and building.reserve_fund_duration_months > 0:
+            end_date = start_date + relativedelta(months=building.reserve_fund_duration_months)
+
+        if target_month < start_date:
+            return False
+        if end_date and target_month > end_date:
+            return False
+
         # ✅ Έλεγχος αν έχει ήδη δημιουργηθεί Expense για αυτόν τον μήνα
         existing_expense = Expense.objects.filter(
             building=building,
@@ -227,15 +244,22 @@ class MonthlyChargeService:
         ✅ ΑΥΤΟΜΑΤΗ ΜΕΤΑΦΟΡΑ: Η Expense μεταφέρεται αυτόματα με τον υπάρχοντα μηχανισμό
         ✅ ΟΡΑΤΟΤΗΤΑ: Εμφανίζεται στη Λίστα Δαπανών
         """
-        if not building.reserve_fund_goal or not building.reserve_fund_duration_months:
+        monthly_target = None
+        if building.reserve_fund_goal and building.reserve_fund_duration_months:
+            # Υπολογισμός μηνιαίου στόχου
+            monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
+        else:
+            contribution_per_apartment = building.reserve_contribution_per_apartment or Decimal('0.00')
+            if contribution_per_apartment > 0:
+                apartments_count = building.apartments.count()
+                monthly_target = contribution_per_apartment * apartments_count
+
+        if monthly_target is None:
             return {
                 'created': False,
                 'total_amount': Decimal('0.00'),
                 'transactions_created': 0
             }
-        
-        # Υπολογισμός μηνιαίου στόχου
-        monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
         
         apartments = building.apartments.all()
         total_mills = sum(apt.participation_mills or 0 for apt in apartments)
@@ -358,4 +382,3 @@ class MonthlyChargeService:
         logger.info(f"📊 Monthly charges created for {len(results)} buildings")
         
         return results
-

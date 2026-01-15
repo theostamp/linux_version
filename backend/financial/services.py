@@ -11,6 +11,7 @@ from .models import Expense, Transaction, Payment, CommonExpensePeriod, Apartmen
 from apartments.models import Apartment
 from buildings.models import Building
 from .monthly_balance_service import MonthlyBalanceService
+from .utils.date_helpers import get_month_date_range, parse_month_string
 
 import os
 import uuid
@@ -443,6 +444,139 @@ class FinancialDashboardService:
         """Επιστρέφει σύνοψη οικονομικών στοιχείων.
         Αν δοθεί month (YYYY-MM), υπολογίζει για τον συγκεκριμένο μήνα."""
         apartments = Apartment.objects.filter(building_id=self.building_id)
+        apartments_count = apartments.count()
+
+        if month:
+            try:
+                target_year, target_month_number = parse_month_string(month)
+                month_label = f"{target_year:04d}-{target_month_number:02d}"
+            except ValueError:
+                today = timezone.now().date()
+                target_year, target_month_number = today.year, today.month
+                month_label = f"{target_year:04d}-{target_month_number:02d}"
+
+            month = month_label
+            self.current_month = month_label
+            month_start, month_end = get_month_date_range(month_label)
+
+            monthly_balance_snapshot: Optional[MonthlyBalance] = None
+            scheduled_maintenance_amount = Decimal('0.00')
+            carry_forward_amount = Decimal('0.00')
+
+            try:
+                monthly_balance_snapshot = self._monthly_balance_service.create_or_update_monthly_balance(
+                    target_year,
+                    target_month_number,
+                    recalculate=True
+                )
+                scheduled_maintenance_amount = monthly_balance_snapshot.scheduled_maintenance_amount
+                carry_forward_amount = monthly_balance_snapshot.carry_forward
+            except Exception as exc:
+                self.logger.warning(
+                    "MonthlyBalanceService failed for %s-%s",
+                    target_year,
+                    f"{target_month_number:02d}",
+                    exc_info=exc
+                )
+
+            if monthly_balance_snapshot:
+                previous_obligations = monthly_balance_snapshot.previous_obligations
+                total_expenses_this_month = monthly_balance_snapshot.total_expenses
+                total_payments_this_month = monthly_balance_snapshot.total_payments
+                reserve_fund_contribution = monthly_balance_snapshot.reserve_fund_amount
+                current_obligations = monthly_balance_snapshot.total_obligations
+                management_fees_snapshot = monthly_balance_snapshot.management_fees
+                scheduled_maintenance_amount = monthly_balance_snapshot.scheduled_maintenance_amount
+                carry_forward_amount = monthly_balance_snapshot.carry_forward
+            else:
+                previous_obligations = Decimal('0.00')
+                total_expenses_this_month = Decimal('0.00')
+                total_payments_this_month = Decimal('0.00')
+                reserve_fund_contribution = Decimal('0.00')
+                current_obligations = Decimal('0.00')
+                management_fees_snapshot = Decimal('0.00')
+
+            current_month_expenses = current_obligations - previous_obligations
+
+            today = date.today()
+            total_payments_all_time = Payment.objects.filter(
+                apartment__building_id=self.building_id
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            total_expenses_all_time = Expense.objects.filter(
+                building_id=self.building_id,
+                date__lte=today
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            current_reserve = total_payments_all_time - total_expenses_all_time
+
+            total_balance = current_reserve - current_obligations
+
+            reserve_fund_monthly_target = self._get_reserve_fund_monthly_target(apartments_count)
+            if self.building.reserve_fund_start_date:
+                if month_start < self.building.reserve_fund_start_date:
+                    reserve_fund_monthly_target = Decimal('0.00')
+                elif (self.building.reserve_fund_target_date and
+                      month_start > self.building.reserve_fund_target_date):
+                    reserve_fund_monthly_target = Decimal('0.00')
+
+            has_monthly_activity = self._has_monthly_activity(month_label)
+
+            recent_transactions_query = Transaction.objects.filter(
+                building_id=self.building_id,
+                date__gte=timezone.make_aware(datetime.combine(month_start, datetime.min.time())),
+                date__lt=timezone.make_aware(datetime.combine(month_end, datetime.min.time()))
+            )
+            recent_transactions = recent_transactions_query.select_related('building', 'apartment').order_by('-date')[:10]
+
+            pending_expenses = Decimal('0.00')
+            apartment_balances = self.get_apartment_balances(month)
+            payment_statistics = self.get_payment_statistics(month)
+
+            pending_payments = Apartment.objects.filter(
+                building_id=self.building_id,
+                current_balance__lt=0
+            ).count()
+
+            average_monthly_expenses = total_expenses_this_month
+            effective_management_fee_per_apartment = (
+                management_fees_snapshot / Decimal(apartments_count)
+                if apartments_count > 0 else Decimal('0.00')
+            )
+
+            expense_breakdown = self.get_expense_breakdown(month, grouped=False)
+            expense_breakdown_grouped = self.get_expense_breakdown(month, grouped=True)
+
+            return {
+                'total_balance': float(total_balance.quantize(Decimal('0.01'))),
+                'current_obligations': float(current_obligations.quantize(Decimal('0.01'))),
+                'previous_obligations': float(previous_obligations.quantize(Decimal('0.01'))),
+                'current_month_expenses': float(current_month_expenses.quantize(Decimal('0.01'))),
+                'reserve_fund_contribution': float(reserve_fund_contribution.quantize(Decimal('0.01'))),
+                'current_reserve': float(current_reserve.quantize(Decimal('0.01'))),
+                'has_monthly_activity': has_monthly_activity,
+                'apartments_count': apartments_count,
+                'pending_payments': pending_payments,
+                'average_monthly_expenses': float(average_monthly_expenses.quantize(Decimal('0.01'))),
+                'last_calculation_date': timezone.now().strftime('%Y-%m-%d'),
+                'total_expenses_month': float(total_expenses_this_month.quantize(Decimal('0.01'))),
+                'total_payments_month': float(total_payments_this_month.quantize(Decimal('0.01'))),
+                'scheduled_maintenance_amount': float(scheduled_maintenance_amount.quantize(Decimal('0.01'))),
+                'carry_forward': float(carry_forward_amount.quantize(Decimal('0.01'))),
+                'pending_expenses': float(pending_expenses.quantize(Decimal('0.01'))),
+                'recent_transactions': list(recent_transactions),
+                'recent_transactions_count': len(recent_transactions),
+                'apartment_balances': apartment_balances,
+                'payment_statistics': payment_statistics,
+                'reserve_fund_goal': float(self.building.reserve_fund_goal or Decimal('0.0')),
+                'reserve_fund_duration_months': int(self.building.reserve_fund_duration_months or 0),
+                'reserve_fund_monthly_target': float(reserve_fund_monthly_target),
+                'reserve_fund_start_date': self.building.reserve_fund_start_date.strftime('%Y-%m-%d') if self.building.reserve_fund_start_date else None,
+                'reserve_fund_target_date': self.building.reserve_fund_target_date.strftime('%Y-%m-%d') if self.building.reserve_fund_target_date else None,
+                'management_fee_per_apartment': float(effective_management_fee_per_apartment),
+                'total_management_cost': float(management_fees_snapshot.quantize(Decimal('0.01'))),
+                'uses_monthly_balance_snapshot': monthly_balance_snapshot is not None,
+                'expense_breakdown': expense_breakdown,
+                'expense_breakdown_grouped': expense_breakdown_grouped
+            }
 
         # Monthly balance snapshot (single source of truth for carryover)
         monthly_balance_snapshot: Optional[MonthlyBalance] = None
@@ -1077,17 +1211,16 @@ class FinancialDashboardService:
         balances = []
 
         # Υπολογισμός end_date αν δοθεί month
+        month_start = None
         end_date = None
         if month:
             try:
-                from datetime import date
-                year, mon = map(int, month.split('-'))
-                if mon == 12:
-                    end_date = date(year + 1, 1, 1)
-                else:
-                    end_date = date(year, mon + 1, 1)
-            except Exception:
-                end_date = None
+                year, mon = parse_month_string(month)
+            except ValueError:
+                today = date.today()
+                year, mon = today.year, today.month
+            month = f"{year:04d}-{mon:02d}"
+            month_start, end_date = get_month_date_range(month)
 
         for apartment in apartments:
             # ΔΙΟΡΘΩΣΗ: Πάντα υπολογίζω το balance από transactions για συνέπεια
@@ -1095,25 +1228,15 @@ class FinancialDashboardService:
             # ✅ FIX 2025-10-10: Added include_reserve_fund=True for proper carryover
             if end_date:
                 # Για snapshot view, υπολογίζουμε το balance μέχρι την αρχή του μήνα (πριν τον επιλεγμένο μήνα)
-                if month:
-                    year, mon = map(int, month.split('-'))
-                    month_start = date(year, mon, 1)
-                    calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                        apartment, month_start,
-                        include_management_fees=True,
-                        include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
-                    )
-                else:
-                    calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                        apartment, end_date,
-                        include_management_fees=True,
-                        include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
-                    )
+                calculated_balance = BalanceCalculationService.calculate_historical_balance(
+                    apartment, month_start,
+                    include_management_fees=True,
+                    include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
+                )
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
             else:
                 # Για current view, χρησιμοποίησε current date
-                from datetime import date
                 calculated_balance = BalanceCalculationService.calculate_historical_balance(
                     apartment, date.today(),
                     include_management_fees=True,
@@ -1143,100 +1266,7 @@ class FinancialDashboardService:
 
             if month and end_date:
                 # Για snapshot view, υπολογίζουμε previous balance και net obligation
-
-                # ΔΙΟΡΘΩΣΗ: month_start πρέπει να είναι η αρχή του επιλεγμένου μήνα
-                year, mon = map(int, month.split('-'))
-                month_start = date(year, mon, 1)
-
-                # 1. Previous Balance = οφειλές από προηγούμενους μήνες (πριν τον επιλεγμένο μήνα)
-                # 🔧 ΔΙΟΡΘΩΣΗ 2025-11-24: Χρήση MonthlyBalance.carry_forward για συνέπεια
-                # Αν η financial_system_start_date είναι η ίδια με τον τρέχοντα μήνα,
-                # το calculated_balance θα είναι 0 (δεν υπάρχουν expenses πριν την start_date)
-                # Αλλά μπορεί να υπάρχει carry_forward από προηγούμενο μήνα στο MonthlyBalance
-
-                # Βρες το MonthlyBalance του προηγούμενου μήνα
-                prev_month = mon - 1
-                prev_year = year
-                if prev_month == 0:
-                    prev_month = 12
-                    prev_year -= 1
-
-                prev_monthly_balance = MonthlyBalance.objects.filter(
-                    building_id=apartment.building_id,
-                    year=prev_year,
-                    month=prev_month
-                ).first()
-
-                if not prev_monthly_balance:
-                    try:
-                        from .monthly_balance_service import MonthlyBalanceService
-                        balance_service = MonthlyBalanceService(self.building)
-                        prev_monthly_balance = balance_service.create_or_update_monthly_balance(
-                            prev_year,
-                            prev_month,
-                            recalculate=False
-                        )
-                    except Exception as exc:
-                        logger.warning(
-                            "Failed to backfill MonthlyBalance for %02d/%d (building=%s). Falling back to calculated balance.",
-                            prev_month,
-                            prev_year,
-                            apartment.building_id,
-                            exc_info=exc
-                        )
-
-                if prev_monthly_balance:
-                    # Χρήση του carry_forward από το MonthlyBalance
-                    # Πρέπει να το κατανείμουμε στο διαμέρισμα βάση χιλιοστών
-                    total_carry_forward = prev_monthly_balance.carry_forward
-
-                    # Υπολογισμός μεριδίου διαμερίσματος
-                    if total_participation_mills > 0:
-                        apartment_ratio = Decimal(apartment.participation_mills or 0) / Decimal(total_participation_mills)
-                        previous_balance = total_carry_forward * apartment_ratio
-                    else:
-                        # Fallback: ισόποση κατανομή
-                        previous_balance = total_carry_forward / Decimal(safe_apartment_count)
-
-                    logger.debug(f"📊 Apartment {apartment.number} - Previous balance from MonthlyBalance:")
-                    logger.debug(f"   Total carry_forward ({prev_month:02d}/{prev_year}): €{total_carry_forward:.2f}")
-                    logger.debug(f"   Apartment ratio: {apartment.participation_mills}/{total_participation_mills}")
-                    logger.debug(f"   Apartment previous_balance: €{previous_balance:.2f}")
-                else:
-                    # Fallback: Manual calculation strictly < month_start to avoid double counting current expenses
-                    # calculated_balance from BalanceCalculationService might be inclusive of start date
-
-                    # 1. Expenses πριν τον μήνα
-                    prev_expenses = Expense.objects.filter(
-                        building_id=self.building_id,
-                        date__lt=month_start
-                    )
-                    if self.building.financial_system_start_date:
-                        prev_expenses = prev_expenses.filter(date__gte=self.building.financial_system_start_date)
-
-                    prev_expenses_share = Decimal('0.00')
-                    total_mills = total_participation_mills or 1000
-
-                    for exp in prev_expenses:
-                        # Calculate share
-                        if exp.category == 'management_fees':
-                            share = exp.amount / safe_apartment_count
-                        else:
-                            share = (Decimal(apartment.participation_mills or 0) / Decimal(total_mills)) * exp.amount
-                        prev_expenses_share += share
-
-                    # 2. Payments πριν τον μήνα
-                    prev_payments = Payment.objects.filter(
-                        apartment=apartment,
-                        date__lt=month_start
-                    )
-                    if self.building.financial_system_start_date:
-                        prev_payments = prev_payments.filter(date__gte=self.building.financial_system_start_date)
-
-                    prev_payments_total = prev_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
-                    previous_balance = prev_expenses_share - prev_payments_total
-                    logger.warning(f" No MonthlyBalance found for {prev_month:02d}/{prev_year}, calculated manual previous_balance: €{previous_balance:.2f}")
+                previous_balance = calculated_balance
 
                 # 1.1. Υπολογισμός previous balance διαχωρισμένο σε resident/owner
                 previous_resident_expenses = Decimal('0.00')
@@ -1318,28 +1348,6 @@ class FinancialDashboardService:
                             Decimal(apartment.participation_mills or 0) / Decimal(total_mills)
                         ) * reserve_expense.amount
                         reserve_fund_share += reserve_share
-                elif self.building.reserve_fund_start_date:
-                    # Αν δεν υπάρχουν Expense records, υπολογίζουμε δυναμικά από Building settings
-                    # month_start έχει ήδη υπολογιστεί παραπάνω (γραμμή 1114)
-                    if (month_start >= self.building.reserve_fund_start_date and
-                        (not self.building.reserve_fund_target_date or month_start <= self.building.reserve_fund_target_date)):
-
-                        monthly_reserve_target = self._get_reserve_fund_monthly_target(apartment_count)
-                        if monthly_reserve_target > 0:
-                            if total_mills > 0:
-                                reserve_share = (
-                                    Decimal(apartment.participation_mills or 0) / Decimal(total_mills)
-                                ) * monthly_reserve_target
-                            else:
-                                reserve_share = Decimal(monthly_reserve_target) / Decimal(apartment_count)
-
-                            reserve_fund_share += reserve_share
-                            # ✅ Προσθήκη reserve_fund_share στο owner_expenses για σωστή εμφάνιση
-                            current_owner_expenses += reserve_share
-                            owner_expenses += reserve_share
-                            # ✅ Πρέπει να ενσωματώνεται στα συνολικά έξοδα του μήνα (expense_share)
-                            expense_share += reserve_share
-
                 # ✅ ΔΙΟΡΘΩΣΗ 2025-10-10: Management fees & Reserve fund είναι ΗΔΗ Expense records!
                 # ΣΗΜΕΙΩΣΗ: Αν το reserve fund υπολογίζεται δυναμικά (χωρίς Expense records),
                 # προστίθεται στο owner_expenses παραπάνω
@@ -1413,29 +1421,6 @@ class FinancialDashboardService:
                         reserve_fund_share += reserve_share
                     # ΣΗΜΕΙΩΣΗ: Αν υπάρχουν Expense records, το reserve_fund_share περιλαμβάνεται ήδη στο owner_expenses
                     # μέσω του loop παραπάνω, οπότε ΔΕΝ χρειάζεται να το προσθέσουμε ξανά
-                elif self.building.reserve_fund_start_date:
-                    # Αν δεν υπάρχουν Expense records, υπολογίζουμε δυναμικά από Building settings
-                    if (current_month_start >= self.building.reserve_fund_start_date and
-                        (not self.building.reserve_fund_target_date or current_month_start <= self.building.reserve_fund_target_date)):
-
-                        monthly_reserve_target = self._get_reserve_fund_monthly_target(apartment_count_current)
-                        if monthly_reserve_target > 0:
-                            if total_mills_current > 0:
-                                reserve_share = (
-                                    Decimal(apartment.participation_mills or 0) / Decimal(total_mills_current)
-                                ) * monthly_reserve_target
-                            else:
-                                reserve_share = Decimal(monthly_reserve_target) / Decimal(apartment_count_current)
-
-                            reserve_fund_share += reserve_share
-
-                            # ✅ Προσθήκη reserve_fund_share στο owner_expenses (μόνο αν υπολογίστηκε δυναμικά)
-                            if not month and not end_date:
-                                owner_expenses += reserve_share
-
-                            # ✅ Το fallback αποθεματικού πρέπει να μετράει στις δαπάνες μήνα
-                            expense_share += reserve_share
-
                 # Υπολογισμός πληρωμών τρέχοντος μήνα (για current view)
                 month_payments = Payment.objects.filter(
                     apartment=apartment,

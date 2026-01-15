@@ -9,13 +9,12 @@ Purpose: Συστηματική και ολοκληρωμένη λύση για 
 
 import logging
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date
 from typing import Dict, Any, List, Optional, Tuple
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.db import transaction
-from django.utils import timezone
 
-from .models import MonthlyBalance, Expense, Payment, Transaction
+from .models import MonthlyBalance, Expense, Payment
 from buildings.models import Building
 from apartments.models import Apartment
 from .balance_service import BalanceCalculationService
@@ -101,11 +100,11 @@ class MonthlyBalanceService:
         previous_obligations = self._calculate_previous_obligations(year, month)
         logger.debug(f"   📊 Παλαιότερες οφειλές: €{previous_obligations}")
         
-        # 4. Υπολογισμός management fees (από Transaction records)
+        # 4. Υπολογισμός management fees (από Expense records)
         management_fees = self._calculate_management_fees(year, month)
         logger.debug(f"   🏢 Διαχειριστικά έξοδα: €{management_fees}")
         
-        # 5. Υπολογισμός reserve fund (από Transaction records)
+        # 5. Υπολογισμός reserve fund (από Expense records)
         reserve_fund_amount = self._calculate_reserve_fund(year, month)
         logger.debug(f"   🏦 Αποθεματικό: €{reserve_fund_amount}")
         
@@ -266,93 +265,33 @@ class MonthlyBalanceService:
         """
         Υπολογισμός management fees για συγκεκριμένο μήνα.
         
-        Ψάχνει για Transaction records με type='management_fee_charge'
-        που δημιουργήθηκαν από το MonthlyChargeService.
+        Βασίζεται αποκλειστικά σε Expense records με category='management_fees'.
         """
         month_start = date(year, month, 1)
-        if month == 12:
-            month_end = date(year + 1, 1, 1)
-        else:
-            month_end = date(year, month + 1, 1)
-        
-        # Αναζήτηση Transaction records για management fees
-        management_transactions = Transaction.objects.filter(
-            building=self.building,
-            type='management_fee_charge',
-            date__gte=timezone.make_aware(datetime.combine(month_start, datetime.min.time())),
-            date__lt=timezone.make_aware(datetime.combine(month_end, datetime.min.time()))
-        )
-        
-        total = management_transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # FALLBACK: Αν δεν υπάρχουν Transaction records, ψάχνουμε για Expense records
-        if total == Decimal('0.00'):
-            management_expenses = Expense.objects.filter(
-                building=self.building,
-                category='management_fees',
-                date__year=year,
-                date__month=month
-            )
-            total = management_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # FALLBACK #2: Αν δεν υπάρχουν ούτε Transaction ούτε Expense records,
-        # αλλά το κτίριο έχει ορισμένο management_fee_per_apartment, χρησιμοποιούμε την τιμή του κτιρίου.
-        if total == Decimal('0.00'):
-            fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
-            if fee_per_apartment > 0:
-                # Ελέγχουμε το financial_system_start_date ώστε να μην χρεώνονται μήνες πριν την έναρξη.
-                should_charge = True
-                if self.building.financial_system_start_date:
-                    should_charge = month_start >= self.building.financial_system_start_date
-                
-                if should_charge:
-                    apartments_count = Apartment.objects.filter(building=self.building).count()
-                    total = fee_per_apartment * Decimal(apartments_count)
-                    logger.debug(
-                        "   🛠️  No management fee transactions for %02d/%d – using building default: %s x %s = %s",
-                        month,
-                        year,
-                        fee_per_apartment,
-                        apartments_count,
-                        total
-                    )
+        if self.building.financial_system_start_date and month_start < self.building.financial_system_start_date:
+            return Decimal('0.00')
 
-        return total
+        management_expenses = Expense.objects.filter(
+            building=self.building,
+            category='management_fees',
+            date__year=year,
+            date__month=month
+        )
+        return management_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
     def _calculate_reserve_fund(self, year: int, month: int) -> Decimal:
         """
         Υπολογισμός reserve fund για συγκεκριμένο μήνα.
         
-        Ψάχνει για Transaction records με type='reserve_fund_charge'
-        που δημιουργήθηκαν από το MonthlyChargeService.
+        Βασίζεται αποκλειστικά σε Expense records με category='reserve_fund'.
         """
-        month_start = date(year, month, 1)
-        if month == 12:
-            month_end = date(year + 1, 1, 1)
-        else:
-            month_end = date(year, month + 1, 1)
-        
-        # Αναζήτηση Transaction records για reserve fund
-        reserve_transactions = Transaction.objects.filter(
+        reserve_expenses = Expense.objects.filter(
             building=self.building,
-            type='reserve_fund_charge',
-            date__gte=timezone.make_aware(datetime.combine(month_start, datetime.min.time())),
-            date__lt=timezone.make_aware(datetime.combine(month_end, datetime.min.time()))
+            category='reserve_fund',
+            date__year=year,
+            date__month=month
         )
-        
-        total = reserve_transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # FALLBACK: Αν δεν υπάρχουν Transaction records, ψάχνουμε για Expense records
-        if total == Decimal('0.00'):
-            reserve_expenses = Expense.objects.filter(
-                building=self.building,
-                category='reserve_fund',
-                date__year=year,
-                date__month=month
-            )
-            total = reserve_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        return total
+        return reserve_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
     def _calculate_scheduled_maintenance(self, year: int, month: int) -> Decimal:
         """

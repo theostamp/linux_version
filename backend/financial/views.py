@@ -781,14 +781,13 @@ class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
         """
         Διαγράφει ΟΛΑ τα management fees και τα ξαναδημιουργεί με σωστή ημερομηνία.
 
-        UPDATED 2025-10-10: Now uses MonthlyChargeService for Transaction-based system.
+        UPDATED 2025-10-10: Now uses MonthlyChargeService for Expense-based system.
 
         Διαγράφει:
-        - OLD: Expense records με category='management_fees'
-        - NEW: Transaction records με type='management_fee_charge'
+        - Expense records με category='management_fees'
 
         Επαναδημιουργεί:
-        - Transaction-based management fees μέσω MonthlyChargeService
+        - Expense-based management fees μέσω MonthlyChargeService
 
         ΠΡΟΣΟΧΗ: Αυτό είναι destructive operation! Χρησιμοποιήστε μόνο για διόρθωση.
         """
@@ -839,17 +838,7 @@ class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
             deleted_expenses_count += 1
 
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # STEP 2: Delete NEW Transaction-based management fees
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        mgmt_fee_transactions = Transaction.objects.filter(
-            building=building,
-            type='management_fee_charge'
-        )
-        deleted_new_transactions_count = mgmt_fee_transactions.count()
-        mgmt_fee_transactions.delete()
-
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # STEP 3: Recreate using NEW MonthlyChargeService system
+        # STEP 2: Recreate using MonthlyChargeService (Expense-based)
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         if not building.management_fee_per_apartment or building.management_fee_per_apartment <= 0:
             return Response({
@@ -904,7 +893,7 @@ class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
                     f'✅ Διαγράφηκαν {deleted_expenses_count} expense-based management fees '
                     f'και {deleted_old_transactions_count + deleted_new_transactions_count} transactions. '
                     f'Επαναδημιουργήθηκαν {recreated_months} μήνες με {recreated_transactions} '
-                    f'transaction-based charges (νέο σύστημα).'
+                    f'expense-based charges (νέο σύστημα).'
                 )
             })
 

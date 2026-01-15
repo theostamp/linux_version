@@ -153,9 +153,10 @@ export const exportToJPG = async (
         : reserveFundInfo.monthlyAmount > 0
           ? Math.max(0, toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000))
           : 0;
+      const fallbackOwnerExpenses = Math.max(0, toNumber((apt as any).owner_expenses || 0));
       const ownerExpensesOnlyProjects = ownerTotal > 0
         ? Math.max(0, ownerTotal)
-        : Math.max(0, toNumber((apt as any).owner_expenses || 0));
+        : Math.max(0, fallbackOwnerExpenses - apartmentReserveFund);
       const totalAmount = commonAmountWithoutReserve + displayElevator + displayHeating + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
 
       return {

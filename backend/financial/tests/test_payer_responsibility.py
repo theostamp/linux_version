@@ -236,6 +236,9 @@ class TestFinancialDashboardPayerSeparation(TestCase):
                 'reserve_fund_duration_months',
             ])
 
+            from financial.monthly_charge_service import MonthlyChargeService
+            MonthlyChargeService.create_monthly_charges(self.building, date(2025, 8, 1))
+
             service = FinancialDashboardService(self.building.id)
             balances = service.get_apartment_balances('2025-08')
 
@@ -587,5 +590,4 @@ class TestSplitRatioValidation(TestCase):
             serializer2 = ExpenseSerializer(data=data_invalid2)
             self.assertFalse(serializer2.is_valid())
             self.assertIn('split_ratio', serializer2.errors)
-
 

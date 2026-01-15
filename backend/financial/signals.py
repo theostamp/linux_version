@@ -515,9 +515,9 @@ def update_financial_data_on_building_change(sender, instance, created, **kwargs
         # Όταν ορίζεται το financial_system_start_date ή το management_fee_per_apartment
         if instance.financial_system_start_date and instance.management_fee_per_apartment:
             # Έλεγχος αν έχουν ήδη δημιουργηθεί charges
-            existing_charges = Transaction.objects.filter(
+            existing_charges = Expense.objects.filter(
                 building=instance,
-                type='management_fee_charge'
+                category='management_fees'
             ).exists()
 
             if not existing_charges:
