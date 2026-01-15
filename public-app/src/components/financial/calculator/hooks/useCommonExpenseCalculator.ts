@@ -24,6 +24,13 @@ import { exportToExcel } from '../utils/excelGenerator';
 import { exportToJPG, exportAndSendJPG } from '../utils/jpgGenerator';
 import { getPeriodInfo } from '../utils/periodHelpers';
 
+const toOptionalNumber = (value: any): number | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  const parsed = toNumber(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   const {
     state,
@@ -419,11 +426,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   }, [reserveFromShares, reserveFromAdvanced, reserveFundInfo.monthlyAmount]);
 
   const previousBalanceAdjustment = useMemo(() => {
-    const previousFromApi = typeof monthlyExpenses?.previous_obligations === 'number'
-      ? toNumber(monthlyExpenses.previous_obligations)
-      : typeof monthlyExpenses?.previous_balances === 'number'
-        ? toNumber(monthlyExpenses.previous_balances)
-        : null;
+    const previousFromApi = toOptionalNumber(monthlyExpenses?.previous_obligations)
+      ?? toOptionalNumber(monthlyExpenses?.previous_balances);
     if (previousFromApi === null) return null;
     if (managementFeeInfo.feePerApartment <= 0) return null;
 
@@ -467,11 +471,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       ? toNumber(monthlyExpenses.total_management_cost)
       : managementFeeInfo.totalFee;
 
-    const previousFromApi = typeof monthlyExpenses?.previous_obligations === 'number'
-      ? toNumber(monthlyExpenses.previous_obligations)
-      : typeof monthlyExpenses?.previous_balances === 'number'
-        ? toNumber(monthlyExpenses.previous_balances)
-        : null;
+    const previousFromApi = toOptionalNumber(monthlyExpenses?.previous_obligations)
+      ?? toOptionalNumber(monthlyExpenses?.previous_balances);
 
     const monthlySubtotalFromSummary = typeof monthlyExpenses?.current_month_expenses === 'number'
       ? toNumber(monthlyExpenses.current_month_expenses)
@@ -732,11 +733,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
         }
       }
 
-      const previousFromApi = typeof monthlyExpenses?.previous_obligations === 'number'
-        ? toNumber(monthlyExpenses.previous_obligations)
-        : typeof monthlyExpenses?.previous_balances === 'number'
-          ? toNumber(monthlyExpenses.previous_balances)
-          : null;
+      const previousFromApi = toOptionalNumber(monthlyExpenses?.previous_obligations)
+        ?? toOptionalNumber(monthlyExpenses?.previous_balances);
 
       if (previousFromApi !== null) {
         const diff = Math.abs(previousFromApi - previousBalanceTotals.signed);
