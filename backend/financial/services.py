@@ -2552,6 +2552,43 @@ class AdvancedCommonExpenseCalculator:
     Προηγμένος υπολογιστής κοινοχρήστων σύμφωνα με το TODO αρχείο.
     Υλοποιεί τον πλήρη αλγόριθμο με όλες τις κατηγορίες δαπανών.
     """
+    ELEVATOR_CATEGORIES = {
+        'elevator_maintenance',
+        'elevator_repair',
+        'elevator_inspection',
+        'elevator_modernization',
+        'elevator_emergency',
+        'elevator_replacement',
+        'elevator_shaft_repair',
+    }
+    HEATING_CATEGORIES = {
+        'heating_fuel',
+        'heating_gas',
+        'heating_maintenance',
+        'heating_repair',
+        'heating_inspection',
+        'heating_modernization',
+        'boiler_replacement',
+        'heating_system_overhaul',
+        'burner_replacement',
+    }
+    EQUAL_SHARE_CATEGORIES = {
+        'special_contribution',
+        'emergency_fund',
+        'renovation_fund',
+    }
+    HEATING_FUEL_KEYWORDS = [
+        'πετρέλαιο', 'πετρελαιο', 'φυσικό αέριο', 'φυσικο αεριο',
+        'αέριο', 'αεριο', 'aerio', 'gas', 'μαζούτ', 'mazout'
+    ]
+    HEATING_GENERAL_KEYWORDS = [
+        'θέρμανσ', 'θερμανσ', 'heating', 'therm', 'radiator',
+        'boiler', 'καυστήρ', 'καυστηρ', 'burner', 'λέβητα', 'λεβητα'
+    ]
+    HEATING_EXCLUDED_CATEGORIES = {
+        'reserve_fund', 'management_fees', 'electricity_common',
+        'water_common', 'garbage_collection', 'cleaning', 'security'
+    }
 
     def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None, reserve_fund_monthly_total: Optional[Decimal] = None, heating_type: str = None, heating_fixed_percentage: int = None):
         self.building_id = building_id
@@ -2634,6 +2671,53 @@ class AdvancedCommonExpenseCalculator:
                     self.reserve_fund_monthly_total = Decimal(str(monthly_total))
                 except Exception:
                     self.reserve_fund_monthly_total = Decimal('0.00')
+
+    @staticmethod
+    def _contains_keyword(text: str, keywords: list[str]) -> bool:
+        text = text or ''
+        return any(keyword in text for keyword in keywords)
+
+    def _is_heating_expense(self, expense: Expense) -> bool:
+        category_lower = (getattr(expense, 'category', '') or '').lower()
+        if category_lower in self.HEATING_CATEGORIES:
+            return True
+        title_lower = (getattr(expense, 'title', '') or '').lower()
+        description_text = getattr(expense, 'description', None)
+        if not description_text:
+            description_text = getattr(expense, 'notes', '')
+        description_lower = (description_text or '').lower()
+        distribution_type = (getattr(expense, 'distribution_type', '') or '').lower()
+        has_fuel_keyword = (
+            self._contains_keyword(title_lower, self.HEATING_FUEL_KEYWORDS)
+            or self._contains_keyword(description_lower, self.HEATING_FUEL_KEYWORDS)
+        )
+        has_general_keyword = (
+            self._contains_keyword(title_lower, self.HEATING_GENERAL_KEYWORDS)
+            or self._contains_keyword(description_lower, self.HEATING_GENERAL_KEYWORDS)
+        )
+        has_distribution_hint = (
+            distribution_type in ['by_meters', 'by_participation_mills']
+            and (has_fuel_keyword or has_general_keyword)
+        )
+        if has_fuel_keyword or has_distribution_hint:
+            return True
+        if category_lower not in self.HEATING_EXCLUDED_CATEGORIES and has_general_keyword:
+            return True
+        return False
+
+    def _classify_expense(self, expense: Expense) -> str:
+        distribution_type = (getattr(expense, 'distribution_type', '') or '').lower()
+        category = (getattr(expense, 'category', '') or '').lower()
+
+        if distribution_type == 'specific_apartments':
+            return 'individual'
+        if self._is_heating_expense(expense):
+            return 'heating'
+        if category in self.ELEVATOR_CATEGORIES:
+            return 'elevator'
+        if distribution_type == 'equal_share' or category in self.EQUAL_SHARE_CATEGORIES:
+            return 'equal_share'
+        return 'general'
 
     # ❌ DELETED: _get_historical_balance() - Use BalanceCalculationService instead
     # This function was removed as part of the balance calculation refactoring.
@@ -2795,81 +2879,7 @@ class AdvancedCommonExpenseCalculator:
             'resident_equal_share': Decimal('0.00'),
         }
 
-        # Αντιστοίχιση κατηγοριών δαπανών με κανόνες κατανομής
-        general_categories = [
-            'cleaning', 'electricity_common', 'water_common', 'garbage_collection',
-            'security', 'concierge', 'electrical_maintenance', 'electrical_repair',
-            'electrical_upgrade', 'lighting_common', 'intercom_system',
-            'plumbing_maintenance', 'plumbing_repair', 'water_tank_cleaning',
-            'water_tank_maintenance', 'sewage_system', 'building_insurance',
-            'building_maintenance', 'roof_maintenance', 'roof_repair',
-            'facade_maintenance', 'facade_repair', 'painting_exterior',
-            'painting_interior', 'garden_maintenance', 'parking_maintenance',
-            'entrance_maintenance', 'emergency_repair', 'storm_damage',
-            'flood_damage', 'fire_damage', 'earthquake_damage', 'vandalism_repair',
-            'locksmith', 'glass_repair', 'door_repair', 'window_repair',
-            'balcony_repair', 'staircase_repair', 'security_system',
-            'cctv_installation', 'access_control', 'fire_alarm', 'fire_extinguishers',
-            'legal_fees', 'notary_fees', 'surveyor_fees', 'architect_fees',
-            'engineer_fees', 'accounting_fees', 'management_fees',
-            'asbestos_removal', 'lead_paint_removal', 'mold_removal',
-            'pest_control', 'tree_trimming', 'snow_removal', 'energy_upgrade',
-            'insulation_work', 'solar_panel_installation', 'led_lighting',
-            'smart_systems', 'miscellaneous', 'consulting_fees',
-            'permits_licenses', 'taxes_fees', 'utilities_other'
-        ]
-
-        elevator_categories = [
-            'elevator_maintenance', 'elevator_repair', 'elevator_inspection',
-            'elevator_modernization'
-        ]
-
-        heating_categories = [
-            'heating_fuel', 'heating_gas', 'heating_maintenance',
-            'heating_repair', 'heating_inspection', 'heating_modernization'
-        ]
-        heating_fuel_keywords = [
-            'πετρέλαιο', 'πετρελαιο', 'φυσικό αέριο', 'φυσικο αεριο',
-            'αέριο', 'αεριο', 'aerio', 'gas', 'μαζούτ', 'mazout'
-        ]
-        heating_general_keywords = [
-            'θέρμανσ', 'θερμανσ', 'heating', 'therm', 'radiator',
-            'boiler', 'καυστήρ', 'καυστηρ', 'burner', 'λέβητα', 'λεβητα'
-        ]
-        heating_excluded_categories = {
-            'reserve_fund', 'management_fees', 'electricity_common',
-            'water_common', 'garbage_collection', 'cleaning', 'security'
-        }
-        def _contains_keyword(text: str, keywords: list[str]) -> bool:
-            text = text or ''
-            return any(keyword in text for keyword in keywords)
-        def _is_heating_expense(expense: Expense) -> bool:
-            category_lower = (getattr(expense, 'category', '') or '').lower()
-            if category_lower in heating_categories:
-                return True
-            title_lower = (getattr(expense, 'title', '') or '').lower()
-            description_text = getattr(expense, 'description', None)
-            if not description_text:
-                description_text = getattr(expense, 'notes', '')
-            description_lower = (description_text or '').lower()
-            distribution_type = (getattr(expense, 'distribution_type', '') or '').lower()
-            has_fuel_keyword = _contains_keyword(title_lower, heating_fuel_keywords) or _contains_keyword(description_lower, heating_fuel_keywords)
-            has_general_keyword = _contains_keyword(title_lower, heating_general_keywords) or _contains_keyword(description_lower, heating_general_keywords)
-            has_distribution_hint = (
-                distribution_type in ['by_meters', 'by_participation_mills']
-                and (has_fuel_keyword or has_general_keyword)
-            )
-            if has_fuel_keyword or has_distribution_hint:
-                return True
-            if category_lower not in heating_excluded_categories and has_general_keyword:
-                return True
-            return False
-
-        equal_share_categories = [
-            'special_contribution', 'emergency_fund',
-            'renovation_fund'
-        ]
-
+        # Categorize expenses based on distribution intent and category.
         for expense in self.expenses:
             # Υπολογισμός ποσού ανά payer_responsibility
             if expense.payer_responsibility == 'owner':
@@ -2884,25 +2894,25 @@ class AdvancedCommonExpenseCalculator:
                 owner_amount = Decimal('0.00')
                 resident_amount = expense.amount
 
-            # Κατανομή ανά κατηγορία
-            if _is_heating_expense(expense):
+            bucket = self._classify_expense(expense)
+            if bucket == 'heating':
                 totals['heating'] += expense.amount
                 totals['owner_heating'] += owner_amount
                 totals['resident_heating'] += resident_amount
-            elif expense.category in general_categories:
-                totals['general'] += expense.amount
-                totals['owner_general'] += owner_amount
-                totals['resident_general'] += resident_amount
-            elif expense.category in elevator_categories:
+            elif bucket == 'elevator':
                 totals['elevator'] += expense.amount
                 totals['owner_elevator'] += owner_amount
                 totals['resident_elevator'] += resident_amount
-            elif expense.category in equal_share_categories:
+            elif bucket == 'equal_share':
                 totals['equal_share'] += expense.amount
                 totals['owner_equal_share'] += owner_amount
                 totals['resident_equal_share'] += resident_amount
-            elif expense.distribution_type == 'specific_apartments':
+            elif bucket == 'individual':
                 totals['individual'] += expense.amount
+            else:
+                totals['general'] += expense.amount
+                totals['owner_general'] += owner_amount
+                totals['resident_general'] += resident_amount
 
         # Προσθήκη δαπανών διαχείρισης στις γενικές δαπάνες
         # Management fees είναι resident expenses (τακτικά κοινόχρηστα)
@@ -3172,44 +3182,6 @@ class AdvancedCommonExpenseCalculator:
 
     def _get_expense_details(self) -> Dict[str, List[Dict]]:
         """Επιστρέφει λεπτομέρειες δαπανών για εμφάνιση στο φύλλο κοινοχρήστων"""
-        general_categories = [
-            'cleaning', 'electricity_common', 'water_common', 'garbage_collection',
-            'security', 'concierge', 'electrical_maintenance', 'electrical_repair',
-            'electrical_upgrade', 'lighting_common', 'intercom_system',
-            'plumbing_maintenance', 'plumbing_repair', 'water_tank_cleaning',
-            'water_tank_maintenance', 'sewage_system', 'building_insurance',
-            'building_maintenance', 'roof_maintenance', 'roof_repair',
-            'facade_maintenance', 'facade_repair', 'painting_exterior',
-            'painting_interior', 'garden_maintenance', 'parking_maintenance',
-            'entrance_maintenance', 'emergency_repair', 'storm_damage',
-            'flood_damage', 'fire_damage', 'earthquake_damage', 'vandalism_repair',
-            'locksmith', 'glass_repair', 'door_repair', 'window_repair',
-            'balcony_repair', 'staircase_repair', 'security_system',
-            'cctv_installation', 'access_control', 'fire_alarm', 'fire_extinguishers',
-            'legal_fees', 'notary_fees', 'surveyor_fees', 'architect_fees',
-            'engineer_fees', 'accounting_fees', 'management_fees',
-            'asbestos_removal', 'lead_paint_removal', 'mold_removal',
-            'pest_control', 'tree_trimming', 'snow_removal', 'energy_upgrade',
-            'insulation_work', 'solar_panel_installation', 'led_lighting',
-            'smart_systems', 'miscellaneous', 'consulting_fees',
-            'permits_licenses', 'taxes_fees', 'utilities_other'
-        ]
-
-        elevator_categories = [
-            'elevator_maintenance', 'elevator_repair', 'elevator_inspection',
-            'elevator_modernization'
-        ]
-
-        heating_categories = [
-            'heating_fuel', 'heating_gas', 'heating_maintenance',
-            'heating_repair', 'heating_inspection', 'heating_modernization'
-        ]
-
-        equal_share_categories = [
-            'special_contribution', 'emergency_fund',
-            'renovation_fund'
-        ]
-
         expense_details = {
             'general': [],
             'elevator': [],
@@ -3232,18 +3204,10 @@ class AdvancedCommonExpenseCalculator:
                 'split_ratio': float(expense.split_ratio) if expense.split_ratio is not None else None  # ΝΕΟ: Ποσοστό κατανομής
             }
 
-            if expense.category in general_categories:
-                expense_details['general'].append(expense_data)
-            elif expense.category in elevator_categories:
-                expense_details['elevator'].append(expense_data)
-            elif expense.category in heating_categories:
-                expense_details['heating'].append(expense_data)
-            elif expense.category in equal_share_categories:
-                expense_details['equal_share'].append(expense_data)
-            elif expense.distribution_type == 'specific_apartments':
-                expense_details['individual'].append(expense_data)
+            bucket = self._classify_expense(expense)
+            if bucket in expense_details:
+                expense_details[bucket].append(expense_data)
             else:
-                # Default fallback
                 expense_details['general'].append(expense_data)
 
         return expense_details
