@@ -913,33 +913,51 @@ class Expense(models.Model):
         """Υπολογίζει το μερίδιο διαμερίσματος για τη δαπάνη"""
         from decimal import Decimal
 
+        def _equal_share():
+            total_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+
+        def _mills_share(mills_attr: str):
+            apartments = Apartment.objects.filter(building=self.building)
+            total_mills = sum(getattr(apt, mills_attr, 0) or 0 for apt in apartments)
+            if total_mills > 0:
+                apartment_mills = getattr(apartment, mills_attr, 0) or 0
+                return (self.amount * apartment_mills) / total_mills
+            return _equal_share()
+
+        def _specific_share():
+            affected = list(self.affected_apartments.select_related('apartment'))
+            if affected:
+                target_ids = {item.apartment_id for item in affected}
+                if apartment.id not in target_ids:
+                    return Decimal('0.00')
+                return self.amount / len(target_ids)
+            return _equal_share()
+
         if self.distribution_type == 'equal_share':
             # Ισόποσα κατανομή
-            total_apartments = Apartment.objects.filter(building=self.building).count()
-            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+            return _equal_share()
 
-        elif self.distribution_type == 'by_participation_mills':
+        elif self.distribution_type in ['by_participation_mills', 'general_expenses']:
             # Κατανομή βάσει χιλιοστών
-            total_mills = sum(apt.participation_mills or 0 for apt in Apartment.objects.filter(building=self.building))
-            if total_mills > 0:
-                apartment_mills = apartment.participation_mills or 0
-                return (self.amount * apartment_mills) / total_mills
-            total_apartments = Apartment.objects.filter(building=self.building).count()
-            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+            return _mills_share('participation_mills')
 
-        elif self.distribution_type == 'by_meters':
+        elif self.distribution_type in ['by_meters']:
             # Κατανομή βάσει τετραγωνικών μέτρων
             total_meters = sum(apt.square_meters or 0 for apt in Apartment.objects.filter(building=self.building))
             if total_meters > 0:
                 apartment_meters = apartment.square_meters or 0
                 return (self.amount * apartment_meters) / total_meters
-            total_apartments = Apartment.objects.filter(building=self.building).count()
-            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+            return _equal_share()
 
-        elif self.distribution_type == 'specific_apartments':
-            # προσωρινά: ισόποσα, όπως το CommonExpenseCalculator
-            total_apartments = Apartment.objects.filter(building=self.building).count()
-            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+        elif self.distribution_type in ['specific_apartments', 'individual_expense']:
+            return _specific_share()
+
+        elif self.distribution_type in ['elevator_expenses']:
+            return _mills_share('elevator_mills')
+
+        elif self.distribution_type in ['heating_expenses', 'by_heating_mills']:
+            return _mills_share('heating_mills')
 
         else:
             return Decimal('0.00')

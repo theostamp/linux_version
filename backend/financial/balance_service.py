@@ -163,18 +163,24 @@ class BalanceCalculationService:
                     reference_id__in=[str(exp_id) for exp_id in regular_expense_ids],  # ✅ ΔΙΟΡΘΩΣΗ: Όχι mgmt/reserve!
                     type__in=TransactionType.get_charge_types()  # ✅ VALIDATED!
                 )
-                if expense_transactions.exists():
-                    total_charges = expense_transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                else:
-                    # Fallback when no transactions exist (legacy or missing generation).
-                    fallback_expenses = Expense.objects.filter(id__in=regular_expense_ids)
-                    for expense in fallback_expenses:
-                        try:
-                            share_amount = expense._calculate_apartment_share(apartment)
-                        except Exception:
-                            share_amount = Decimal('0.00')
-                        if share_amount:
-                            total_charges += share_amount
+                transactions_by_ref = {
+                    int(item['reference_id']): item['total']
+                    for item in expense_transactions.values('reference_id').annotate(total=Sum('amount'))
+                    if str(item['reference_id']).isdigit()
+                }
+                # Merge transactions and fallback shares per expense to avoid gaps.
+                fallback_expenses = Expense.objects.filter(id__in=regular_expense_ids)
+                for expense in fallback_expenses:
+                    tx_total = transactions_by_ref.get(expense.id)
+                    if tx_total is not None:
+                        total_charges += tx_total
+                        continue
+                    try:
+                        share_amount = expense._calculate_apartment_share(apartment)
+                    except Exception:
+                        share_amount = Decimal('0.00')
+                    if share_amount:
+                        total_charges += share_amount
 
         # Υπολογισμός πληρωμών μέχρι την ημερομηνία
         # ✅ ΔΙΟΡΘΩΣΗ: Μόνο Payment model (ΟΧΙ διπλή μέτρηση)
