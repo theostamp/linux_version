@@ -88,15 +88,26 @@ class BalanceCalculationService:
         system_start_date = building.financial_system_start_date
 
         if system_start_date is None:
-            # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ 2025-10-10: 
-            # Αν δεν υπάρχει system start date, επιστρέφουμε 0
-            # ΛΟΓΟΣ: Αποφυγή χρεώσεων από το -άπειρο
-            # Το κτίριο ΠΡΕΠΕΙ να έχει ορισμένο financial_system_start_date
-            logger.warning(
-                f"⚠️ Building {building.name} has no financial_system_start_date! "
-                f"Returning 0 balance to prevent charging from infinity."
-            )
-            return Decimal('0.00')
+            # If missing, infer from the earliest expense to avoid zeroing valid history.
+            oldest_expense = Expense.objects.filter(
+                building_id=apartment.building_id
+            ).order_by('date').first()
+            if oldest_expense and oldest_expense.date:
+                system_start_date = oldest_expense.date.replace(day=1)
+                building.financial_system_start_date = system_start_date
+                building.save(update_fields=['financial_system_start_date'])
+                logger.info(
+                    "✅ Set financial_system_start_date for building %s to %s based on earliest expense.",
+                    building.id,
+                    system_start_date
+                )
+            else:
+                # No expenses, keep safe zero balance.
+                logger.warning(
+                    "⚠️ Building %s has no financial_system_start_date and no expenses. Returning 0.",
+                    building.id
+                )
+                return Decimal('0.00')
 
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         # ⚠️ ΚΡΙΣΙΜΟ: BALANCE TRANSFER LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!
@@ -146,12 +157,24 @@ class BalanceCalculationService:
             if regular_expense_ids:
                 # ✅ ΔΙΟΡΘΩΣΗ: Χρήση apartment object (FK) αντί για apartment_number
                 # ✅ ΒΕΛΤΙΩΣΗ: Χρήση TransactionType.get_charge_types() για validation
-                total_charges = Transaction.objects.filter(
+                expense_transactions = Transaction.objects.filter(
                     apartment=apartment,  # ✅ ΣΩΣΤΟ! (όχι apartment_number)
                     reference_type='expense',
                     reference_id__in=[str(exp_id) for exp_id in regular_expense_ids],  # ✅ ΔΙΟΡΘΩΣΗ: Όχι mgmt/reserve!
                     type__in=TransactionType.get_charge_types()  # ✅ VALIDATED!
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                )
+                if expense_transactions.exists():
+                    total_charges = expense_transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                else:
+                    # Fallback when no transactions exist (legacy or missing generation).
+                    fallback_expenses = Expense.objects.filter(id__in=regular_expense_ids)
+                    for expense in fallback_expenses:
+                        try:
+                            share_amount = expense._calculate_apartment_share(apartment)
+                        except Exception:
+                            share_amount = Decimal('0.00')
+                        if share_amount:
+                            total_charges += share_amount
 
         # Υπολογισμός πληρωμών μέχρι την ημερομηνία
         # ✅ ΔΙΟΡΘΩΣΗ: Μόνο Payment model (ΟΧΙ διπλή μέτρηση)

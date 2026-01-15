@@ -924,7 +924,8 @@ class Expense(models.Model):
             if total_mills > 0:
                 apartment_mills = apartment.participation_mills or 0
                 return (self.amount * apartment_mills) / total_mills
-            return Decimal('0.00')
+            total_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
 
         elif self.distribution_type == 'by_meters':
             # Κατανομή βάσει τετραγωνικών μέτρων
@@ -932,7 +933,13 @@ class Expense(models.Model):
             if total_meters > 0:
                 apartment_meters = apartment.square_meters or 0
                 return (self.amount * apartment_meters) / total_meters
-            return Decimal('0.00')
+            total_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+
+        elif self.distribution_type == 'specific_apartments':
+            # προσωρινά: ισόποσα, όπως το CommonExpenseCalculator
+            total_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
 
         else:
             return Decimal('0.00')
