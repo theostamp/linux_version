@@ -11,7 +11,7 @@
 - **Canonical charges ledger:** `Expense` (D1)
 - **Monthly snapshot:** `MonthlyBalanceService` (D2)
 - **Historical apartment balance:** `BalanceCalculationService` (D3)
-- **Backfill baseline:** `financial_system_start_date` (1η του μήνα, default: 1η του μήνα δημιουργίας κτιρίου)
+- **Backfill baseline:** `financial_system_start_date` (1η του μήνα, default: 1η του μήνα της πρώτης δαπάνης)
 
 ---
 

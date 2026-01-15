@@ -1372,7 +1372,6 @@ class FinancialDashboardService:
                 logger.debug(f"   Net Obligation: €{net_obligation:.2f}")
             else:
                 # ✅ ΔΙΟΡΘΩΣΗ: Για current view (χωρίς month), υπολογίζουμε reserve_fund_share για τον τρέχοντα μήνα
-                from datetime import date
                 today = date.today()
                 current_month_start = date(today.year, today.month, 1)
 
