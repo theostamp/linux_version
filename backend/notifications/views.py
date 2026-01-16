@@ -1187,7 +1187,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         name=f'Κοινόχρηστα Μήνα (Auto)',
                         category='payment',
                         subject='Κοινόχρηστα {{month}}',
-                        body='Αγαπητέ/ή {{resident_name}},\n\nΕπισυνάπτονται τα κοινόχρηστα του μήνα {{month}}.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        body_template='Αγαπητέ/ή {{resident_name}},\n\nΕπισυνάπτονται τα κοινόχρηστα του μήνα {{month}}.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
                         is_active=True,
                         building=target_building,
                     )
@@ -1196,7 +1196,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         name=f'Υπενθύμιση Οφειλής (Auto)',
                         category='payment',
                         subject='Υπενθύμιση Οφειλής',
-                        body='Αγαπητέ/ή {{resident_name}},\n\nΣας υπενθυμίζουμε ότι υπάρχει εκκρεμές υπόλοιπο στον λογαριασμό σας.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        body_template='Αγαπητέ/ή {{resident_name}},\n\nΣας υπενθυμίζουμε ότι υπάρχει εκκρεμές υπόλοιπο στον λογαριασμό σας.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
                         is_active=True,
                         building=target_building,
                     )
@@ -1205,7 +1205,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         name=f'Γενική Ανακοίνωση (Auto)',
                         category='announcement',
                         subject='Ανακοίνωση',
-                        body='Αγαπητέ/ή {{resident_name}},\n\n{{message}}\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        body_template='Αγαπητέ/ή {{resident_name}},\n\n{{message}}\n\nΜε εκτίμηση,\nΗ Διαχείριση',
                         is_active=True,
                         building=target_building,
                     )
