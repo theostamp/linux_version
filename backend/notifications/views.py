@@ -1163,20 +1163,28 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             category = category_map.get(task_type, 'announcement')
 
             # Try to find an active template for this category
-            template = NotificationTemplate.objects.filter(
+            template_query = NotificationTemplate.objects.filter(
                 category=category,
-                is_active=True
-            ).first()
+                is_active=True,
+            )
+            if building:
+                template_query = template_query.filter(building=building)
+            template = template_query.first()
 
             # If no template found, create a default one
             if not template:
+                if not building:
+                    raise ValidationError(
+                        "Απαιτείται επιλογή πολυκατοικίας ή συγκεκριμένου template."
+                    )
                 if task_type == 'common_expense':
                     template = NotificationTemplate.objects.create(
                         name=f'Κοινόχρηστα Μήνα (Auto)',
                         category='payment',
                         subject='Κοινόχρηστα {{month}}',
                         body='Αγαπητέ/ή {{resident_name}},\n\nΕπισυνάπτονται τα κοινόχρηστα του μήνα {{month}}.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
-                        is_active=True
+                        is_active=True,
+                        building=building,
                     )
                 elif task_type == 'balance_reminder':
                     template = NotificationTemplate.objects.create(
@@ -1184,7 +1192,8 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         category='payment',
                         subject='Υπενθύμιση Οφειλής',
                         body='Αγαπητέ/ή {{resident_name}},\n\nΣας υπενθυμίζουμε ότι υπάρχει εκκρεμές υπόλοιπο στον λογαριασμό σας.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
-                        is_active=True
+                        is_active=True,
+                        building=building,
                     )
                 else:
                     template = NotificationTemplate.objects.create(
@@ -1192,7 +1201,8 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         category='announcement',
                         subject='Ανακοίνωση',
                         body='Αγαπητέ/ή {{resident_name}},\n\n{{message}}\n\nΜε εκτίμηση,\nΗ Διαχείριση',
-                        is_active=True
+                        is_active=True,
+                        building=building,
                     )
         else:
             template = get_object_or_404(
