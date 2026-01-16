@@ -21,6 +21,7 @@ import {
   deleteServiceReceipt,
 } from '@/lib/api';
 import { ExpenseViewModal } from './ExpenseViewModal';
+import { ExpensePaymentModal } from './ExpensePaymentModal';
 import { Plus } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { showErrorFromException } from '@/lib/errorMessages';
@@ -50,13 +51,17 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   const { user } = useCurrentUser();
   const effectiveRole = getEffectiveRoleForBuilding(user, selectedBuilding);
   const canDeleteArchiveDocs = effectiveRole === 'manager' || effectiveRole === 'superuser';
+  const canManagePayments = effectiveRole === 'manager' || effectiveRole === 'superuser';
 
   const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [payerFilter, setPayerFilter] = useState<string>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedPaymentExpense, setSelectedPaymentExpense] = useState<Expense | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Generate month options for the last 24 months
   const generateMonthOptions = () => {
@@ -274,10 +279,21 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     setShowViewModal(true);
   };
 
+  const handleOpenPaymentModal = (expense: Expense, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPaymentExpense(expense);
+    setShowPaymentModal(true);
+  };
+
   // Handle modal close
   const handleCloseViewModal = () => {
     setShowViewModal(false);
     setSelectedExpense(null);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setSelectedPaymentExpense(null);
   };
 
   const filteredExpenses = useMemo(() => {
@@ -291,9 +307,12 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
 
       const matchesPayer = payerFilter === 'all' || expense.payer_responsibility === payerFilter;
 
-      return matchesSearch && matchesCategory && matchesPayer;
+      const status = expense.payment_status || 'unpaid';
+      const matchesPaymentStatus = paymentStatusFilter === 'all' || status === paymentStatusFilter;
+
+      return matchesSearch && matchesCategory && matchesPayer && matchesPaymentStatus;
     });
-  }, [expenses, searchTerm, categoryFilter, payerFilter]);
+  }, [expenses, searchTerm, categoryFilter, payerFilter, paymentStatusFilter]);
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -318,6 +337,20 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
       'specific_apartments': 'Συγκεκριμένα',
     };
     return labels[distribution] || 'Άγνωστο';
+  };
+
+  const getPaymentStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'paid':
+        return { label: '✅ Πληρωμένο', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+      case 'partial':
+        return { label: '🟠 Μερικώς', className: 'bg-amber-50 text-amber-700 border-amber-200' };
+      case 'overdue':
+        return { label: '⚠️ Ληξιπρόθεσμο', className: 'bg-red-50 text-red-700 border-red-200' };
+      case 'unpaid':
+      default:
+        return { label: '⏳ Απλήρωτο', className: 'bg-slate-50 text-slate-700 border-slate-200' };
+    }
   };
 
   if (isLoading) {
@@ -420,16 +453,17 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                 setSearchTerm('');
                 setCategoryFilter('all');
                 setPayerFilter('all');
+                setPaymentStatusFilter('all');
                 // Note: We don't clear selectedMonth as it's a primary filter
               }}
               className="text-xs"
-              title="Καθαρίζει αναζήτηση, κατηγορία, ευθύνη πληρωμής (διατηρεί τον μήνα)"
+              title="Καθαρίζει αναζήτηση, κατηγορία, ευθύνη πληρωμής και κατάσταση (διατηρεί τον μήνα)"
             >
               🗑️ Καθαρισμός Φίλτρων
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">Αναζήτηση</label>
               <Input
@@ -510,6 +544,22 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-600">Κατάσταση Πληρωμής</label>
+              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Όλες" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">📌 Όλες οι καταστάσεις</SelectItem>
+                  <SelectItem value="unpaid">⏳ Απλήρωτο</SelectItem>
+                  <SelectItem value="partial">🟠 Μερικώς Πληρωμένο</SelectItem>
+                  <SelectItem value="paid">✅ Πληρωμένο</SelectItem>
+                  <SelectItem value="overdue">⚠️ Ληξιπρόθεσμο</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
           </div>
 
           {/* Active Filters Summary */}
@@ -550,6 +600,14 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                     : '🔵 Κοινή Ευθύνη'}
                 </Badge>
               )}
+              {paymentStatusFilter !== 'all' && (
+                <Badge variant="outline" className="text-xs">
+                  {paymentStatusFilter === 'paid' ? '✅ Πληρωμένο'
+                    : paymentStatusFilter === 'partial' ? '🟠 Μερικώς'
+                    : paymentStatusFilter === 'overdue' ? '⚠️ Ληξιπρόθεσμο'
+                    : '⏳ Απλήρωτο'}
+                </Badge>
+              )}
 
             </div>
           </div>
@@ -583,150 +641,179 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               )}
             </div>
           ) : (
-            filteredExpenses.map((expense) => (
-              <div
-                key={expense.id}
-                className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer group"
-                onClick={() => onExpenseSelect?.(expense)}
-              >
-                <div className="flex items-center justify-between">
-                  {/* Main Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base truncate group-hover:text-blue-600">
-                          {expense.title}
-                        </h3>
+            filteredExpenses.map((expense) => {
+              const paymentStatus = getPaymentStatusBadge(expense.payment_status);
+              const hasRemaining = typeof expense.remaining_amount === 'number';
+              const isPaid = expense.payment_status === 'paid' || (hasRemaining && (expense.remaining_amount || 0) <= 0);
+
+              return (
+                <div
+                  key={expense.id}
+                  className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer group"
+                  onClick={() => onExpenseSelect?.(expense)}
+                >
+                  <div className="flex items-center justify-between">
+                    {/* Main Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base truncate group-hover:text-blue-600">
+                            {expense.title}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge className={`${getCategoryColor(expense.category)} text-xs`}>
+                            {expense.category_display || expense.category}
+                          </Badge>
+                          {expense.payer_responsibility === 'resident' ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs font-semibold">
+                              🟢 Ένοικος
+                            </Badge>
+                          ) : expense.payer_responsibility === 'owner' ? (
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-xs font-semibold">
+                              🔴 Ιδιοκτήτης
+                            </Badge>
+                          ) : expense.payer_responsibility === 'shared' ? (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs font-semibold">
+                              🔵 Κοινή Ευθύνη
+                            </Badge>
+                          ) : null}
+                          {expense.title?.toLowerCase().includes('προκαταβολή') ? (
+                            <Badge variant="default" className="bg-amber-500 hover:bg-amber-600 text-white text-xs">
+                              💰 Προκαταβολή
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-blue-600 text-xs">
+                              📋 Καταχωρημένη
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className={`text-xs font-semibold ${paymentStatus.className}`}>
+                            {paymentStatus.label}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge className={`${getCategoryColor(expense.category)} text-xs`}>
-                          {expense.category_display || expense.category}
-                        </Badge>
-                        {expense.payer_responsibility === 'resident' ? (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs font-semibold">
-                            🟢 Ένοικος
-                          </Badge>
-                        ) : expense.payer_responsibility === 'owner' ? (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-xs font-semibold">
-                            🔴 Ιδιοκτήτης
-                          </Badge>
-                        ) : expense.payer_responsibility === 'shared' ? (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs font-semibold">
-                            🔵 Κοινή Ευθύνη
-                          </Badge>
-                        ) : null}
-                        {expense.title?.toLowerCase().includes('προκαταβολή') ? (
-                          <Badge variant="default" className="bg-amber-500 hover:bg-amber-600 text-white text-xs">
-                            💰 Προκαταβολή
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-blue-600 text-xs">
-                            📋 Καταχωρημένη
-                          </Badge>
+
+                      {/* Key Information Row */}
+                      <div className="flex items-center flex-wrap gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <span className={`font-semibold text-base ${expense.title?.toLowerCase().includes('προκαταβολή') ? 'text-amber-600' : 'text-green-600'}`}>
+                            {formatCurrency(expense.amount)}
+                          </span>
+                        </div>
+                        {hasRemaining && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-500">💸</span>
+                            <span className="font-medium text-slate-700">
+                              Υπόλοιπο: {formatCurrency(expense.remaining_amount || 0)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-500">📅</span>
+                          <span>{formatDate(expense.date)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-500">📊</span>
+                          <span>{getDistributionBadge(expense.distribution_type)}</span>
+                        </div>
+                        {expense.supplier_name && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-500">🏢</span>
+                            <span className="text-blue-600 truncate max-w-32">{expense.supplier_name}</span>
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    {/* Key Information Row */}
-                    <div className="flex items-center gap-6 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <span className={`font-semibold text-base ${expense.title?.toLowerCase().includes('προκαταβολή') ? 'text-amber-600' : 'text-green-600'}`}>
-                          {formatCurrency(expense.amount)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-500">📅</span>
-                        <span>{formatDate(expense.date)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-500">📊</span>
-                        <span>{getDistributionBadge(expense.distribution_type)}</span>
-                      </div>
-                      {expense.supplier_name && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-500">🏢</span>
-                          <span className="text-blue-600 truncate max-w-32">{expense.supplier_name}</span>
+                      {/* Additional Info (collapsible) */}
+                      {(expense.notes || expense.attachment) && (
+                        <div className="mt-2 pt-2 border-t border-gray-100">
+                          {expense.notes && (
+                            <div className="text-xs text-gray-500 mb-1">
+                              <span className="font-medium">📝 Σημειώσεις:</span>
+                              <span className="ml-1 truncate">{expense.notes}</span>
+                            </div>
+                          )}
+                          {expense.attachment && (
+                            <div className="text-xs text-gray-500">
+                              <span className="font-medium">📎 Επισύναψη:</span>
+                              <span className="ml-1 text-blue-600">
+                                {expense.attachment.split('/').pop() || 'attachment'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Maintenance Payment Info */}
+                      {expense.maintenance_payment_receipts && expense.maintenance_payment_receipts.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-blue-100 bg-blue-50/30 rounded p-2">
+                          <div className="text-xs font-medium text-blue-700 mb-1 flex items-center gap-1">
+                            <span>🔧</span>
+                            <span>Συνδεδεμένο με Συντήρηση:</span>
+                          </div>
+                          {expense.maintenance_payment_receipts.map((receipt) => (
+                            <div key={receipt.id} className="text-xs text-blue-600 ml-1 flex items-center gap-2">
+                              {receipt?.scheduled_maintenance?.id ? (
+                                <Link
+                                  href={`/maintenance/scheduled/${receipt.scheduled_maintenance.id}/edit`}
+                                  className="font-medium text-blue-700 hover:underline"
+                                >
+                                  {receipt.scheduled_maintenance.title}
+                                </Link>
+                              ) : (
+                                <span className="font-medium">{receipt.scheduled_maintenance.title}</span>
+                              )}
+                              {receipt.installment && (
+                                <span className="text-blue-500">
+                                  ({receipt.installment.installment_type === 'advance' ? 'Προκαταβολή' :
+                                    receipt.installment.installment_type === 'installment' ? `Δόση ${receipt.installment.installment_number}` :
+                                    receipt.installment.installment_type})
+                                </span>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
 
-                    {/* Additional Info (collapsible) */}
-                    {(expense.notes || expense.attachment) && (
-                      <div className="mt-2 pt-2 border-t border-gray-100">
-                        {expense.notes && (
-                          <div className="text-xs text-gray-500 mb-1">
-                            <span className="font-medium">📝 Σημειώσεις:</span>
-                            <span className="ml-1 truncate">{expense.notes}</span>
-                          </div>
+                    {/* Actions */}
+                    {showActions && (
+                      <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                        {canManagePayments && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => handleOpenPaymentModal(expense, e)}
+                            disabled={isPaid}
+                            title={isPaid ? 'Η δαπάνη είναι ήδη εξοφλημένη' : 'Καταχώρηση εξόφλησης'}
+                          >
+                            💸 Εξόφληση
+                          </Button>
                         )}
-                        {expense.attachment && (
-                          <div className="text-xs text-gray-500">
-                            <span className="font-medium">📎 Επισύναψη:</span>
-                            <span className="ml-1 text-blue-600">
-                              {expense.attachment.split('/').pop() || 'attachment'}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Maintenance Payment Info */}
-                    {expense.maintenance_payment_receipts && expense.maintenance_payment_receipts.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-blue-100 bg-blue-50/30 rounded p-2">
-                        <div className="text-xs font-medium text-blue-700 mb-1 flex items-center gap-1">
-                          <span>🔧</span>
-                          <span>Συνδεδεμένο με Συντήρηση:</span>
-                        </div>
-                        {expense.maintenance_payment_receipts.map((receipt) => (
-                          <div key={receipt.id} className="text-xs text-blue-600 ml-1 flex items-center gap-2">
-                            {receipt?.scheduled_maintenance?.id ? (
-                              <Link
-                                href={`/maintenance/scheduled/${receipt.scheduled_maintenance.id}/edit`}
-                                className="font-medium text-blue-700 hover:underline"
-                              >
-                                {receipt.scheduled_maintenance.title}
-                              </Link>
-                            ) : (
-                              <span className="font-medium">{receipt.scheduled_maintenance.title}</span>
-                            )}
-                            {receipt.installment && (
-                              <span className="text-blue-500">
-                                ({receipt.installment.installment_type === 'advance' ? 'Προκαταβολή' :
-                                  receipt.installment.installment_type === 'installment' ? `Δόση ${receipt.installment.installment_number}` :
-                                  receipt.installment.installment_type})
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => handleViewExpense(expense, e)}
+                        >
+                          👁️ Προβολή
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          onClick={(e) => handleDeleteExpense(expense, e)}
+                          title="Διαγραφή δαπάνης"
+                        >
+                          🗑️ Διαγραφή
+                        </Button>
                       </div>
                     )}
                   </div>
-
-                  {/* Actions */}
-                  {showActions && (
-                    <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleViewExpense(expense, e)}
-                      >
-                        👁️ Προβολή
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        onClick={(e) => handleDeleteExpense(expense, e)}
-                        title="Διαγραφή δαπάνης"
-                      >
-                        🗑️ Διαγραφή
-                      </Button>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </CardContent>
@@ -738,6 +825,14 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
       onClose={handleCloseViewModal}
       expense={selectedExpense}
       buildingName={buildingName}
+    />
+
+    <ExpensePaymentModal
+      isOpen={showPaymentModal}
+      onClose={handleClosePaymentModal}
+      expense={selectedPaymentExpense}
+      buildingId={buildingId}
+      onSuccess={loadExpenses}
     />
   </>
   );

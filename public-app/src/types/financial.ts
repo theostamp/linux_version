@@ -44,6 +44,11 @@ export interface Expense {
   attachment?: string;
   attachment_url?: string;
   notes?: string;
+  paid_total?: number;
+  remaining_amount?: number;
+  payment_status?: 'unpaid' | 'partial' | 'paid' | 'overdue';
+  payment_status_display?: string;
+  last_payment_date?: string | null;
   created_at: string;
   updated_at: string;
   // Explicit links (optional; require backend support)
@@ -126,6 +131,25 @@ export interface Payment {
   created_at: string;
 }
 
+export interface ExpensePayment {
+  id: number;
+  expense: number;
+  expense_title?: string;
+  expense_amount?: number;
+  payment_date: string;
+  amount: number;
+  method: string;
+  method_display?: string;
+  reference_number?: string;
+  notes?: string;
+  receipt?: string;
+  receipt_url?: string;
+  created_by?: number | null;
+  created_by_name?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ExpenseApartment {
   id: number;
   expense: number;
@@ -161,6 +185,7 @@ export interface FinancialSummary {
   previous_obligations?: number;
   current_obligations?: number;
   current_month_expenses?: number;  // Νέο πεδίο: Δαπάνες μόνο του τρέχοντος μήνα
+  third_party_obligations?: number; // Οφειλές προς τρίτους (δαπάνες μείον εξοφλήσεις)
   total_expenses_this_month: number;
   total_payments_this_month: number;
   recent_transactions: Transaction[];

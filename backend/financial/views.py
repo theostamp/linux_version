@@ -26,14 +26,15 @@ def get_query_params(request):
     """
     return getattr(request, 'query_params', request.GET)
 
-from .models import Expense, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt, MonthlyBalance
+from .models import Expense, ExpensePayment, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt, MonthlyBalance
 from .serializers import (
-    ExpenseSerializer, TransactionSerializer, PaymentSerializer,
+    ExpenseSerializer, ExpensePaymentSerializer, TransactionSerializer, PaymentSerializer,
     MeterReadingSerializer, SupplierSerializer,
     FinancialSummarySerializer, FinancialReceiptSerializer, MonthlyBalanceSerializer
 )
 from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService, InvoiceParser
 from buildings.models import Building
+from buildings.services import BuildingService
 from buildings.mixins import BuildingContextMixin, OptionalBuildingContextMixin  # NEW: Import mixin
 from apartments.models import Apartment
 from .services import ReportService
@@ -46,6 +47,7 @@ from core.permissions import IsManager, IsRelatedToBuilding
 from .audit import FinancialAuditLog
 from .services import CommonExpenseAutomationService
 from django.db import models
+from django.db.models.functions import Coalesce
 try:
     from system_health_validator import run_system_health_check
 except ImportError:
@@ -184,6 +186,17 @@ class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), IsManager()]
         return [IsAuthenticated(), IsRelatedToBuilding()]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(
+            paid_total=Coalesce(
+                models.Sum('payments__amount'),
+                models.Value(0),
+                output_field=models.DecimalField(max_digits=10, decimal_places=2)
+            ),
+            last_payment_date=models.Max('payments__payment_date')
+        )
 
     def perform_create(self, serializer):
         """Καταγραφή δημιουργίας δαπάνης με αυτόματη έκδοση και χρέωση διαμερισμάτων"""
@@ -911,6 +924,40 @@ class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class ExpensePaymentViewSet(viewsets.ModelViewSet):
+    """ViewSet για εξοφλήσεις δαπανών προς προμηθευτές"""
+
+    queryset = ExpensePayment.objects.select_related('expense', 'expense__building').all()
+    serializer_class = ExpensePaymentSerializer
+    permission_classes = [IsAuthenticated, ExpensePermission]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsManager()]
+        return [IsAuthenticated(), IsRelatedToBuilding()]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        building = BuildingService.resolve_building_from_request(self.request, required=True)
+        if building:
+            queryset = queryset.filter(expense__building_id=building.id)
+
+        expense_id = self.request.query_params.get('expense')
+        if expense_id:
+            queryset = queryset.filter(expense_id=expense_id)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        building = BuildingService.resolve_building_from_request(self.request, required=True)
+        expense = serializer.validated_data.get('expense')
+        if expense and building and expense.building_id != building.id:
+            raise ValidationError("Η δαπάνη δεν ανήκει στο επιλεγμένο κτίριο.")
+
+        serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
 
 
 class TransactionViewSet(viewsets.ModelViewSet):

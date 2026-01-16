@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from buildings.models import Building
 from apartments.models import Apartment
@@ -1111,6 +1112,53 @@ class Payment(models.Model):
         # Update apartment balance using BalanceCalculationService
         from .balance_service import BalanceCalculationService
         BalanceCalculationService.update_apartment_balance(self.apartment, use_locking=False)
+
+
+class ExpensePayment(models.Model):
+    """Μοντέλο για εξοφλήσεις δαπανών προς προμηθευτές"""
+
+    PAYMENT_METHODS = [
+        ('cash', 'Μετρητά'),
+        ('bank_transfer', 'Τραπεζική Μεταφορά'),
+        ('check', 'Επιταγή'),
+        ('card', 'Κάρτα'),
+    ]
+
+    expense = models.ForeignKey(
+        Expense,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name="Δαπάνη"
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό Πληρωμής")
+    payment_date = models.DateField(verbose_name="Ημερομηνία Εξόφλησης")
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, verbose_name="Τρόπος Πληρωμής")
+    reference_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Αναφοράς")
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    receipt = models.FileField(
+        upload_to='expense_payments/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name="Απόδειξη Πληρωμής"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='expense_payments',
+        verbose_name="Καταχωρήθηκε από"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Εξόφληση Δαπάνης"
+        verbose_name_plural = "Εξοφλήσεις Δαπανών"
+        ordering = ['-payment_date', '-created_at']
+
+    def __str__(self):
+        return f"Πληρωμή {self.expense.title} - {self.amount}€ ({self.payment_date})"
 
 
 class ExpenseApartment(models.Model):

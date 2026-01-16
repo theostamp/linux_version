@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    ExpenseViewSet, TransactionViewSet, PaymentViewSet,
+    ExpenseViewSet, ExpensePaymentViewSet, TransactionViewSet, PaymentViewSet,
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
     SystemHealthCheckView, auto_fix_system_issues, financial_overview,
@@ -16,6 +16,7 @@ from .tests_views import (
 
 router = DefaultRouter()
 router.register(r'expenses', ExpenseViewSet)
+router.register(r'expense-payments', ExpensePaymentViewSet, basename='expense-payments')
 router.register(r'transactions', TransactionViewSet)
 router.register(r'payments', PaymentViewSet)
 router.register(r'suppliers', SupplierViewSet)

@@ -58,6 +58,7 @@ interface FinancialSummary {
   current_obligations: number; // Τρέχουσες υποχρεώσεις (κύριο χρέος)
   previous_obligations: number; // ← ΝΕΟ FIELD - Οφειλές προηγούμενων μηνών
   current_month_expenses: number; // ← ΝΕΟ FIELD - Δαπάνες μόνο τρέχοντος μήνα
+  third_party_obligations?: number; // Οφειλές προς τρίτους
   reserve_fund_debt: number; // Χρέος από εισφορά αποθεματικού
   reserve_fund_goal: number;
   current_reserve: number;
@@ -478,6 +479,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         current_obligations: apiData.current_obligations || 0,
         previous_obligations: apiData.previous_obligations || 0, // ← ΝΕΟ FIELD
         current_month_expenses: (apiData as any).current_month_expenses || 0, // ← ΝΕΟ FIELD: Δαπάνες μόνο τρέχοντος μήνα
+        third_party_obligations: (apiData as any).third_party_obligations || 0,
         reserve_fund_debt: -calculatedReserveFundDebt, // Χρέος από εισφορά αποθεματικού - DYNAMIC
         reserve_fund_goal: savedGoal,
         current_reserve: apiData.current_reserve || 0,
@@ -554,6 +556,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         current_obligations: 0,
         previous_obligations: 0, // Add missing property
         current_month_expenses: 0, // Add missing property
+        third_party_obligations: 0,
         reserve_fund_debt: 0,
         reserve_fund_goal: 0, // No hardcoded value - will be set by user
         current_reserve: 0,
@@ -1422,6 +1425,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             <Eye className="h-3 w-3" />
                           </Button>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Οφειλές προς τρίτους */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-700 dark:text-slate-200 font-medium">Οφειλές προς τρίτους:</span>
+                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">
+                          {formatCurrency(financialSummary?.third_party_obligations || 0)}
+                        </span>
                       </div>
                     </div>
 

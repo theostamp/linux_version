@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt, MonthlyBalance
+from .models import Expense, ExpensePayment, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt, MonthlyBalance
 from .services import FileUploadService
 
 
@@ -29,6 +29,11 @@ class ExpenseSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     supplier_details = SupplierSerializer(source='supplier', read_only=True)
     attachment_url = serializers.SerializerMethodField()
+    paid_total = serializers.SerializerMethodField()
+    remaining_amount = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
+    payment_status_display = serializers.SerializerMethodField()
+    last_payment_date = serializers.SerializerMethodField()
 
     # Linked maintenance/receipt (read-only)
     linked_service_receipt = serializers.SerializerMethodField()
@@ -55,6 +60,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'payer_responsibility', 'payer_responsibility_display', 'suggested_payer', 'split_ratio',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
             'notes', 'due_date', 'add_to_calendar', 'expense_type', 'created_at', 'updated_at',
+            'paid_total', 'remaining_amount', 'payment_status', 'payment_status_display', 'last_payment_date',
             'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
             'has_installments', 'linked_maintenance_projects',
             # New project fields
@@ -82,6 +88,69 @@ class ExpenseSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.attachment.url)
             return obj.attachment.url
         return None
+
+    def _get_paid_total(self, obj):
+        from decimal import Decimal
+
+        paid_total = getattr(obj, 'paid_total', None)
+        if paid_total is None:
+            try:
+                from django.db.models import Sum
+                paid_total = obj.payments.aggregate(total=Sum('amount'))['total']
+            except Exception:
+                paid_total = None
+        return Decimal(str(paid_total or Decimal('0.00')))
+
+    def get_paid_total(self, obj):
+        return float(self._get_paid_total(obj))
+
+    def get_remaining_amount(self, obj):
+        from decimal import Decimal
+
+        paid_total = self._get_paid_total(obj)
+        amount = Decimal(str(obj.amount or Decimal('0.00')))
+        remaining = amount - paid_total
+        if remaining < 0:
+            remaining = Decimal('0.00')
+        return float(remaining)
+
+    def get_payment_status(self, obj):
+        from datetime import date
+
+        paid_total = self._get_paid_total(obj)
+        amount = getattr(obj, 'amount', 0) or 0
+        remaining = amount - paid_total
+        if paid_total <= 0:
+            status = 'unpaid'
+        elif remaining <= 0:
+            status = 'paid'
+        else:
+            status = 'partial'
+
+        if status != 'paid' and obj.due_date and obj.due_date < date.today():
+            status = 'overdue'
+
+        return status
+
+    def get_payment_status_display(self, obj):
+        status = self.get_payment_status(obj)
+        return {
+            'unpaid': 'Απλήρωτο',
+            'partial': 'Μερικώς Πληρωμένο',
+            'paid': 'Πληρωμένο',
+            'overdue': 'Ληξιπρόθεσμο'
+        }.get(status, 'Απλήρωτο')
+
+    def get_last_payment_date(self, obj):
+        last_payment_date = getattr(obj, 'last_payment_date', None)
+        if last_payment_date:
+            return last_payment_date.isoformat()
+
+        try:
+            latest_payment = obj.payments.order_by('-payment_date').first()
+            return latest_payment.payment_date.isoformat() if latest_payment else None
+        except Exception:
+            return None
 
     def get_project_url(self, obj):
         """Return URL to project detail page"""
@@ -345,6 +414,53 @@ class PaymentSerializer(serializers.ModelSerializer):
         return None
 
 
+class ExpensePaymentSerializer(serializers.ModelSerializer):
+    """Serializer για εξοφλήσεις δαπανών"""
+
+    method_display = serializers.CharField(source='get_method_display', read_only=True)
+    expense_title = serializers.CharField(source='expense.title', read_only=True)
+    expense_amount = serializers.DecimalField(source='expense.amount', max_digits=10, decimal_places=2, read_only=True)
+    receipt_url = serializers.SerializerMethodField()
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = ExpensePayment
+        fields = [
+            'id', 'expense', 'expense_title', 'expense_amount',
+            'payment_date', 'amount', 'method', 'method_display',
+            'reference_number', 'notes', 'receipt', 'receipt_url',
+            'created_by', 'created_by_name', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'created_by',
+            'created_by_name', 'expense_title', 'expense_amount', 'receipt_url'
+        ]
+
+    def get_receipt_url(self, obj):
+        if obj.receipt:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.receipt.url)
+            return obj.receipt.url
+        return None
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Το ποσό πρέπει να είναι μεγαλύτερο του μηδενός.")
+        return value
+
+    def validate_receipt(self, value):
+        if value:
+            try:
+                result = FileUploadService.validate_file(value)
+                if not result.get('is_valid'):
+                    errors = result.get('errors') or []
+                    raise serializers.ValidationError("; ".join(errors) or "Μη έγκυρο αρχείο.")
+            except Exception as e:
+                raise serializers.ValidationError(f"Σφάλμα στο αρχείο: {str(e)}")
+        return value
+
+
 class ExpenseApartmentSerializer(serializers.ModelSerializer):
     """Serializer για τη σύνδεση δαπανών-διαμερισμάτων"""
     
@@ -540,6 +656,7 @@ class FinancialSummarySerializer(serializers.Serializer):
     total_expenses_month = serializers.FloatField()
     total_payments_month = serializers.FloatField()
     pending_expenses = serializers.FloatField()
+    third_party_obligations = serializers.FloatField()
     recent_transactions = TransactionSerializer(many=True, read_only=True)
     recent_transactions_count = serializers.IntegerField()
     apartment_balances = ApartmentBalanceSerializer(many=True, read_only=True)

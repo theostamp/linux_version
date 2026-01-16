@@ -7,7 +7,7 @@ from django.db.models import Sum
 from datetime import datetime, date
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
+from .models import Expense, ExpensePayment, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
 from apartments.models import Apartment
 from buildings.models import Building
 from .monthly_balance_service import MonthlyBalanceService
@@ -528,6 +528,7 @@ class FinancialDashboardService:
             recent_transactions = recent_transactions_query.select_related('building', 'apartment').order_by('-date')[:10]
 
             pending_expenses = Decimal('0.00')
+            third_party_obligations = self._get_third_party_obligations(month_label)
             apartment_balances = self.get_apartment_balances(month)
             payment_statistics = self.get_payment_statistics(month)
 
@@ -562,6 +563,7 @@ class FinancialDashboardService:
                 'scheduled_maintenance_amount': float(scheduled_maintenance_amount.quantize(Decimal('0.01'))),
                 'carry_forward': float(carry_forward_amount.quantize(Decimal('0.01'))),
                 'pending_expenses': float(pending_expenses.quantize(Decimal('0.01'))),
+                'third_party_obligations': float(third_party_obligations.quantize(Decimal('0.01'))),
                 'recent_transactions': list(recent_transactions),
                 'recent_transactions_count': len(recent_transactions),
                 'apartment_balances': apartment_balances,
@@ -761,6 +763,7 @@ class FinancialDashboardService:
 
         # Στατιστικά πληρωμών
         payment_statistics = self.get_payment_statistics(month)
+        third_party_obligations = self._get_third_party_obligations(month)
 
         # Calculate financial position based on month parameter
         if month:
@@ -1058,6 +1061,7 @@ class FinancialDashboardService:
             'scheduled_maintenance_amount': float(scheduled_maintenance_amount.quantize(Decimal('0.01'))),
             'carry_forward': float(carry_forward_amount.quantize(Decimal('0.01'))),
             'pending_expenses': float(pending_expenses.quantize(Decimal('0.01'))),
+            'third_party_obligations': float(third_party_obligations.quantize(Decimal('0.01'))),
             'recent_transactions': list(recent_transactions),
             'recent_transactions_count': len(recent_transactions),
             'apartment_balances': apartment_balances,
@@ -1192,6 +1196,42 @@ class FinancialDashboardService:
         logger.debug(f"   ✅ Overall activity: {activity_found}")
 
         return activity_found
+
+    def _get_third_party_obligations(self, month: str | None = None) -> Decimal:
+        """
+        Υπολογίζει τις οφειλές προς τρίτους (δαπάνες μείον εξοφλήσεις).
+
+        Αν δοθεί month (YYYY-MM), υπολογίζει μέχρι το τέλος του μήνα (exclusive).
+        """
+        if month:
+            _, month_end = get_month_date_range(month)
+            expenses_qs = Expense.objects.filter(
+                building_id=self.building_id,
+                date__lt=month_end
+            )
+            payments_qs = ExpensePayment.objects.filter(
+                expense__building_id=self.building_id,
+                expense__date__lt=month_end,
+                payment_date__lt=month_end
+            )
+        else:
+            today = timezone.now().date()
+            expenses_qs = Expense.objects.filter(
+                building_id=self.building_id,
+                date__lte=today
+            )
+            payments_qs = ExpensePayment.objects.filter(
+                expense__building_id=self.building_id,
+                expense__date__lte=today,
+                payment_date__lte=today
+            )
+
+        expenses_total = expenses_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        payments_total = payments_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        remaining = expenses_total - payments_total
+        if remaining < 0:
+            remaining = Decimal('0.00')
+        return remaining
 
     def get_apartment_balances(self, month: str | None = None) -> List[Dict[str, Any]]:
         """Επιστρέφει την κατάσταση οφειλών για όλα τα διαμερίσματα

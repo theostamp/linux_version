@@ -65,6 +65,8 @@ export const useExpenses = (
       const normalize = (e: any): Expense => ({
         ...e,
         amount: parseAmount(e?.amount),
+        paid_total: parseAmount(e?.paid_total),
+        remaining_amount: parseAmount(e?.remaining_amount),
       });
 
       return Array.isArray(data) ? data.map(normalize) : [];
