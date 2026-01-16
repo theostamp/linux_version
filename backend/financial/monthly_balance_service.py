@@ -18,6 +18,7 @@ from .models import MonthlyBalance, Expense, Payment
 from buildings.models import Building
 from apartments.models import Apartment
 from .balance_service import BalanceCalculationService
+from .utils.date_helpers import is_date_in_reserve_fund_timeline
 from maintenance.models import PaymentInstallment
 
 logger = logging.getLogger(__name__)
@@ -315,7 +316,9 @@ class MonthlyBalanceService:
         """
         Υπολογισμός reserve fund για συγκεκριμένο μήνα.
         
-        Βασίζεται αποκλειστικά σε Expense records με category='reserve_fund'.
+        Προτιμά Expense records με category='reserve_fund'.
+        Αν δεν υπάρχουν, υπολογίζει το μηνιαίο ποσό από τις ρυθμίσεις κτιρίου
+        (με έλεγχο timeline).
         """
         reserve_expenses = Expense.objects.filter(
             building=self.building,
@@ -323,7 +326,25 @@ class MonthlyBalanceService:
             date__year=year,
             date__month=month
         )
-        return reserve_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        recorded_total = reserve_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        if reserve_expenses.exists():
+            return recorded_total
+
+        target_date = date(year, month, 1)
+        if not is_date_in_reserve_fund_timeline(target_date, self.building):
+            return Decimal('0.00')
+
+        apartments_count = Apartment.objects.filter(building=self.building).count()
+        if self.building.reserve_fund_goal and self.building.reserve_fund_duration_months:
+            duration = max(int(self.building.reserve_fund_duration_months), 1)
+            goal = self.building.reserve_fund_goal or Decimal('0.00')
+            return goal / Decimal(duration)
+
+        contribution_per_apartment = self.building.reserve_contribution_per_apartment or Decimal('0.00')
+        if contribution_per_apartment > 0 and apartments_count > 0:
+            return contribution_per_apartment * Decimal(apartments_count)
+
+        return Decimal('0.00')
     
     def _calculate_scheduled_maintenance(self, year: int, month: int) -> Decimal:
         """
