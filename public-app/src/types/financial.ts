@@ -235,6 +235,7 @@ export interface ScannedInvoiceData {
   supplier_vat?: string | null;
   document_number?: string | null;
   document_type?: string | null;
+  financial_intent?: 'expense' | 'payment_receipt' | null;
   category: string | null;
   description: string | null;
   // Best-effort building recognition (backend)
@@ -243,6 +244,9 @@ export interface ScannedInvoiceData {
   service_address?: string | null;
   service_city?: string | null;
   service_postal_code?: string | null;
+  // Manual fields for unified flow (not from OCR)
+  linked_expense_id?: number | null;
+  payment_method?: string | null;
 }
 
 export interface ApartmentBalance {

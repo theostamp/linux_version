@@ -3515,6 +3515,7 @@ supplier: (string, name of the company/person)
 supplier_vat: (string, Greek VAT/AFM number, digits only)
 document_number: (string, invoice/receipt number)
 document_type: (string, strictly one of: 'invoice', 'receipt', 'credit_note', 'debit_note', 'other')
+financial_intent: (string, strictly one of: 'expense', 'payment_receipt')
 category: (string, strictly one of: 'DEH', 'EYDAP', 'HEATING', 'CLEANING', 'MAINTENANCE', 'ELEVATOR', 'OTHER')
 description: (string, brief description in Greek)
 
@@ -3522,6 +3523,9 @@ description: (string, brief description in Greek)
 service_address: (string, the service/property address the invoice refers to)
 service_city: (string, city)
 service_postal_code: (string, postal code digits only)
+
+    Use financial_intent='payment_receipt' ONLY when the document is clearly a proof of payment/settlement for an existing invoice or obligation.
+    Otherwise, use financial_intent='expense'.
 
     If a field is not found, return null."""
 
@@ -3825,6 +3829,10 @@ service_postal_code: (string, postal code digits only)
             # Validate and normalize response structure
             document_number = parsed_data.get('document_number') or parsed_data.get('invoice_number')
             document_type = parsed_data.get('document_type') or parsed_data.get('invoice_type')
+            financial_intent = (
+                parsed_data.get('financial_intent')
+                or parsed_data.get('document_intent')
+            )
             supplier_vat = (
                 parsed_data.get('supplier_vat')
                 or parsed_data.get('vat')
@@ -3850,6 +3858,11 @@ service_postal_code: (string, postal code digits only)
                 'supplier_vat': self._parse_supplier_vat(supplier_vat),
                 'document_number': self._parse_document_number(document_number),
                 'document_type': self._parse_document_type(document_type),
+                'financial_intent': self._parse_financial_intent(
+                    financial_intent,
+                    document_type=document_type,
+                    description=parsed_data.get('description'),
+                ),
                 'category': parsed_data.get('category'),
                 'description': parsed_data.get('description'),
                 'service_address': self._parse_optional_text(service_address),
@@ -3963,3 +3976,33 @@ service_postal_code: (string, postal code digits only)
         if 'χρεω' in normalized or 'debit' in normalized:
             return 'debit_note'
         return 'other'
+
+    def _parse_financial_intent(
+        self,
+        value,
+        document_type: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> Optional[str]:
+        """Normalize financial intent to supported values."""
+        normalized = (str(value).strip().lower() if value is not None else '')
+
+        if normalized in {'expense', 'payment_receipt'}:
+            return normalized
+
+        if normalized:
+            if any(keyword in normalized for keyword in ['payment', 'paid', 'settlement', 'εξοφλ', 'πληρωμ']):
+                return 'payment_receipt'
+            if 'expense' in normalized or 'δαπαν' in normalized:
+                return 'expense'
+
+        normalized_doc_type = self._parse_document_type(document_type)
+        description_text = (description or '').lower()
+        if normalized_doc_type == 'receipt' and any(
+            keyword in description_text for keyword in ['εξοφλ', 'πληρωμ', 'settlement', 'paid']
+        ):
+            return 'payment_receipt'
+
+        if normalized_doc_type:
+            return 'expense'
+
+        return None

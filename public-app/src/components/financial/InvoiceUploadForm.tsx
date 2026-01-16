@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useInvoiceScan } from '@/hooks/useInvoiceScan';
-import { ScannedInvoiceData, ExpenseCategory } from '@/types/financial';
+import { ScannedInvoiceData, ExpenseCategory, Expense } from '@/types/financial';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,8 @@ import { Loader2, Upload, CheckCircle, AlertCircle, FileText } from 'lucide-reac
 interface InvoiceUploadFormProps {
   onSave?: (data: ScannedInvoiceData, file: File | null, shouldArchive: boolean) => void;
   onCancel?: () => void;
+  availableExpenses?: Expense[];
+  isLoadingExpenses?: boolean;
 }
 
 // Category mapping from AI categories to Expense model categories
@@ -48,7 +50,24 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   other: 'Άλλο',
 };
 
-export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, onCancel }) => {
+const FINANCIAL_INTENT_LABELS: Record<string, string> = {
+  expense: 'Καταχώρηση Δαπάνης',
+  payment_receipt: 'Απόδειξη Πληρωμής',
+};
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: 'Μετρητά',
+  bank_transfer: 'Τραπεζική Μεταφορά',
+  check: 'Επιταγή',
+  card: 'Κάρτα',
+};
+
+export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({
+  onSave,
+  onCancel,
+  availableExpenses = [],
+  isLoadingExpenses = false,
+}) => {
   const { scanInvoiceAsync, isLoading, error, data: scannedData, reset } = useInvoiceScan();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -60,6 +79,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
     supplier_vat: null,
     document_number: null,
     document_type: null,
+    financial_intent: null,
     category: null,
     description: null,
     building_suggestion: null,
@@ -71,6 +91,10 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
   // Update form data when scan completes
   useEffect(() => {
     if (scannedData) {
+      const suggestedIntent =
+        scannedData.financial_intent ||
+        (scannedData.document_type === 'receipt' ? 'payment_receipt' : 'expense');
+
       setFormData({
         amount: scannedData.amount,
         date: scannedData.date,
@@ -78,12 +102,15 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
         supplier_vat: scannedData.supplier_vat ?? null,
         document_number: scannedData.document_number ?? null,
         document_type: scannedData.document_type ?? null,
+        financial_intent: suggestedIntent,
         category: scannedData.category ? CATEGORY_MAPPING[scannedData.category] || null : null,
         description: scannedData.description,
         building_suggestion: scannedData.building_suggestion ?? null,
         service_address: scannedData.service_address ?? null,
         service_city: scannedData.service_city ?? null,
         service_postal_code: scannedData.service_postal_code ?? null,
+        linked_expense_id: scannedData.linked_expense_id ?? null,
+        payment_method: scannedData.payment_method ?? null,
       });
     }
   }, [scannedData]);
@@ -154,12 +181,15 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
       supplier_vat: null,
       document_number: null,
       document_type: null,
+      financial_intent: null,
       category: null,
       description: null,
       building_suggestion: null,
       service_address: null,
       service_city: null,
       service_postal_code: null,
+      linked_expense_id: null,
+      payment_method: null,
     });
     reset();
   };
@@ -270,7 +300,9 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                 <div className="space-y-4">
                   {/* Amount */}
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Ποσό (€) *</Label>
+                    <Label htmlFor="amount">
+                      {formData.financial_intent === 'payment_receipt' ? 'Ποσό Πληρωμής (€) *' : 'Ποσό (€) *'}
+                    </Label>
                     <Input
                       id="amount"
                       type="number"
@@ -283,7 +315,9 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
 
                   {/* Date */}
                   <div className="space-y-2">
-                    <Label htmlFor="date">Ημερομηνία *</Label>
+                    <Label htmlFor="date">
+                      {formData.financial_intent === 'payment_receipt' ? 'Ημερομηνία Πληρωμής *' : 'Ημερομηνία *'}
+                    </Label>
                     <Input
                       id="date"
                       type="date"
@@ -348,6 +382,79 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                     </Select>
                   </div>
 
+                  {/* Financial Intent */}
+                  <div className="space-y-2">
+                    <Label htmlFor="financial-intent">Χρήση Παραστατικού</Label>
+                    <Select
+                      value={formData.financial_intent ?? ''}
+                      onValueChange={(value) => handleInputChange('financial_intent', value || null)}
+                    >
+                      <SelectTrigger id="financial-intent">
+                        <SelectValue placeholder="Επιλέξτε χρήση" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(FINANCIAL_INTENT_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {formData.financial_intent === 'payment_receipt' && (
+                      <p className="text-xs text-muted-foreground">
+                        Θα συνδεθεί ως απόδειξη εξόφλησης με υπάρχουσα δαπάνη.
+                      </p>
+                    )}
+                  </div>
+
+                  {formData.financial_intent === 'payment_receipt' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="linked-expense">Σύνδεση με Δαπάνη *</Label>
+                        <Select
+                          value={formData.linked_expense_id ? String(formData.linked_expense_id) : ''}
+                          onValueChange={(value) => handleInputChange('linked_expense_id', value ? Number(value) : null)}
+                        >
+                          <SelectTrigger id="linked-expense">
+                            <SelectValue placeholder={isLoadingExpenses ? 'Φόρτωση δαπανών...' : 'Επιλέξτε δαπάνη'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableExpenses.length === 0 ? (
+                              <SelectItem value="none" disabled>
+                                Δεν υπάρχουν διαθέσιμες δαπάνες
+                              </SelectItem>
+                            ) : (
+                              availableExpenses.map((expense) => (
+                                <SelectItem key={expense.id} value={String(expense.id)}>
+                                  {expense.title} · {expense.amount}€ · {expense.date}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="payment-method">Τρόπος Πληρωμής *</Label>
+                        <Select
+                          value={formData.payment_method ?? ''}
+                          onValueChange={(value) => handleInputChange('payment_method', value || null)}
+                        >
+                          <SelectTrigger id="payment-method">
+                            <SelectValue placeholder="Επιλέξτε τρόπο" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
                   {/* Category */}
                   <div className="space-y-2">
                     <Label htmlFor="category">Κατηγορία</Label>
@@ -407,9 +514,16 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                     <Button
                       onClick={handleSave}
                       className="flex-1"
-                      disabled={!formData.amount || !formData.date}
+                      disabled={
+                        !formData.amount ||
+                        !formData.date ||
+                        (formData.financial_intent === 'payment_receipt' &&
+                          (!formData.linked_expense_id || !formData.payment_method))
+                      }
                     >
-                      Αποθήκευση Δαπάνης
+                      {formData.financial_intent === 'payment_receipt'
+                        ? 'Αποθήκευση Απόδειξης Πληρωμής'
+                        : 'Αποθήκευση Δαπάνης'}
                     </Button>
                     {onCancel && (
                       <Button

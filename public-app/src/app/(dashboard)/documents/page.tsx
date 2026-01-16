@@ -11,6 +11,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { createArchiveDocument } from '@/lib/api';
 import { api } from '@/lib/api';
 import { ScannedInvoiceData, ExpenseFormData } from '@/types/financial';
+import { useExpenses as useExpensesQuery } from '@/hooks/useExpensesQuery';
 import { toast } from 'sonner';
 import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 import {
@@ -46,6 +47,10 @@ function parseApiErrorBody(error: any): any | null {
 function DocumentsContent() {
   const router = useRouter();
   const { selectedBuilding, buildings, setSelectedBuilding } = useBuilding();
+  const { data: availableExpenses = [], isLoading: isLoadingExpenses } = useExpensesQuery(
+    { building_id: selectedBuilding?.id, page_size: 500 },
+    { enabled: !!selectedBuilding?.id }
+  );
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -78,12 +83,14 @@ function DocumentsContent() {
     scannedData: ScannedInvoiceData,
     file: File,
     allowDuplicate: boolean,
+    options?: { category?: string; linkedExpenseId?: number | null },
   ) => {
     const archiveData = new FormData();
     archiveData.append('building', buildingId.toString());
-    archiveData.append('category', 'expense_receipt');
+    archiveData.append('category', options?.category || 'expense_receipt');
     archiveData.append('file', file);
     if (allowDuplicate) archiveData.append('allow_duplicate', 'true');
+    if (options?.linkedExpenseId) archiveData.append('linked_expense', options.linkedExpenseId.toString());
 
     if (scannedData.document_type) archiveData.append('document_type', scannedData.document_type);
     if (scannedData.document_number) archiveData.append('document_number', scannedData.document_number);
@@ -94,11 +101,14 @@ function DocumentsContent() {
       archiveData.append('amount', scannedData.amount.toString());
     }
 
+    const fallbackTitle = options?.category === 'payment_receipt'
+      ? 'Απόδειξη Πληρωμής'
+      : 'Παραστατικό Δαπάνης';
     const title =
       scannedData.description ||
       scannedData.supplier ||
       file.name ||
-      'Παραστατικό Δαπάνης';
+      fallbackTitle;
     archiveData.append('title', title);
 
     return archiveData;
@@ -126,8 +136,30 @@ function DocumentsContent() {
     let archivedDoc: any | null = null;
 
     try {
+      const intent = scannedData.financial_intent === 'payment_receipt' ? 'payment_receipt' : 'expense';
+
+      if (intent === 'payment_receipt') {
+        if (!scannedData.linked_expense_id) {
+          toast.error('Επιλέξτε τη δαπάνη που εξοφλείται.');
+          return;
+        }
+        if (!scannedData.payment_method) {
+          toast.error('Επιλέξτε τρόπο πληρωμής.');
+          return;
+        }
+      }
+
       if (shouldArchive && file) {
-        const archiveData = buildArchiveFormData(buildingId, scannedData, file, Boolean(options?.allowDuplicate));
+        const archiveData = buildArchiveFormData(
+          buildingId,
+          scannedData,
+          file,
+          Boolean(options?.allowDuplicate),
+          {
+            category: intent === 'payment_receipt' ? 'payment_receipt' : 'expense_receipt',
+            linkedExpenseId: intent === 'payment_receipt' ? scannedData.linked_expense_id : null,
+          }
+        );
         try {
           archivedDoc = await createArchiveDocument(archiveData);
         } catch (archiveError: any) {
@@ -147,6 +179,42 @@ function DocumentsContent() {
 
           throw archiveError;
         }
+      }
+
+      if (intent === 'payment_receipt') {
+        const paymentForm = new FormData();
+        paymentForm.append('building_id', buildingId.toString());
+        paymentForm.append('expense', String(scannedData.linked_expense_id));
+        paymentForm.append('amount', scannedData.amount.toString());
+        paymentForm.append('payment_date', scannedData.date);
+        paymentForm.append('method', scannedData.payment_method || 'bank_transfer');
+        if (scannedData.document_number) {
+          paymentForm.append('reference_number', scannedData.document_number);
+        }
+        if (scannedData.description) {
+          paymentForm.append('notes', scannedData.description);
+        }
+        if (file) {
+          paymentForm.append('receipt', file);
+        }
+
+        const createdPayment = await api.post<any>('/financial/expense-payments/', paymentForm);
+        const createdPaymentId = createdPayment?.id ?? createdPayment?.data?.id;
+
+        if (archivedDoc?.id && createdPaymentId) {
+          try {
+            const linkForm = new FormData();
+            linkForm.append('metadata', JSON.stringify({ expense_payment_id: createdPaymentId }));
+            await api.patch(`/archive/documents/${archivedDoc.id}/`, linkForm);
+          } catch (linkError) {
+            console.warn('[DocumentsPage] Failed to link archive to expense payment:', linkError);
+          }
+          toast.success('Το παραστατικό αποθηκεύτηκε στο ηλεκτρονικό αρχείο');
+        }
+
+        toast.success('Η απόδειξη πληρωμής καταχωρήθηκε επιτυχώς!');
+        router.push(`/financial?building=${buildingId}`);
+        return;
       }
 
       const expenseData: ExpenseFormData = {
@@ -268,7 +336,7 @@ function DocumentsContent() {
             Παραστατικά
           </h1>
           <p className="text-muted-foreground mt-2">
-            Ανάλυση παραστατικών από την εφαρμογή για αυτόματη συμπλήρωση δαπανών
+            Ανάλυση παραστατικών για αυτόματη συμπλήρωση δαπανών ή αποδείξεων πληρωμής
           </p>
         </div>
       </div>
@@ -285,14 +353,19 @@ function DocumentsContent() {
           <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
             <li>Ανέβασε εικόνα ή PDF παραστατικού (JPG, PNG, WebP, PDF)</li>
             <li>Η εφαρμογή αναλύει το παραστατικό και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
+            <li>Επίλεξε αν πρόκειται για δαπάνη ή απόδειξη πληρωμής</li>
             <li>Ελέγξε και επεξεργάσου τα αποτελέσματα</li>
-            <li>Αποθήκευσε τη δαπάνη με ένα κλικ</li>
+            <li>Αποθήκευσε το παραστατικό με ένα κλικ</li>
           </ul>
         </CardContent>
       </Card>
 
       {/* Invoice Upload Form */}
-      <InvoiceUploadForm onSave={handleSave} />
+      <InvoiceUploadForm
+        onSave={handleSave}
+        availableExpenses={availableExpenses}
+        isLoadingExpenses={isLoadingExpenses}
+      />
 
       {/* Building confirmation (when recognition is not confident) */}
       <AlertDialog
