@@ -46,7 +46,15 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
   const [shouldSendNotification, setShouldSendNotification] = useState(true);
   const [isSendingNotification, setIsSendingNotification] = useState(false);
   const [hasSentNotification, setHasSentNotification] = useState(false);
+  const isMountedRef = useRef(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Load receipt data from database if not provided
   useEffect(() => {
@@ -173,14 +181,18 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
       return false;
     }
 
-    setIsSendingNotification(true);
+    if (isMountedRef.current) {
+      setIsSendingNotification(true);
+    }
     try {
       const response = await api.post<{ success?: boolean; message?: string }>(
         `/financial/payments/${payment.id}/notify/`
       );
       const success = Boolean(response?.success);
       if (success) {
-        setHasSentNotification(true);
+        if (isMountedRef.current) {
+          setHasSentNotification(true);
+        }
         toast({
           title: 'Ειδοποίηση στάλθηκε',
           description: response?.message || 'Η ειδοποίηση εστάλη επιτυχώς.',
@@ -202,12 +214,14 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
       });
       return false;
     } finally {
-      setIsSendingNotification(false);
+      if (isMountedRef.current) {
+        setIsSendingNotification(false);
+      }
     }
   };
 
-  const handleRequestClose = async () => {
-    await sendReceiptNotification();
+  const handleRequestClose = () => {
+    void sendReceiptNotification();
     onClose();
   };
 
@@ -273,7 +287,11 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
   };
 
   const handleDirectPrint = async () => {
-    await sendReceiptNotification();
+    const notificationPromise = sendReceiptNotification();
+    await Promise.race([
+      notificationPromise,
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
     // Hide dialog and print the current page content
     const originalContent = document.body.innerHTML;
     const printContent = printRef.current?.innerHTML || '';
