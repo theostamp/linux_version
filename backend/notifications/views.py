@@ -1143,6 +1143,8 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
+        task_type = data['task_type']
+        template_id = data.get('template')
 
         # Get building
         building = None
@@ -1150,11 +1152,16 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             from buildings.models import Building
             building = get_object_or_404(Building, id=data['building'])
 
-        # Get template - auto-select based on task_type if not provided or if 0
-        template_id = data.get('template')
-        if not template_id or template_id == 0:
-            # Map task_type to template category
-            task_type = data['task_type']
+        def resolve_template(target_building, template_id_override=None):
+            if template_id_override and template_id_override != 0:
+                if target_building:
+                    return get_object_or_404(
+                        NotificationTemplate,
+                        id=template_id_override,
+                        building=target_building,
+                    )
+                return get_object_or_404(NotificationTemplate, id=template_id_override)
+
             category_map = {
                 'common_expense': 'payment',
                 'balance_reminder': 'payment',
@@ -1162,18 +1169,16 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             }
             category = category_map.get(task_type, 'announcement')
 
-            # Try to find an active template for this category
             template_query = NotificationTemplate.objects.filter(
                 category=category,
                 is_active=True,
             )
-            if building:
-                template_query = template_query.filter(building=building)
+            if target_building:
+                template_query = template_query.filter(building=target_building)
             template = template_query.first()
 
-            # If no template found, create a default one
             if not template:
-                if not building:
+                if not target_building:
                     raise ValidationError(
                         "Απαιτείται επιλογή πολυκατοικίας ή συγκεκριμένου template."
                     )
@@ -1184,7 +1189,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         subject='Κοινόχρηστα {{month}}',
                         body='Αγαπητέ/ή {{resident_name}},\n\nΕπισυνάπτονται τα κοινόχρηστα του μήνα {{month}}.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
                         is_active=True,
-                        building=building,
+                        building=target_building,
                     )
                 elif task_type == 'balance_reminder':
                     template = NotificationTemplate.objects.create(
@@ -1193,7 +1198,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         subject='Υπενθύμιση Οφειλής',
                         body='Αγαπητέ/ή {{resident_name}},\n\nΣας υπενθυμίζουμε ότι υπάρχει εκκρεμές υπόλοιπο στον λογαριασμό σας.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
                         is_active=True,
-                        building=building,
+                        building=target_building,
                     )
                 else:
                     template = NotificationTemplate.objects.create(
@@ -1202,18 +1207,53 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                         subject='Ανακοίνωση',
                         body='Αγαπητέ/ή {{resident_name}},\n\n{{message}}\n\nΜε εκτίμηση,\nΗ Διαχείριση',
                         is_active=True,
-                        building=building,
+                        building=target_building,
                     )
-        else:
-            template = get_object_or_404(
-                NotificationTemplate,
-                id=template_id
+
+            return template
+
+        # Create per-building tasks when no building is selected
+        if not building:
+            if template_id and template_id != 0:
+                raise ValidationError(
+                    "Για όλες τις πολυκατοικίες επιλέξτε χωρίς template ή ορίστε πολυκατοικία."
+                )
+
+            from buildings.models import Building
+
+            buildings = Building.objects.all()
+            if not buildings.exists():
+                raise ValidationError("Δεν βρέθηκαν πολυκατοικίες.")
+
+            tasks = []
+            for target_building in buildings:
+                template = resolve_template(target_building, template_id_override=0)
+                task = MonthlyTaskService.configure_task(
+                    building=target_building,
+                    task_type=task_type,
+                    recurrence_type=data.get('recurrence_type', 'monthly'),
+                    day_of_week=data.get('day_of_week'),
+                    day_of_month=data.get('day_of_month', 1),
+                    time_to_send=data['time_to_send'],
+                    template=template,
+                    auto_send_enabled=data.get('auto_send_enabled', False),
+                    period_month=data.get('period_month'),
+                )
+                tasks.append(task)
+
+            serializer = MonthlyNotificationTaskSerializer(tasks, many=True)
+            return Response(
+                {"count": len(tasks), "tasks": serializer.data},
+                status=status.HTTP_201_CREATED,
             )
+
+        # Single building flow
+        template = resolve_template(building, template_id_override=template_id)
 
         # Configure task
         task = MonthlyTaskService.configure_task(
             building=building,
-            task_type=data['task_type'],
+            task_type=task_type,
             recurrence_type=data.get('recurrence_type', 'monthly'),
             day_of_week=data.get('day_of_week'),
             day_of_month=data.get('day_of_month', 1),
