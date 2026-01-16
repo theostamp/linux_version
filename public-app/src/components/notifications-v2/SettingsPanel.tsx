@@ -108,6 +108,17 @@ export default function SettingsPanel() {
     },
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => monthlyTasksApi.remove(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthly-tasks-settings'] });
+      toast.success('Η αυτόματη αποστολή διαγράφηκε');
+    },
+    onError: () => {
+      toast.error('Αποτυχία διαγραφής');
+    },
+  });
+
   const createTaskMutation = useMutation({
     mutationFn: async (data: {
       task_type: 'common_expense' | 'balance_reminder' | 'custom';
@@ -174,6 +185,14 @@ export default function SettingsPanel() {
   const formatPeriod = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
+  };
+
+  const handleDeleteTask = (task: MonthlyNotificationTask) => {
+    if (typeof window === 'undefined') return;
+    const buildingLabel = task.building_name || 'Όλες οι πολυκατοικίες';
+    const confirmMessage = `Διαγραφή κανόνα αυτόματης αποστολής για ${buildingLabel};`;
+    if (!window.confirm(confirmMessage)) return;
+    deleteTaskMutation.mutate(task.id);
   };
 
   return (
@@ -304,6 +323,15 @@ export default function SettingsPanel() {
                           )}
                         </button>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteTask(task)}
+                        className="text-red-500 hover:text-red-600"
+                        aria-label="Διαγραφή"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

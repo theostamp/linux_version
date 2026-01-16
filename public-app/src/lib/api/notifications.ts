@@ -602,6 +602,16 @@ export const monthlyTasksApi = {
   },
 
   /**
+   * Delete a monthly task
+   */
+  remove: async (id: number) => {
+    const response = await apiClient.delete<void>(
+      `${BASE_URL}/monthly-tasks/${id}/`
+    );
+    return response;
+  },
+
+  /**
    * Configure or create a recurring task
    */
   configure: async (data: {
