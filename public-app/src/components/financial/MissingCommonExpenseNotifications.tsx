@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Building2, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertTriangle, Building2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import {
   COMMON_EXPENSES_SENT_EVENT,
@@ -36,6 +36,7 @@ const reasonLabels: Record<string, string> = {
 };
 
 const FAILURE_NOTE_WINDOW_MS = 1000 * 60 * 60 * 24 * 7;
+const DISMISS_STORAGE_KEY = 'missing_common_expenses_notice_dismissed_v1';
 
 const formatReferenceMonth = (referenceMonth?: string): string => {
   if (!referenceMonth) return '';
@@ -58,6 +59,7 @@ export default function MissingCommonExpenseNotifications() {
   const [data, setData] = useState<MissingNotificationsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lastAttempt, setLastAttempt] = useState<CommonExpensesSendAttempt | null>(null);
+  const [isDismissed, setIsDismissed] = useState(false);
   const refreshEvent = COMMON_EXPENSES_SENT_EVENT;
 
   const canView = useMemo(() => {
@@ -148,38 +150,87 @@ export default function MissingCommonExpenseNotifications() {
     return formatAttemptTimestamp(lastAttempt.timestamp);
   }, [lastAttempt]);
 
-  if (!isAuthReady || !canView || (isLoading && !data) || missingCount === 0) {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!data?.reference_month) {
+      setIsDismissed(false);
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(DISMISS_STORAGE_KEY);
+      if (!stored) {
+        setIsDismissed(false);
+        return;
+      }
+      const parsed = JSON.parse(stored) as { reference_month?: string; missing_count?: number };
+      const matchesReference = parsed?.reference_month === data.reference_month;
+      const matchesCount = typeof parsed?.missing_count === 'number'
+        ? parsed.missing_count === missingCount
+        : true;
+      setIsDismissed(matchesReference && matchesCount);
+    } catch {
+      setIsDismissed(false);
+    }
+  }, [data?.reference_month, missingCount]);
+
+  const handleDismiss = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        DISMISS_STORAGE_KEY,
+        JSON.stringify({
+          reference_month: data?.reference_month ?? null,
+          missing_count: missingCount,
+          dismissed_at: new Date().toISOString(),
+        })
+      );
+    } catch {}
+    setIsDismissed(true);
+  };
+
+  if (!isAuthReady || !canView || (isLoading && !data) || missingCount === 0 || isDismissed) {
     return null;
   }
 
   return (
     <div className="fixed bottom-24 right-6 z-50 max-w-[calc(100vw-2.5rem)]">
       <div className="w-80 max-w-full rounded-2xl border border-border/70 bg-card/95 shadow-lg backdrop-blur">
-        <button
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-          aria-expanded={isExpanded}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-              <AlertTriangle className="h-4 w-4" />
-            </span>
-            <div>
-              <div className="text-sm font-semibold text-foreground">
-                Κοινοχρήστα {headerMonth}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Εκκρεμεί αποστολή σε {missingCount} κτίρια
+        <div className="flex w-full items-center justify-between gap-2 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+            aria-expanded={isExpanded}
+            className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                <AlertTriangle className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">
+                  Κοινοχρήστα {headerMonth}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Εκκρεμεί αποστολή σε {missingCount} κτίρια
+                </div>
               </div>
             </div>
-          </div>
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </button>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+            aria-label="Κλείσιμο ειδοποίησης"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
 
         {isExpanded && (
           <div className="space-y-3 px-4 pb-4">
