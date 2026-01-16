@@ -61,6 +61,7 @@ interface NavigationLink {
   icon: React.ReactNode;
   roles: string[];
   isBeta?: boolean;
+  badgeLabel?: string;
   requiresUltraAdmin?: boolean;
   requiresPremium?: boolean;
   requiresIot?: boolean;
@@ -154,6 +155,15 @@ const navigationGroups: NavigationGroup[] = [
         icon: <Euro className="w-5 h-5" />,
         roles: ['manager', 'internal_manager', 'staff', 'superuser'],
         tooltip: 'Διαχείριση εσόδων, εξόδων και οικονομικών στοιχείων των κτιρίων',
+      },
+      {
+        href: '/documents',
+        label: 'Παραστατικά',
+        icon: <FileText className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        badgeLabel: 'Premium',
+        requiresPremium: true,
+        tooltip: 'Ψηφιοποίηση παραστατικών με AI/OCR, αυτόματη συμπλήρωση στοιχείων και δημιουργία δαπανών.',
       },
       {
         href: '/maintenance',
@@ -283,15 +293,6 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
         requiresPremium: true,
         tooltip: 'Άνοιγμα της οθόνης προβολής σε πλήρη οθόνη για TV/monitor στην είσοδο.',
-      },
-      {
-        href: '/documents',
-        label: 'Παραστατικά',
-        icon: <FileText className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        isBeta: true,
-        requiresPremium: true,
-        tooltip: 'Ψηφιοποίηση παραστατικών με AI/OCR, αυτόματη συμπλήρωση στοιχείων και δημιουργία δαπανών.',
       },
       {
         href: '/archive',
@@ -858,6 +859,21 @@ export default function CollapsibleSidebar() {
                                   }}
                                 >
                                   BETA
+                                </span>
+                              )}
+
+                              {/* Premium Badge */}
+                              {link.badgeLabel && isExpanded && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
+                                    link.tooltip ? "ml-2" : "ml-auto"
+                                  )}
+                                  style={{
+                                    fontSize: designSystem.typography.fontSize.xs,
+                                  }}
+                                >
+                                  {link.badgeLabel}
                                 </span>
                               )}
                             </button>
