@@ -44,11 +44,11 @@ app.conf.beat_schedule = {
         'task': 'assemblies.tasks.check_and_send_pre_voting_open_reminders',
         'schedule': crontab(minute=0, hour=9),  # 09:00 daily
     },
-    # Daily debt reminders (09:00) - weekly dedupe per building (Mon-Sun)
-    'send-daily-debt-reminders': {
+    # Weekly debt reminders (Mon 09:00) - min debt 50€, min overdue 20 days
+    'send-weekly-debt-reminders': {
         'task': 'notifications.tasks.send_daily_debt_reminders_if_not_sent_this_week',
-        'schedule': crontab(minute=0, hour=9),  # 09:00 daily
-        'args': (),
+        'schedule': crontab(minute=0, hour=9, day_of_week='mon'),
+        'args': (50.0, 20),
     },
     # Retry failed notification recipients (email) every 30 minutes
     'retry-failed-notification-recipients': {
@@ -67,12 +67,6 @@ app.conf.beat_schedule = {
         'task': 'email_webhooks.tasks.finalize_email_batches',
         'schedule': crontab(minute='*/10'),
         'args': (30,),
-    },
-    # Daily overdue debt reminders (matured balances)
-    'send-daily-overdue-debt-reminders': {
-        'task': 'notifications.tasks.send_daily_overdue_debt_reminders',
-        'schedule': crontab(minute=15, hour=9),  # 09:15 daily
-        'args': (),
     },
     # Ad Portal trial reminders (7/3/1 days) + trial end notices
     'ad-portal-trial-reminders-daily': {

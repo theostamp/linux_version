@@ -378,6 +378,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
           "building_id": 1,
           "month": "2025-12",              // optional, defaults to current month
           "min_debt": "0" | "50" | "100",  // optional
+          "min_days_overdue": 20,          // optional
           "apartment_ids": [1,2,3],        // optional; if omitted uses all apartments
           "custom_message": "..."          // optional
         }
@@ -398,6 +399,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
         except Exception:
             raise ValidationError("min_debt must be numeric")
 
+        min_days_overdue_raw = data.get('min_days_overdue', None)
+        min_days_overdue = None
+        if min_days_overdue_raw is not None and str(min_days_overdue_raw).strip() != "":
+            try:
+                min_days_overdue = int(min_days_overdue_raw)
+            except Exception:
+                raise ValidationError("min_days_overdue must be an integer")
+
         apartment_ids = data.get('apartment_ids') or None
         if apartment_ids is not None and not isinstance(apartment_ids, list):
             raise ValidationError("apartment_ids must be a list")
@@ -409,6 +418,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
             created_by=request.user,
             month=month,
             min_debt=min_debt,
+            min_days_overdue=min_days_overdue,
             apartment_ids=apartment_ids,
             custom_message=custom_message,
             create_notification_if_empty=True,

@@ -378,7 +378,7 @@ def send_monthly_reminder_sms(task_id: int):
 @shared_task
 def send_automated_debt_reminders(
     building_id: Optional[int] = None,
-    min_debt_amount: float = 0.01,
+    min_debt_amount: float = 50.0,
     schema_name: str = 'demo'
 ):
     """
@@ -467,7 +467,7 @@ def send_automated_debt_reminders(
 
 @shared_task
 def send_weekly_debt_reminders(
-    min_debt_amount: float = 0.01,
+    min_debt_amount: float = 50.0,
     cooldown_days: int = 6,
 ):
     """
@@ -558,20 +558,23 @@ def send_weekly_debt_reminders(
 
 @shared_task
 def send_daily_debt_reminders_if_not_sent_this_week(
-    min_debt_amount: float = 0.01,
+    min_debt_amount: float = 50.0,
+    min_days_overdue: int = 20,
 ):
     """
-    Καθημερινός έλεγχος οφειλών (09:00) και αυτόματη αποστολή υπενθύμισης,
+    Εβδομαδιαίος έλεγχος οφειλών (Δευτέρα 09:00) και αυτόματη αποστολή υπενθύμισης,
     μόνο αν ΔΕΝ υπάρχει Notification με status='sent' μέσα στη Δευτέρα–Κυριακή
     της τρέχουσας εβδομάδας.
 
     - Multi-tenant: τρέχει για όλα τα tenant schemas
     - Dedupe ανά building: weekly window (Europe/Athens)
     - Χρησιμοποιεί το breakdown email template (όπως το manual endpoint)
+    - Εφαρμόζει min_debt_amount και min_days_overdue
     """
     from decimal import Decimal
     from django.contrib.auth import get_user_model
     from buildings.models import Building
+    from buildings.entitlements import resolve_tenant_state
     from notifications.debt_reminder_breakdown_service import DebtReminderBreakdownService
 
     TenantModel = get_tenant_model()
@@ -579,12 +582,18 @@ def send_daily_debt_reminders_if_not_sent_this_week(
     month = now.date().strftime("%Y-%m")
 
     tenants_processed = 0
+    tenants_skipped = 0
     buildings_processed = 0
     buildings_skipped = 0
     notifications_created = 0
 
     for tenant in TenantModel.objects.exclude(schema_name="public"):
         try:
+            tenant_state = resolve_tenant_state(tenant)
+            if not tenant_state.get("tenant_subscription_active"):
+                tenants_skipped += 1
+                continue
+
             with schema_context(tenant.schema_name):
                 tenants_processed += 1
 
@@ -613,6 +622,7 @@ def send_daily_debt_reminders_if_not_sent_this_week(
                         created_by=system_user,
                         month=month,
                         min_debt=Decimal(str(min_debt_amount)),
+                        min_days_overdue=min_days_overdue,
                         apartment_ids=None,
                         custom_message="",
                         # Avoid creating empty notifications when there are no eligible recipients
@@ -628,8 +638,9 @@ def send_daily_debt_reminders_if_not_sent_this_week(
             continue
 
     summary = (
-        f"Daily debt reminders: tenants={tenants_processed}, buildings={buildings_processed}, "
-        f"skipped={buildings_skipped}, notifications_created={notifications_created}"
+        f"Daily debt reminders: tenants={tenants_processed}, tenants_skipped={tenants_skipped}, "
+        f"buildings={buildings_processed}, skipped={buildings_skipped}, "
+        f"notifications_created={notifications_created}"
     )
     logger.info(summary)
     return summary
@@ -718,8 +729,8 @@ def retry_failed_notification_recipients(
 
 @shared_task
 def send_daily_overdue_debt_reminders(
-    min_debt_amount: float = 0.01,
-    min_days_overdue: int = 5,
+    min_debt_amount: float = 50.0,
+    min_days_overdue: int = 20,
     cooldown_days: int = 7,
 ):
     """

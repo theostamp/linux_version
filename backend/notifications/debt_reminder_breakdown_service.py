@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
@@ -94,6 +94,7 @@ class DebtReminderBreakdownService:
         created_by,
         month: str,
         min_debt: Decimal = Decimal("0"),
+        min_days_overdue: Optional[int] = None,
         apartment_ids: Optional[List[int]] = None,
         custom_message: str = "",
         create_notification_if_empty: bool = True,
@@ -101,8 +102,8 @@ class DebtReminderBreakdownService:
         """
         Αποστολή εξατομικευμένων υπενθυμίσεων οφειλών (με breakdown) για building.
 
-        - Αν create_notification_if_empty=False και δεν υπάρχει κανένας παραλήπτης πάνω από min_debt,
-          δεν δημιουργεί Notification record.
+        - Αν create_notification_if_empty=False και δεν υπάρχει κανένας παραλήπτης πάνω από min_debt
+          (και min_days_overdue όπου ισχύει), δεν δημιουργεί Notification record.
         """
         from financial.services import FinancialDashboardService
 
@@ -115,6 +116,7 @@ class DebtReminderBreakdownService:
 
         month_display = month
         payment_deadline = ""
+        target_month_date = None
         try:
             year, mon = map(int, month.split('-'))
             month_names = {
@@ -131,9 +133,11 @@ class DebtReminderBreakdownService:
             deadline_month = 1 if mon == 12 else mon + 1
             deadline_year = year + 1 if mon == 12 else year
             payment_deadline = f"15 {month_genitive.get(deadline_month, '')} {deadline_year}".strip()
+            target_month_date = date(year, mon, 1)
         except Exception:
             month_display = month
             payment_deadline = ""
+            target_month_date = timezone.now().date().replace(day=1)
 
         office_data = {}
         if created_by:
@@ -152,11 +156,95 @@ class DebtReminderBreakdownService:
         else:
             target_apartments = Apartment.objects.filter(building=building)
 
+        def _normalize_email(value: str) -> str:
+            return value.strip().lower()
+
+        def _collect_emails(apartment: Apartment) -> List[str]:
+            emails: List[str] = []
+            seen = set()
+            for candidate in [apartment.occupant_email, apartment.owner_email]:
+                if not candidate:
+                    continue
+                cleaned = candidate.strip()
+                if not cleaned:
+                    continue
+                normalized = _normalize_email(cleaned)
+                if normalized in seen:
+                    continue
+                seen.add(normalized)
+                emails.append(cleaned)
+            return emails
+
+        def _collect_phones(apartment: Apartment) -> List[str]:
+            phones: List[str] = []
+            seen = set()
+            for candidate in [apartment.occupant_phone, apartment.owner_phone]:
+                if not candidate:
+                    continue
+                cleaned = candidate.strip()
+                if not cleaned:
+                    continue
+                if cleaned in seen:
+                    continue
+                seen.add(cleaned)
+                phones.append(cleaned)
+            return phones
+
+        def _collect_push_users(apartment: Apartment):
+            users = []
+            seen = set()
+            for candidate in [apartment.tenant_user, apartment.owner_user]:
+                if not candidate:
+                    continue
+                if not getattr(candidate, "is_active", True):
+                    continue
+                if candidate.id in seen:
+                    continue
+                seen.add(candidate.id)
+                users.append(candidate)
+            return users
+
+        min_days_overdue_value: Optional[int] = None
+        if min_days_overdue is not None:
+            try:
+                min_days_overdue_value = int(min_days_overdue)
+            except (TypeError, ValueError):
+                min_days_overdue_value = None
+        if min_days_overdue_value is not None and min_days_overdue_value <= 0:
+            min_days_overdue_value = None
+
+        overdue_by_id: Dict[int, Dict[str, int | bool]] = {}
+        if min_days_overdue_value is not None:
+            from notifications.debt_reminder_service import DebtReminderService
+
+            for apartment in target_apartments:
+                try:
+                    financials = DebtReminderService._calculate_apartment_financials(
+                        apartment,
+                        target_month_date or timezone.now().date().replace(day=1),
+                    )
+                    overdue_by_id[apartment.id] = {
+                        "days_overdue": int(financials.get("days_overdue") or 0),
+                        "has_unpaid": bool(financials.get("has_unpaid")),
+                    }
+                except Exception as exc:
+                    logger.warning(
+                        "Debt reminder overdue check failed for apartment=%s: %s",
+                        apartment.id,
+                        exc,
+                    )
+                    overdue_by_id[apartment.id] = {"days_overdue": 0, "has_unpaid": False}
+
+        sms_enabled = bool(getattr(settings, "SMS_ENABLED", False))
+
         # Pre-scan: determine if any recipient is eligible (avoid creating spammy empty notifications for automation)
         eligible_count = 0
         for apartment in target_apartments:
-            recipient_email = apartment.occupant_email or apartment.owner_email
-            if not recipient_email:
+            recipient_emails = _collect_emails(apartment)
+            recipient_phones = _collect_phones(apartment)
+            push_users = _collect_push_users(apartment)
+            has_contact = bool(recipient_emails or (sms_enabled and recipient_phones) or push_users)
+            if not has_contact:
                 continue
             bal = balances_by_id.get(int(apartment.id))
             if not bal:
@@ -166,6 +254,10 @@ class DebtReminderBreakdownService:
             except Exception:
                 total_due_raw = Decimal("0")
             if total_due_raw > min_debt:
+                if min_days_overdue_value is not None:
+                    overdue = overdue_by_id.get(apartment.id, {})
+                    if not overdue.get("has_unpaid") or int(overdue.get("days_overdue") or 0) < min_days_overdue_value:
+                        continue
                 eligible_count += 1
                 break
 
@@ -209,15 +301,19 @@ class DebtReminderBreakdownService:
         )
 
         for apartment in target_apartments:
-            recipient_email = apartment.occupant_email or apartment.owner_email
-            recipient_name = apartment.occupant_name
+            recipient_emails = _collect_emails(apartment)
+            recipient_phones = _collect_phones(apartment)
+            push_users = _collect_push_users(apartment)
+            recipient_email = recipient_emails[0] if recipient_emails else ""
+            recipient_phone = recipient_phones[0] if recipient_phones else ""
+            recipient_name = apartment.occupant_name or apartment.owner_name
 
             recipient = NotificationRecipient.objects.create(
                 notification=notification,
                 apartment=apartment,
                 recipient_name=recipient_name or f"Διαμέρισμα {apartment.number}",
                 email=recipient_email or "",
-                phone=apartment.occupant_phone or "",
+                phone=recipient_phone or "",
                 status="pending",
             )
 
@@ -253,6 +349,23 @@ class DebtReminderBreakdownService:
                 )
                 continue
 
+            if min_days_overdue_value is not None:
+                overdue = overdue_by_id.get(apartment.id, {})
+                has_unpaid = bool(overdue.get("has_unpaid"))
+                days_overdue = int(overdue.get("days_overdue") or 0)
+                if not has_unpaid or days_overdue < min_days_overdue_value:
+                    recipient.mark_as_failed("Not overdue enough")
+                    skipped += 1
+                    details.append(
+                        {
+                            "apartment": apartment.number,
+                            "status": "skipped",
+                            "reason": "Not overdue enough",
+                            "total_due": str(total_due_raw),
+                        }
+                    )
+                    continue
+
             apartment_data = {
                 'apartment_number': apartment.number,
                 'building_name': building.name or building.street,
@@ -274,7 +387,7 @@ class DebtReminderBreakdownService:
 
             subject = f"{cls.SUBJECT_KEYWORD} {month} - Διαμέρισμα {apartment.number} ({building.name})"
 
-            if not recipient_email:
+            if not recipient_emails:
                 email_error_reason = "No email address"
             else:
                 try:
@@ -290,7 +403,7 @@ class DebtReminderBreakdownService:
                         """ + html_content
                     body_html = extract_legacy_body_html(html=html_content)
                     ok = send_templated_email(
-                        to=recipient_email,
+                        to=recipient_emails,
                         subject=subject,
                         template_html="emails/wrapper.html",
                         context={"body_html": body_html, "wrapper_title": subject},
@@ -304,71 +417,73 @@ class DebtReminderBreakdownService:
                 except Exception as e:
                     email_error_reason = str(e)
 
-            push_user = apartment.owner_user or apartment.tenant_user
-            if push_user:
+            if push_users:
                 try:
                     amount_str = cls._fmt_money(total_due_raw)
-                    viber_ok = ViberNotificationService.send_to_user(
-                        user=push_user,
-                        message=(
-                            f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
-                            f"Ποσό: {amount_str}"
-                        ),
-                        building=building,
-                        office_name=office_data.get('name', '') if office_data else '',
-                    )
-                    webpush_ok = WebPushService.send_to_user(
-                        user=push_user,
-                        title=f"{cls.SUBJECT_KEYWORD} {month_display}",
-                        body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
-                        data={
-                            'type': 'debt_reminder',
-                            'month': month,
-                            'building_id': str(building.id),
-                            'apartment_id': str(apartment.id),
-                            'url': '/my-apartment',
-                        },
-                    )
-                    fcm_ok = PushNotificationService.send_to_user(
-                        user=push_user,
-                        title=f"{cls.SUBJECT_KEYWORD} {month_display}",
-                        body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
-                        data={
-                            'type': 'debt_reminder',
-                            'month': month,
-                            'building_id': str(building.id),
-                            'apartment_id': str(apartment.id),
-                        },
-                    )
-                    push_ok = bool(webpush_ok or fcm_ok)
+                    for push_user in push_users:
+                        viber_ok = ViberNotificationService.send_to_user(
+                            user=push_user,
+                            message=(
+                                f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
+                                f"Ποσό: {amount_str}"
+                            ),
+                            building=building,
+                            office_name=office_data.get('name', '') if office_data else '',
+                        ) or viber_ok
+                        webpush_ok = WebPushService.send_to_user(
+                            user=push_user,
+                            title=f"{cls.SUBJECT_KEYWORD} {month_display}",
+                            body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                            data={
+                                'type': 'debt_reminder',
+                                'month': month,
+                                'building_id': str(building.id),
+                                'apartment_id': str(apartment.id),
+                                'url': '/my-apartment',
+                            },
+                        )
+                        fcm_ok = PushNotificationService.send_to_user(
+                            user=push_user,
+                            title=f"{cls.SUBJECT_KEYWORD} {month_display}",
+                            body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                            data={
+                                'type': 'debt_reminder',
+                                'month': month,
+                                'building_id': str(building.id),
+                                'apartment_id': str(apartment.id),
+                            },
+                        )
+                        if webpush_ok or fcm_ok:
+                            push_ok = True
                 except Exception as push_error:
                     logger.warning(
-                        "Web push failed for debt reminder (user=%s, apartment=%s): %s",
-                        push_user.id,
+                        "Web push failed for debt reminder (apartment=%s): %s",
                         apartment.id,
                         push_error,
                     )
 
-            if recipient.phone and getattr(settings, 'SMS_ENABLED', False):
+            if recipient_phones and getattr(settings, 'SMS_ENABLED', False):
                 if not subscription:
                     sms_error_reason = "No subscription for SMS quota"
-                elif not BillingService.check_usage_limits(subscription, 'sms', 1):
-                    sms_error_reason = "SMS quota exceeded"
                 else:
                     sms_text = (
                         f"{cls.SUBJECT_KEYWORD} {month_display}: {cls._fmt_money(total_due_raw)}. "
                         f"Προθεσμία: {payment_deadline}"
                     ).strip()
                     sms_text = sms_text[:160]
-                    result = SMSProviderFactory.get_provider().send(
-                        recipient.phone,
-                        sms_text,
-                    )
-                    if result.success:
-                        BillingService.increment_usage(subscription, 'sms', 1)
-                        sms_ok = True
-                    else:
-                        sms_error_reason = result.error_message or "SMS send failed"
+                    for phone in recipient_phones:
+                        if not BillingService.check_usage_limits(subscription, 'sms', 1):
+                            sms_error_reason = "SMS quota exceeded"
+                            break
+                        result = SMSProviderFactory.get_provider().send(
+                            phone,
+                            sms_text,
+                        )
+                        if result.success:
+                            BillingService.increment_usage(subscription, 'sms', 1)
+                            sms_ok = True
+                        else:
+                            sms_error_reason = result.error_message or "SMS send failed"
 
             if email_ok or push_ok or viber_ok or sms_ok:
                 recipient.mark_as_sent()

@@ -59,7 +59,7 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
 
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
-  const [minDebt, setMinDebt] = useState<'all' | '50' | '100' | '200'>('all');
+  const [minDebt, setMinDebt] = useState<'all' | '50' | '100' | '200'>('50');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [extraMessage, setExtraMessage] = useState('');
   const [showPreview, setShowPreview] = useState(false);
