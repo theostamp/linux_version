@@ -38,7 +38,22 @@ function parseApiErrorBody(error: any): any | null {
   const body = error?.response?.body;
   if (!body || typeof body !== 'string') return null;
   try {
-    return JSON.parse(body);
+    const parsed = JSON.parse(body);
+    const details = parsed?.details;
+    if (typeof details === 'string') {
+      const trimmed = details.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          const parsedDetails = JSON.parse(trimmed);
+          if (parsedDetails && typeof parsedDetails === 'object') {
+            return { ...parsed, ...parsedDetails, details: parsedDetails };
+          }
+        } catch {
+          return parsed;
+        }
+      }
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -246,7 +261,12 @@ function DocumentsContent() {
       router.push(`/financial?building=${buildingId}`);
     } catch (error: any) {
       console.error('Error creating expense:', error);
-      toast.error(error?.message || 'Σφάλμα κατά τη δημιουργία της δαπάνης');
+      const parsed = parseApiErrorBody(error);
+      const friendlyMessage =
+        (typeof parsed?.error === 'string' && parsed.error) ||
+        (typeof parsed?.detail === 'string' && parsed.detail) ||
+        (typeof parsed?.message === 'string' && parsed.message);
+      toast.error(friendlyMessage || error?.message || 'Σφάλμα κατά τη δημιουργία της δαπάνης');
     } finally {
       setIsSaving(false);
     }
