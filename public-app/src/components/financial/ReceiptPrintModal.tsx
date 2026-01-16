@@ -3,11 +3,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Payment, PaymentMethod, PaymentType, PayerType } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
 import { useReceipts, FinancialReceipt } from '@/hooks/useReceipts';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { getOfficeLogoUrl } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 interface ReceiptPrintModalProps {
   isOpen: boolean;
@@ -41,6 +43,9 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [storedReceipt, setStoredReceipt] = useState<FinancialReceipt | null>(receiptData || null);
   const [logoError, setLogoError] = useState(false);
+  const [shouldSendNotification, setShouldSendNotification] = useState(true);
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
+  const [hasSentNotification, setHasSentNotification] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Load receipt data from database if not provided
@@ -96,6 +101,14 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
       });
     }
   }, [isOpen, payment.id, storedReceipt?.receipt_number, qrCodeDataUrl]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldSendNotification(true);
+      setIsSendingNotification(false);
+      setHasSentNotification(false);
+    }
+  }, [isOpen, payment.id]);
 
   const getPaymentMethodLabel = (method: PaymentMethod) => {
     const labels: Record<PaymentMethod, string> = {
@@ -155,7 +168,51 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
     return num.toString();
   };
 
+  const sendReceiptNotification = async () => {
+    if (!shouldSendNotification || hasSentNotification || isSendingNotification || !payment?.id) {
+      return false;
+    }
+
+    setIsSendingNotification(true);
+    try {
+      const response = await api.post<{ success?: boolean; message?: string }>(
+        `/financial/payments/${payment.id}/notify/`
+      );
+      const success = Boolean(response?.success);
+      if (success) {
+        setHasSentNotification(true);
+        toast({
+          title: 'Ειδοποίηση στάλθηκε',
+          description: response?.message || 'Η ειδοποίηση εστάλη επιτυχώς.',
+        });
+      } else {
+        toast({
+          title: 'Δεν έγινε αποστολή',
+          description: response?.message || 'Δεν υπάρχει ενεργό κανάλι αποστολής.',
+          variant: 'destructive',
+        });
+      }
+      return success;
+    } catch (error: any) {
+      const errorMessage = error?.response?.body || error?.message || 'Σφάλμα κατά την αποστολή ειδοποίησης';
+      toast({
+        title: 'Αποτυχία αποστολής',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsSendingNotification(false);
+    }
+  };
+
+  const handleRequestClose = async () => {
+    await sendReceiptNotification();
+    onClose();
+  };
+
   const handlePrint = () => {
+    void sendReceiptNotification();
     if (printRef.current) {
       const printContent = printRef.current.innerHTML;
       const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -215,7 +272,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
     }
   };
 
-  const handleDirectPrint = () => {
+  const handleDirectPrint = async () => {
+    await sendReceiptNotification();
     // Hide dialog and print the current page content
     const originalContent = document.body.innerHTML;
     const printContent = printRef.current?.innerHTML || '';
@@ -240,7 +298,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
   const verificationUrl = `${window.location.origin}/verify-payment/${storedReceipt?.receipt_number || payment.id}`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) void handleRequestClose(); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -253,16 +311,44 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
 
         <div className="space-y-4">
           {/* Print Action Buttons */}
-          <div className="flex gap-2 justify-end border-b pb-4 no-print">
-            <Button onClick={handlePrint} variant="default">
-              🖨️ Εκτύπωση με Παράθυρο
-            </Button>
-            <Button onClick={handleDirectPrint} variant="outline">
-              📄 Άμεση Εκτύπωση
-            </Button>
-            <Button onClick={onClose} variant="outline">
-              Κλείσιμο
-            </Button>
+          <div className="space-y-3 border-b pb-4 no-print">
+            <div className="flex gap-2 justify-end">
+              <Button onClick={handlePrint} variant="default">
+                🖨️ Εκτύπωση με Παράθυρο
+              </Button>
+              <Button onClick={handleDirectPrint} variant="outline">
+                📄 Άμεση Εκτύπωση
+              </Button>
+              <Button onClick={() => void handleRequestClose()} variant="outline">
+                Κλείσιμο
+              </Button>
+            </div>
+            <div className="flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium text-slate-800">Αποστολή ειδοποίησης</p>
+                <p className="text-xs text-slate-500">
+                  {hasSentNotification
+                    ? 'Η ειδοποίηση στάλθηκε.'
+                    : shouldSendNotification
+                      ? `Θα σταλεί ειδοποίηση στον/στην ${getPayerTypeLabel(payerInfo.payer_type)}.`
+                      : 'Η αποστολή ειδοποίησης είναι απενεργοποιημένη.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {isSendingNotification && (
+                  <span className="text-xs text-slate-500">Αποστολή...</span>
+                )}
+                {hasSentNotification && (
+                  <span className="text-xs text-emerald-600">Εστάλη</span>
+                )}
+                <Switch
+                  checked={shouldSendNotification}
+                  onCheckedChange={(checked) => setShouldSendNotification(checked)}
+                  disabled={isSendingNotification || hasSentNotification}
+                  className={shouldSendNotification ? 'data-[state=checked]:bg-emerald-500' : ''}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Receipt Content */}

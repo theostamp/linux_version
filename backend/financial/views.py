@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.http import FileResponse
 from django.shortcuts import redirect
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -1473,6 +1474,233 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 'success': False,
                 'error': f'Σφάλμα κατά την επαλήθευση: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def notify(self, request, pk=None):
+        """Αποστολή ειδοποίησης για απόδειξη είσπραξης"""
+        import logging
+        from django.db import connection
+        from billing.services import BillingService
+        from notifications.models import NotificationPreference
+        from notifications.viber_notification_service import ViberNotificationService
+        from notifications.webpush_service import WebPushService
+        from notifications.push_service import PushNotificationService
+        from notifications.providers.sms_providers import SMSProviderFactory
+        from notifications.common_expense_service import CommonExpenseNotificationService
+        from core.emailing import plain_text_to_html, send_templated_email_with_result
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            payment = self.get_object()
+            apartment = payment.apartment
+            building = apartment.building
+
+            receipt = payment.receipts.order_by('-receipt_date', '-created_at').first()
+            receipt_number = receipt.receipt_number if receipt else ""
+
+            payer_type = payment.payer_type
+            payer_name = (payment.payer_name or "").strip()
+
+            user = None
+            recipient_email = ""
+            recipient_phone = ""
+
+            if payer_type == 'tenant':
+                user = apartment.tenant_user
+                payer_name = payer_name or apartment.tenant_name or apartment.owner_name or ""
+                recipient_email = apartment.tenant_email or (user.email if user else "")
+                recipient_phone = apartment.tenant_phone or ""
+            elif payer_type == 'owner':
+                user = apartment.owner_user
+                payer_name = payer_name or apartment.owner_name or apartment.tenant_name or ""
+                recipient_email = apartment.owner_email or (user.email if user else "")
+                recipient_phone = apartment.owner_phone or ""
+            else:
+                user = apartment.owner_user or apartment.tenant_user
+                payer_name = payer_name or apartment.owner_name or apartment.tenant_name or ""
+                recipient_email = (
+                    apartment.owner_email
+                    or apartment.tenant_email
+                    or (user.email if user else "")
+                )
+                recipient_phone = apartment.owner_phone or apartment.tenant_phone or ""
+
+            if not recipient_email and not recipient_phone and not user:
+                return Response(
+                    {'success': False, 'message': 'Δεν βρέθηκαν στοιχεία επικοινωνίας για αποστολή.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            amount_str = f"{payment.amount:.2f}€"
+            date_str = payment.date.strftime('%d/%m/%Y')
+            method_label = payment.get_method_display()
+            type_label = payment.get_payment_type_display()
+
+            frontend_base = (CommonExpenseNotificationService._resolve_tenant_frontend_base() or "").rstrip('/')
+            verification_url = (
+                f"{frontend_base}/verify-payment/{receipt_number or payment.id}"
+                if frontend_base else ""
+            )
+
+            subject = f"Απόδειξη Είσπραξης - {building.name} - Διαμ. {apartment.number}"
+            intro = f"Αγαπητέ/ή {payer_name}," if payer_name else "Καλησπέρα,"
+
+            lines = [
+                intro,
+                "Επιβεβαιώνουμε την είσπραξη με τα παρακάτω στοιχεία:",
+                f"Κτίριο: {building.name}",
+                f"Διαμέρισμα: {apartment.number}",
+                f"Ποσό: {amount_str}",
+                f"Ημερομηνία: {date_str}",
+                f"Τρόπος: {method_label}",
+                f"Τύπος: {type_label}",
+            ]
+            if receipt_number:
+                lines.append(f"Αρ. Απόδειξης: {receipt_number}")
+            if payment.reference_number:
+                lines.append(f"Αρ. Αναφοράς: {payment.reference_number}")
+            if payment.notes:
+                lines.append(f"Σημειώσεις: {payment.notes}")
+            if verification_url:
+                lines.append(f"Επαλήθευση: {verification_url}")
+
+            text_body = "\n".join(lines)
+            html_body = plain_text_to_html(text_body)
+
+            pref = NotificationPreference.get_user_preferences(user, building=building, category='payment') if user else None
+            email_allowed = pref.email_enabled if pref else True
+            sms_allowed = pref.sms_enabled if pref else False
+            viber_allowed = pref.viber_enabled if pref else True
+            push_allowed = pref.push_enabled if pref else True
+
+            channels = {
+                'email': False,
+                'sms': False,
+                'viber': False,
+                'push': False,
+            }
+            errors = {}
+
+            if recipient_email and email_allowed:
+                try:
+                    email_result = send_templated_email_with_result(
+                        to=recipient_email,
+                        subject=subject,
+                        template_html="emails/wrapper.html",
+                        context={"body_html": html_body, "wrapper_title": subject},
+                        sender_user=request.user if request.user.is_authenticated else None,
+                        building_manager_id=getattr(building, "manager_id", None),
+                    )
+                    channels['email'] = bool(email_result.get('sent'))
+                except Exception as exc:
+                    errors['email'] = str(exc)
+
+            sms_enabled = getattr(settings, 'SMS_ENABLED', False)
+            sms_only_debt = getattr(settings, 'SMS_ONLY_FOR_DEBT_REMINDERS', True)
+            if recipient_phone and sms_enabled and not sms_only_debt and sms_allowed:
+                try:
+                    subscription = BillingService.resolve_subscription_for_schema(
+                        connection.schema_name,
+                        request.user if request.user.is_authenticated else None,
+                    )
+                    if not subscription:
+                        errors['sms'] = 'No subscription for SMS quota'
+                    elif not BillingService.check_usage_limits(subscription, 'sms', 1):
+                        errors['sms'] = 'SMS quota exceeded'
+                    else:
+                        sms_message = (
+                            f"{building.name}: Είσπραξη {amount_str} "
+                            f"για διαμ. {apartment.number} ({date_str}). "
+                            f"Απόδειξη {receipt_number or payment.id}."
+                        )
+                        sms_message = sms_message[:160]
+                        result = SMSProviderFactory.get_provider().send(recipient_phone, sms_message)
+                        if result.success:
+                            BillingService.increment_usage(subscription, 'sms', 1)
+                            channels['sms'] = True
+                        else:
+                            errors['sms'] = result.error_message or 'SMS send failed'
+                except Exception as exc:
+                    errors['sms'] = str(exc)
+
+            if user and viber_allowed:
+                try:
+                    viber_message = (
+                        f"Είσπραξη {amount_str} για διαμ. {apartment.number}. "
+                        f"Απόδειξη {receipt_number or payment.id}."
+                    )
+                    channels['viber'] = bool(ViberNotificationService.send_to_user(
+                        user=user,
+                        message=viber_message,
+                        building=building,
+                        office_name=getattr(request.user, 'office_name', '') if request.user.is_authenticated else '',
+                    ))
+                except Exception as exc:
+                    errors['viber'] = str(exc)
+
+            if user and push_allowed:
+                try:
+                    push_body = f"Καταχωρήθηκε είσπραξη {amount_str} για διαμ. {apartment.number}."
+                    webpush_sent = WebPushService.send_to_user(
+                        user=user,
+                        title="Απόδειξη Είσπραξης",
+                        body=push_body,
+                        data={
+                            'type': 'payment_receipt',
+                            'payment_id': str(payment.id),
+                            'apartment_id': str(apartment.id),
+                            'building_id': str(building.id),
+                            'receipt_number': str(receipt_number or ''),
+                            'url': '/my-apartment',
+                        },
+                    )
+                    fcm_response = PushNotificationService.send_to_user(
+                        user=user,
+                        title="Απόδειξη Είσπραξης",
+                        body=push_body,
+                        data={
+                            'type': 'payment_receipt',
+                            'payment_id': str(payment.id),
+                            'apartment_id': str(apartment.id),
+                            'building_id': str(building.id),
+                            'receipt_number': str(receipt_number or ''),
+                        }
+                    )
+                    channels['push'] = bool(webpush_sent) or bool(getattr(fcm_response, "success_count", 0))
+                except Exception as exc:
+                    errors['push'] = str(exc)
+
+            sent_any = any(channels.values())
+            if not sent_any and errors:
+                logger.warning("Payment receipt notification failed (payment=%s): %s", payment.id, errors)
+
+            if sent_any:
+                message = "Η ειδοποίηση στάλθηκε."
+            elif errors:
+                message = "Αποτυχία αποστολής."
+            else:
+                message = "Δεν υπάρχει ενεργό κανάλι αποστολής."
+
+            return Response({
+                'success': sent_any,
+                'message': message,
+                'channels': channels,
+                'errors': errors,
+                'recipient': {
+                    'name': payer_name,
+                    'email': recipient_email,
+                    'phone': recipient_phone,
+                    'user_id': getattr(user, 'id', None),
+                },
+            })
+
+        except Exception as e:
+            logger.error("Payment receipt notify error: %s", e, exc_info=True)
+            return Response(
+                {'success': False, 'message': f'Σφάλμα κατά την αποστολή: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class FinancialDashboardViewSet(viewsets.ViewSet):
