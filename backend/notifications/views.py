@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Q, Count, Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -1226,20 +1226,31 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
                 raise ValidationError("Δεν βρέθηκαν πολυκατοικίες.")
 
             tasks = []
-            for target_building in buildings:
-                template = resolve_template(target_building, template_id_override=0)
-                task = MonthlyTaskService.configure_task(
-                    building=target_building,
-                    task_type=task_type,
-                    recurrence_type=data.get('recurrence_type', 'monthly'),
-                    day_of_week=data.get('day_of_week'),
-                    day_of_month=data.get('day_of_month', 1),
-                    time_to_send=data['time_to_send'],
-                    template=template,
-                    auto_send_enabled=data.get('auto_send_enabled', False),
-                    period_month=data.get('period_month'),
-                )
-                tasks.append(task)
+            with transaction.atomic():
+                for target_building in buildings:
+                    try:
+                        template = resolve_template(target_building, template_id_override=0)
+                        task = MonthlyTaskService.configure_task(
+                            building=target_building,
+                            task_type=task_type,
+                            recurrence_type=data.get('recurrence_type', 'monthly'),
+                            day_of_week=data.get('day_of_week'),
+                            day_of_month=data.get('day_of_month', 1),
+                            time_to_send=data['time_to_send'],
+                            template=template,
+                            auto_send_enabled=data.get('auto_send_enabled', False),
+                            period_month=data.get('period_month'),
+                        )
+                        tasks.append(task)
+                    except Exception as exc:
+                        logger.exception(
+                            "Monthly task configure failed for building=%s task_type=%s",
+                            target_building.id,
+                            task_type,
+                        )
+                        raise ValidationError(
+                            f"Σφάλμα για πολυκατοικία {target_building.id}: {exc}"
+                        )
 
             serializer = MonthlyNotificationTaskSerializer(tasks, many=True)
             return Response(
