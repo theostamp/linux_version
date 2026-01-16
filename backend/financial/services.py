@@ -3826,7 +3826,13 @@ service_postal_code: (string, postal code digits only)
                 else:
                     raise ValueError(f"Invalid JSON response from Gemini: {str(e)}")
 
-            # Validate and normalize response structure
+            # Normalize response structure (Gemini may return a list)
+            if isinstance(parsed_data, list):
+                parsed_data = next((item for item in parsed_data if isinstance(item, dict)), None)
+
+            if not isinstance(parsed_data, dict):
+                raise ValueError("Invalid JSON response type from Gemini (expected object)")
+
             document_number = parsed_data.get('document_number') or parsed_data.get('invoice_number')
             document_type = parsed_data.get('document_type') or parsed_data.get('invoice_type')
             financial_intent = (
