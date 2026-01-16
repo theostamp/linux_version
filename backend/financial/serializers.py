@@ -657,6 +657,7 @@ class FinancialSummarySerializer(serializers.Serializer):
     total_payments_month = serializers.FloatField()
     pending_expenses = serializers.FloatField()
     third_party_obligations = serializers.FloatField()
+    cash_available = serializers.FloatField()
     recent_transactions = TransactionSerializer(many=True, read_only=True)
     recent_transactions_count = serializers.IntegerField()
     apartment_balances = ApartmentBalanceSerializer(many=True, read_only=True)

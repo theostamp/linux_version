@@ -81,7 +81,11 @@ export const useExpensePayments = (buildingId?: number) => {
       toast.success('Η εξόφληση καταχωρήθηκε επιτυχώς.');
       return normalize(response.data);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την καταχώρηση εξόφλησης';
+      const payload = err.response?.data;
+      const fieldErrors = payload && typeof payload === 'object'
+        ? Object.values(payload).flat().join(' ')
+        : null;
+      const errorMessage = payload?.error || payload?.detail || fieldErrors || err.message || 'Σφάλμα κατά την καταχώρηση εξόφλησης';
       setError(errorMessage);
       toast.error(errorMessage);
       return null;

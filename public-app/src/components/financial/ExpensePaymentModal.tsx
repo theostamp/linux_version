@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,8 @@ import { ModalPortal } from '@/components/ui/ModalPortal';
 import { Expense } from '@/types/financial';
 import { formatCurrency } from '@/lib/utils';
 import { useExpensePayments } from '@/hooks/useExpensePayments';
+import { useInvoiceScan } from '@/hooks/useInvoiceScan';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 
@@ -37,12 +40,19 @@ export const ExpensePaymentModal: React.FC<ExpensePaymentModalProps> = ({
   onSuccess,
 }) => {
   const { createExpensePayment, isLoading } = useExpensePayments(buildingId || undefined);
+  const { selectedBuilding, buildingContext } = useBuilding();
+  const { scanInvoiceAsync, isLoading: isScanning, data: scannedData, reset: resetScan } = useInvoiceScan();
   const [amount, setAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [method, setMethod] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [ocrFileName, setOcrFileName] = useState<string | null>(null);
+
+  const isPremium = Boolean(
+    buildingContext?.billing?.premium_enabled ?? selectedBuilding?.premium_enabled
+  );
 
   const remainingAmount = useMemo(() => {
     if (!expense) return 0;
@@ -62,7 +72,26 @@ export const ExpensePaymentModal: React.FC<ExpensePaymentModalProps> = ({
     setReferenceNumber('');
     setNotes('');
     setReceipt(null);
-  }, [expense, isOpen, remainingAmount]);
+    setOcrFileName(null);
+    resetScan();
+  }, [expense, isOpen, remainingAmount, resetScan]);
+
+  useEffect(() => {
+    if (!scannedData) return;
+
+    if (typeof scannedData.amount === 'number') {
+      setAmount(scannedData.amount.toFixed(2));
+    }
+    if (scannedData.date) {
+      setPaymentDate(scannedData.date);
+    }
+    if (scannedData.document_number && !referenceNumber) {
+      setReferenceNumber(scannedData.document_number);
+    }
+    if (scannedData.supplier && !notes) {
+      setNotes(`OCR προμηθευτής: ${scannedData.supplier}`);
+    }
+  }, [scannedData, referenceNumber, notes]);
 
   if (!isOpen || !expense) return null;
 
@@ -97,6 +126,22 @@ export const ExpensePaymentModal: React.FC<ExpensePaymentModalProps> = ({
     if (result) {
       onSuccess();
       onClose();
+    }
+  };
+
+  const handleOcrFileSelect = async (file?: File | null) => {
+    if (!file) return;
+    if (!isPremium) {
+      toast.error('Η λειτουργία OCR είναι διαθέσιμη μόνο σε Premium.');
+      return;
+    }
+
+    setReceipt(file);
+    setOcrFileName(file.name);
+    try {
+      await scanInvoiceAsync(file);
+    } catch (err) {
+      console.error('OCR scan failed:', err);
     }
   };
 
@@ -205,6 +250,38 @@ export const ExpensePaymentModal: React.FC<ExpensePaymentModalProps> = ({
               />
               {receipt && (
                 <p className="text-xs text-gray-500">Επιλεγμένο αρχείο: {receipt.name}</p>
+              )}
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="expense-payment-ocr" className="text-sm">OCR Παραστατικού</Label>
+                {!isPremium && (
+                  <Badge variant="outline" className="text-xs">Premium</Badge>
+                )}
+              </div>
+              <Input
+                id="expense-payment-ocr"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                disabled={!isPremium || isScanning}
+                onChange={(e) => handleOcrFileSelect(e.target.files?.[0] || null)}
+              />
+              {isScanning && (
+                <p className="text-xs text-blue-600">Ανάλυση παραστατικού σε εξέλιξη...</p>
+              )}
+              {ocrFileName && (
+                <p className="text-xs text-gray-500">OCR αρχείο: {ocrFileName}</p>
+              )}
+              {scannedData && (
+                <div className="text-xs text-gray-600">
+                  Αναγνώριση: {scannedData.amount ? `${scannedData.amount.toFixed(2)}€` : '—'} · {scannedData.date || '—'}
+                </div>
+              )}
+              {!isPremium && (
+                <p className="text-xs text-gray-500">
+                  Διαθέσιμο σε Premium. <Link href="/upgrade" className="text-blue-600 hover:underline">Αναβάθμιση</Link>
+                </p>
               )}
             </div>
           </div>

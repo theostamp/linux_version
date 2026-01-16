@@ -186,6 +186,7 @@ export interface FinancialSummary {
   current_obligations?: number;
   current_month_expenses?: number;  // Νέο πεδίο: Δαπάνες μόνο του τρέχοντος μήνα
   third_party_obligations?: number; // Οφειλές προς τρίτους (δαπάνες μείον εξοφλήσεις)
+  cash_available?: number; // Ταμειακό διαθέσιμο
   total_expenses_this_month: number;
   total_payments_this_month: number;
   recent_transactions: Transaction[];

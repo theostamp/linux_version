@@ -957,6 +957,28 @@ class ExpensePaymentViewSet(viewsets.ModelViewSet):
         if expense and building and expense.building_id != building.id:
             raise ValidationError("Η δαπάνη δεν ανήκει στο επιλεγμένο κτίριο.")
 
+        payment_amount = serializer.validated_data.get('amount') or Decimal('0.00')
+        payment_date = serializer.validated_data.get('payment_date') or date.today()
+
+        payments_total = Payment.objects.filter(
+            apartment__building_id=building.id,
+            date__lte=payment_date
+        ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+
+        supplier_payments_total = ExpensePayment.objects.filter(
+            expense__building_id=building.id,
+            payment_date__lte=payment_date
+        ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+
+        cash_available = payments_total - supplier_payments_total
+        if cash_available < 0:
+            cash_available = Decimal('0.00')
+
+        if payment_amount > cash_available:
+            raise ValidationError({
+                'amount': f'Μη επαρκές ταμειακό διαθέσιμο. Διαθέσιμο: {cash_available:.2f}€.'
+            })
+
         serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
 
 

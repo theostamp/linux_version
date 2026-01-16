@@ -59,6 +59,7 @@ interface FinancialSummary {
   previous_obligations: number; // ← ΝΕΟ FIELD - Οφειλές προηγούμενων μηνών
   current_month_expenses: number; // ← ΝΕΟ FIELD - Δαπάνες μόνο τρέχοντος μήνα
   third_party_obligations?: number; // Οφειλές προς τρίτους
+  cash_available?: number; // Ταμειακό διαθέσιμο
   reserve_fund_debt: number; // Χρέος από εισφορά αποθεματικού
   reserve_fund_goal: number;
   current_reserve: number;
@@ -480,6 +481,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         previous_obligations: apiData.previous_obligations || 0, // ← ΝΕΟ FIELD
         current_month_expenses: (apiData as any).current_month_expenses || 0, // ← ΝΕΟ FIELD: Δαπάνες μόνο τρέχοντος μήνα
         third_party_obligations: (apiData as any).third_party_obligations || 0,
+        cash_available: (apiData as any).cash_available || 0,
         reserve_fund_debt: -calculatedReserveFundDebt, // Χρέος από εισφορά αποθεματικού - DYNAMIC
         reserve_fund_goal: savedGoal,
         current_reserve: apiData.current_reserve || 0,
@@ -557,6 +559,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         previous_obligations: 0, // Add missing property
         current_month_expenses: 0, // Add missing property
         third_party_obligations: 0,
+        cash_available: 0,
         reserve_fund_debt: 0,
         reserve_fund_goal: 0, // No hardcoded value - will be set by user
         current_reserve: 0,
@@ -1375,6 +1378,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
                   {/* Ανάλυση κάλυψης υποχρεώσεων */}
                   <div className="pt-2 border-t border-gray-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-200">
+                      <span>Ταμειακό διαθέσιμο:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-100">
+                        {formatCurrency(financialSummary?.cash_available || 0)}
+                      </span>
+                    </div>
+
                     <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-2">Τι πρέπει να πληρωθεί αυτόν τον μήνα:</div>
 
                     {/* Παλαιότερες οφειλές - ΠΑΝΤΑ ΕΜΦΑΝΙΖΕΤΑΙ */}
