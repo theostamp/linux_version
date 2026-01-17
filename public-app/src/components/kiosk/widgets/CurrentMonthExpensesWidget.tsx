@@ -2,33 +2,16 @@
 
 import { BaseWidgetProps } from '@/types/kiosk';
 import { Euro } from 'lucide-react';
-import { format } from 'date-fns';
-import { el } from 'date-fns/locale';
 import { useMemo } from 'react';
 
 export default function CurrentMonthExpensesWidget({ data, isLoading, error, buildingId }: BaseWidgetProps & { buildingId?: number | null }) {
-  // Get expenses from data prop (from useKioskData hook)
-  const expenses = useMemo(() => {
-    const expensesData = data?.financial?.current_month_expenses || [];
-    return expensesData;
+  const totalObligations =
+    typeof data?.financial?.total_obligations === 'number' ? data.financial.total_obligations : 0;
+  const pendingCount = useMemo(() => {
+    const statuses = data?.financial?.apartment_statuses;
+    if (!Array.isArray(statuses)) return 0;
+    return statuses.filter((item) => Boolean(item?.has_pending)).length;
   }, [data]);
-
-  const currentMonth = format(new Date(), 'MMMM yyyy', { locale: el });
-  const periodInfo = data?.financial?.current_month_period;
-
-  const periodLabel = useMemo(() => {
-    if (periodInfo?.is_fallback) {
-      return 'Πρόσφατες';
-    }
-    if (periodInfo?.start) {
-      try {
-        return format(new Date(periodInfo.start), 'MMMM yyyy', { locale: el });
-      } catch {
-        return currentMonth;
-      }
-    }
-    return currentMonth;
-  }, [periodInfo, currentMonth]);
 
   if (isLoading) {
     return (
@@ -49,7 +32,7 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
     );
   }
 
-  const totalAmount = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+  const totalAmount = Math.max(0, totalObligations);
 
   return (
     <div className="h-full flex flex-col items-center justify-center">
@@ -58,7 +41,7 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
         <div className="flex items-center justify-center space-x-2 mb-2">
           <Euro className="w-6 h-6 text-green-400" />
           <span className="text-sm text-green-200/80 uppercase tracking-wider">
-            Δαπάνες {periodLabel}
+            Σύνολο Οφειλών
           </span>
         </div>
 
@@ -68,13 +51,13 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
           </div>
         ) : (
           <div className="text-green-200/50">
-            <p className="text-lg">Δεν υπάρχουν δαπάνες</p>
+            <p className="text-lg">Δεν υπάρχουν οφειλές</p>
           </div>
         )}
 
-        {expenses.length > 0 && (
+        {pendingCount > 0 && (
           <p className="text-xs text-green-300/60 mt-2">
-            {expenses.length} {expenses.length === 1 ? 'δαπάνη' : 'δαπάνες'}
+            {pendingCount} {pendingCount === 1 ? 'διαμέρισμα' : 'διαμερίσματα'} με εκκρεμότητες
           </p>
         )}
       </div>

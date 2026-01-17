@@ -48,7 +48,7 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
     const baseWidgets = [
       {
         id: 'expenses',
-        name: 'Δαπάνες Τρέχοντος Μήνα',
+        name: 'Σύνολο Οφειλών',
         Component: CurrentMonthExpensesWidget,
       },
     ];
