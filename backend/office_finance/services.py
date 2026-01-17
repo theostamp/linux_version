@@ -289,6 +289,46 @@ class OfficeFinanceService:
         ]
     
     @staticmethod
+    def get_income_by_category(year: int = None, month: int = None) -> list:
+        """
+        Επιστρέφει έσοδα ανά κατηγορία.
+        """
+        if year is None:
+            year = timezone.now().year
+        
+        queryset = OfficeIncome.objects.filter(status='received')
+        
+        if month:
+            first_day, last_day = OfficeFinanceService.get_month_range(year, month)
+            queryset = queryset.filter(date__gte=first_day, date__lte=last_day)
+        else:
+            queryset = queryset.filter(date__year=year)
+        
+        data = queryset.values(
+            'category__id',
+            'category__name',
+            'category__category_type',
+            'category__group_type',
+            'category__color'
+        ).annotate(
+            total=Sum('amount'),
+            count=Count('id')
+        ).order_by('-total')
+        
+        return [
+            {
+                'category_id': item['category__id'],
+                'category_name': item['category__name'],
+                'category_type': item['category__category_type'],
+                'group_type': item['category__group_type'],
+                'color': item['category__color'],
+                'total': float(item['total']),
+                'count': item['count'],
+            }
+            for item in data
+        ]
+    
+    @staticmethod
     def get_pending_incomes() -> list:
         """
         Επιστρέφει εκκρεμή έσοδα.
@@ -355,6 +395,10 @@ class OfficeFinanceService:
             'yearly_summary': OfficeFinanceService.get_yearly_summary(),
             'income_by_building': OfficeFinanceService.get_income_by_building(
                 year=today.year, 
+                month=today.month
+            ),
+            'income_by_category': OfficeFinanceService.get_income_by_category(
+                year=today.year,
                 month=today.month
             ),
             'expenses_by_category': OfficeFinanceService.get_expenses_by_category(
@@ -482,6 +526,11 @@ class OfficeFinanceService:
             {'name': 'Προμήθεια Προμηθευτή', 'group_type': 'commissions', 'category_type': 'supplier_commission', 'icon': 'Percent', 'color': 'purple', 'order': 2, 'links_to_management': False},
             {'name': 'Προμήθεια Ασφάλειας', 'group_type': 'commissions', 'category_type': 'insurance_commission', 'icon': 'Percent', 'color': 'purple', 'order': 3, 'links_to_management': False},
             
+            # ─── ΠΩΛΗΣΕΙΣ ΠΡΟΪΟΝΤΩΝ ───
+            {'name': 'Πωλήσεις Καθαριστικών', 'group_type': 'product_sales', 'category_type': 'product_sales_cleaning', 'icon': 'Sparkles', 'color': 'amber', 'order': 1, 'links_to_management': False},
+            {'name': 'Πωλήσεις Απολυμαντικών', 'group_type': 'product_sales', 'category_type': 'product_sales_disinfectants', 'icon': 'ShieldCheck', 'color': 'amber', 'order': 2, 'links_to_management': False},
+            {'name': 'Πωλήσεις Αναλώσιμων', 'group_type': 'product_sales', 'category_type': 'product_sales_supplies', 'icon': 'Package', 'color': 'amber', 'order': 3, 'links_to_management': False},
+            
             # ─── ΛΟΙΠΑ ───
             {'name': 'Τόκοι Καταθέσεων', 'group_type': 'other', 'category_type': 'interest_income', 'icon': 'TrendingUp', 'color': 'emerald', 'order': 1, 'links_to_management': False},
             {'name': 'Προσαυξήσεις Καθυστέρησης', 'group_type': 'other', 'category_type': 'late_payment_fees', 'icon': 'Clock', 'color': 'orange', 'order': 2, 'links_to_management': False},
@@ -507,4 +556,3 @@ class OfficeFinanceService:
 
 # Global service instance
 office_finance_service = OfficeFinanceService()
-

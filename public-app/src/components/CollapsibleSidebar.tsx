@@ -254,7 +254,7 @@ const navigationGroups: NavigationGroup[] = [
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         staffPermission: 'can_access_office_finance', // Staff needs this permission
-        tooltip: 'Οικονομική εποπτεία γραφείου με έσοδα, έξοδα και αναλύσεις',
+        tooltip: 'Οικονομική εποπτεία, μισθοδοσία και λειτουργικές ροές του γραφείου',
       },
       {
         href: '/my-profile',

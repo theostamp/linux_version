@@ -109,6 +109,7 @@ class OfficeIncomeCategory(models.Model):
         ('building_fees', 'Αμοιβές Κτιρίων'),
         ('services', 'Υπηρεσίες'),
         ('commissions', 'Προμήθειες'),
+        ('product_sales', 'Πωλήσεις Προϊόντων'),
         ('other', 'Λοιπά'),
     ]
     
@@ -129,6 +130,10 @@ class OfficeIncomeCategory(models.Model):
         ('contractor_commission', 'Προμήθεια Συνεργείου'),
         ('supplier_commission', 'Προμήθεια Προμηθευτή'),
         ('insurance_commission', 'Προμήθεια Ασφάλειας'),
+        # Πωλήσεις Προϊόντων
+        ('product_sales_cleaning', 'Πωλήσεις Καθαριστικών'),
+        ('product_sales_disinfectants', 'Πωλήσεις Απολυμαντικών'),
+        ('product_sales_supplies', 'Πωλήσεις Αναλώσιμων'),
         # Λοιπά
         ('interest_income', 'Τόκοι Καταθέσεων'),
         ('late_payment_fees', 'Προσαυξήσεις Καθυστέρησης'),
@@ -538,4 +543,3 @@ class OfficeFinancialSummary(models.Model):
         
         self.save()
         return self
-

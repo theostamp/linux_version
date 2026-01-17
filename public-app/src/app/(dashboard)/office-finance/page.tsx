@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Wallet,
   Download,
@@ -14,7 +14,13 @@ import {
   Calendar,
   FileText,
   Building2,
-  Tag
+  Tag,
+  Users,
+  Percent,
+  Package,
+  Receipt,
+  Wrench,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardErrorBoundary } from '@/components/dashboard/DashboardErrorBoundary';
@@ -22,6 +28,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import {
   FinanceSummaryCards,
   IncomeByBuildingChart,
+  IncomeByCategoryChart,
   ExpensesByCategoryChart,
   YearlyChart,
   RecentTransactions
@@ -43,11 +50,10 @@ import {
   EXPENSE_GROUP_LABELS,
   INCOME_GROUP_LABELS,
   type ExpenseCategory,
-  type IncomeCategory,
-  type OfficeExpense,
-  type OfficeIncome
+  type IncomeCategory
 } from '@/hooks/useOfficeFinance';
 import { useBuildings } from '@/hooks/useBuildings';
+import { formatCurrency } from '@/lib/utils';
 
 // Helper function to group categories
 function groupCategories<T extends { group_type: string }>(
@@ -226,6 +232,55 @@ function AccordionSection({
   );
 }
 
+function getShare(value: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.min(100, (value / total) * 100);
+}
+
+function SummaryCard({
+  title,
+  description,
+  value,
+  share,
+  icon: Icon,
+  chipClassName,
+  iconClassName,
+  barClassName,
+  footer,
+}: {
+  title: string;
+  description: string;
+  value: number;
+  share: number;
+  icon: React.ElementType;
+  chipClassName: string;
+  iconClassName: string;
+  barClassName: string;
+  footer?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card/70 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <div className={`p-2 rounded-lg ${chipClassName}`}>
+          <Icon className={`w-4 h-4 ${iconClassName}`} />
+        </div>
+      </div>
+      <div className="mt-3 text-lg font-semibold text-foreground">{formatCurrency(value)}</div>
+      <div className="mt-2 flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className={`h-full ${barClassName}`} style={{ width: `${share}%` }} />
+        </div>
+        <span className="text-xs text-muted-foreground w-10 text-right">{share.toFixed(0)}%</span>
+      </div>
+      {footer && <p className="mt-2 text-xs text-muted-foreground">{footer}</p>}
+    </div>
+  );
+}
+
 function OfficeFinanceContent() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [showIncomeModal, setShowIncomeModal] = useState(false);
@@ -301,6 +356,129 @@ function OfficeFinanceContent() {
   const { data: expenseCategories } = useExpenseCategories();
   const { data: incomeCategories } = useIncomeCategories();
   const { buildings } = useBuildings();
+
+  const incomeGroupTotals = useMemo(() => {
+    if (!dashboardData?.income_by_category) return null;
+    return dashboardData.income_by_category.reduce((acc, item) => {
+      const group = item.group_type || 'other';
+      acc[group] = (acc[group] || 0) + item.total;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [dashboardData?.income_by_category]);
+
+  const incomeGroupsTotal = useMemo(() => {
+    if (!incomeGroupTotals) return 0;
+    return Object.values(incomeGroupTotals).reduce((sum, value) => sum + value, 0);
+  }, [incomeGroupTotals]);
+
+  const expenseGroupTotals = useMemo(() => {
+    if (!dashboardData?.expenses_by_category || !expenseCategories) return null;
+    const categoryToGroup = new Map(
+      expenseCategories.map((category) => [category.id, category.group_type || 'other'])
+    );
+    return dashboardData.expenses_by_category.reduce((acc, item) => {
+      const group = categoryToGroup.get(item.category_id) || 'other';
+      acc[group] = (acc[group] || 0) + item.total;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [dashboardData?.expenses_by_category, expenseCategories]);
+
+  const expenseGroupsTotal = useMemo(() => {
+    if (!expenseGroupTotals) return 0;
+    return Object.values(expenseGroupTotals).reduce((sum, value) => sum + value, 0);
+  }, [expenseGroupTotals]);
+
+  const payrollTotal = expenseGroupTotals?.staff ?? 0;
+  const collaboratorsTotal = (expenseGroupTotals?.collaborators ?? 0) + (expenseGroupTotals?.suppliers ?? 0);
+  const operationsTotal = (expenseGroupTotals?.operational ?? 0) + (expenseGroupTotals?.fixed ?? 0);
+  const taxesTotal = expenseGroupTotals?.taxes_legal ?? 0;
+
+  const incomeSummaryCards = [
+    {
+      key: 'building_fees',
+      title: 'Αμοιβές Διαχείρισης',
+      description: 'Έσοδα από πολυκατοικίες',
+      value: incomeGroupTotals?.building_fees ?? 0,
+      icon: Building2,
+      chipClassName: 'bg-emerald-100/70',
+      iconClassName: 'text-emerald-600',
+      barClassName: 'bg-emerald-500',
+    },
+    {
+      key: 'commissions',
+      title: 'Προμήθειες Συνεργείων',
+      description: 'Ποσοστά συνεργατών',
+      value: incomeGroupTotals?.commissions ?? 0,
+      icon: Percent,
+      chipClassName: 'bg-violet-100/70',
+      iconClassName: 'text-violet-600',
+      barClassName: 'bg-violet-500',
+    },
+    {
+      key: 'product_sales',
+      title: 'Πωλήσεις Προϊόντων',
+      description: 'Καθαριστικά & αναλώσιμα',
+      value: incomeGroupTotals?.product_sales ?? 0,
+      icon: Package,
+      chipClassName: 'bg-amber-100/70',
+      iconClassName: 'text-amber-600',
+      barClassName: 'bg-amber-500',
+    },
+    {
+      key: 'services',
+      title: 'Υπηρεσίες Γραφείου',
+      description: 'Πιστοποιητικά & επίβλεψη',
+      value: incomeGroupTotals?.services ?? 0,
+      icon: FileText,
+      chipClassName: 'bg-blue-100/70',
+      iconClassName: 'text-blue-600',
+      barClassName: 'bg-blue-500',
+    },
+  ];
+
+  const expenseSummaryCards = [
+    {
+      key: 'staff',
+      title: 'Μισθοδοσία & Εισφορές',
+      description: 'Μισθοί, εισφορές, παροχές',
+      value: payrollTotal,
+      icon: Users,
+      chipClassName: 'bg-indigo-100/70',
+      iconClassName: 'text-indigo-600',
+      barClassName: 'bg-indigo-500',
+      footer: 'Βάσει πληρωμένων εξόδων',
+    },
+    {
+      key: 'collaborators',
+      title: 'Αμοιβές Συνεργατών',
+      description: 'Συνεργεία & προμηθευτές',
+      value: collaboratorsTotal,
+      icon: Wrench,
+      chipClassName: 'bg-amber-100/70',
+      iconClassName: 'text-amber-600',
+      barClassName: 'bg-amber-500',
+    },
+    {
+      key: 'operations',
+      title: 'Λειτουργικά & Πάγια',
+      description: 'Ενοίκια, λογαριασμοί, εξοπλισμός',
+      value: operationsTotal,
+      icon: Building2,
+      chipClassName: 'bg-slate-100',
+      iconClassName: 'text-slate-600',
+      barClassName: 'bg-slate-500',
+    },
+    {
+      key: 'taxes_legal',
+      title: 'Φόροι & Νομικά',
+      description: 'Φόροι, πρόστιμα, νομικά',
+      value: taxesTotal,
+      icon: Receipt,
+      chipClassName: 'bg-rose-100/70',
+      iconClassName: 'text-rose-600',
+      barClassName: 'bg-rose-500',
+    },
+  ];
 
   const handleMarkReceived = async (id: number) => {
     try {
@@ -555,7 +733,7 @@ function OfficeFinanceContent() {
           </div>
           <div>
             <h1 className="page-title-sm">Κέντρο Ελέγχου</h1>
-            <p className="text-muted-foreground">Οικονομική εποπτεία, έσοδα/έξοδα και ανάλυση απόδοσης γραφείου</p>
+            <p className="text-muted-foreground">Οικονομική εποπτεία, μισθοδοσία και λειτουργικές ροές του γραφείου</p>
           </div>
         </div>
 
@@ -618,19 +796,125 @@ function OfficeFinanceContent() {
       </AccordionSection>
 
       <AccordionSection
-        title="Έσοδα & Έξοδα"
-        description="Ανάλυση ανά κτίριο και κατηγορία"
+        title="Ροές Εσόδων"
+        description="Αμοιβές διαχείρισης, προμήθειες, πωλήσεις προϊόντων και υπηρεσίες γραφείου"
         defaultOpen
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <IncomeByBuildingChart
-            data={dashboardData?.income_by_building || null}
-            isLoading={isDashboardLoading}
-          />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {incomeSummaryCards.map((card) => (
+              <SummaryCard
+                key={card.key}
+                title={card.title}
+                description={card.description}
+                value={card.value}
+                share={getShare(card.value, incomeGroupsTotal)}
+                icon={card.icon}
+                chipClassName={card.chipClassName}
+                iconClassName={card.iconClassName}
+                barClassName={card.barClassName}
+              />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <IncomeByBuildingChart
+              data={dashboardData?.income_by_building || null}
+              isLoading={isDashboardLoading}
+            />
+            <IncomeByCategoryChart
+              data={dashboardData?.income_by_category || null}
+              isLoading={isDashboardLoading}
+            />
+          </div>
+        </div>
+      </AccordionSection>
+
+      <AccordionSection
+        title="Δαπάνες & Μισθοδοσία"
+        description="Λειτουργικά, συνεργάτες, φόροι και μισθοδοσία σε ενιαία εικόνα"
+        defaultOpen
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {expenseSummaryCards.map((card) => (
+              <SummaryCard
+                key={card.key}
+                title={card.title}
+                description={card.description}
+                value={card.value}
+                share={getShare(card.value, expenseGroupsTotal)}
+                icon={card.icon}
+                chipClassName={card.chipClassName}
+                iconClassName={card.iconClassName}
+                barClassName={card.barClassName}
+                footer={card.footer}
+              />
+            ))}
+          </div>
           <ExpensesByCategoryChart
             data={dashboardData?.expenses_by_category || null}
             isLoading={isDashboardLoading}
           />
+        </div>
+      </AccordionSection>
+
+      <AccordionSection
+        title="Προσωπικό & Ωράρια"
+        description="Μισθοδοσία, ωράρια και άδειες προσωπικού"
+        defaultOpen={false}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-border bg-card/70 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-indigo-100/70">
+                  <Users className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Μισθοδοσία</p>
+                  <p className="text-xs text-muted-foreground">Μισθοί & εισφορές μήνα</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 text-lg font-semibold text-foreground">{formatCurrency(payrollTotal)}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Βάσει πληρωμένων εξόδων</p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card/70 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100/70">
+                  <Calendar className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Ωράρια Προσωπικού</p>
+                  <p className="text-xs text-muted-foreground">Βάρδιες & υπερωρίες</p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Σύντομα</span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Ορισμός εβδομαδιαίων βαρδιών και παρακολούθηση υπερωριών.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card/70 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-rose-100/70">
+                  <Clock className="w-4 h-4 text-rose-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Άδειες & Απουσίες</p>
+                  <p className="text-xs text-muted-foreground">Αιτήσεις & υπόλοιπα</p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Σύντομα</span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Καταγραφή αιτημάτων και αυτόματη ενημέρωση υπολοίπων.
+            </p>
+          </div>
         </div>
       </AccordionSection>
 

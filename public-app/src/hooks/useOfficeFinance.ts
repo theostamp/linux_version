@@ -53,6 +53,7 @@ export const INCOME_GROUP_LABELS: Record<string, string> = {
   building_fees: 'Αμοιβές Κτιρίων',
   services: 'Υπηρεσίες',
   commissions: 'Προμήθειες',
+  product_sales: 'Πωλήσεις Προϊόντων',
   other: 'Λοιπά',
 };
 
@@ -158,6 +159,16 @@ export interface IncomeByBuilding {
   count: number;
 }
 
+export interface IncomeByCategory {
+  category_id: number;
+  category_name: string;
+  category_type: string;
+  group_type: string;
+  color: string;
+  total: number;
+  count: number;
+}
+
 export interface ExpensesByCategory {
   category_id: number;
   category_name: string;
@@ -210,6 +221,7 @@ export interface OfficeFinanceDashboard {
   previous_month: PreviousMonthSummary;
   yearly_summary: YearlySummary;
   income_by_building: IncomeByBuilding[];
+  income_by_category: IncomeByCategory[];
   expenses_by_category: ExpensesByCategory[];
   pending_incomes: PendingIncome[];
   unpaid_expenses: UnpaidExpense[];
