@@ -214,14 +214,14 @@ class OfficeFinanceService:
     @staticmethod
     def get_income_by_building(year: int = None, month: int = None) -> list:
         """
-        Επιστρέφει έσοδα ανά κτίριο.
+        Επιστρέφει έσοδα ανά κτίριο (received + pending).
         """
         if year is None:
             year = timezone.now().year
         
         queryset = OfficeIncome.objects.filter(
             building__isnull=False,
-            status='received'
+            status__in=['received', 'pending']
         )
         
         if month:
@@ -291,12 +291,12 @@ class OfficeFinanceService:
     @staticmethod
     def get_income_by_category(year: int = None, month: int = None) -> list:
         """
-        Επιστρέφει έσοδα ανά κατηγορία.
+        Επιστρέφει έσοδα ανά κατηγορία (received + pending).
         """
         if year is None:
             year = timezone.now().year
         
-        queryset = OfficeIncome.objects.filter(status='received')
+        queryset = OfficeIncome.objects.filter(status__in=['received', 'pending'])
         
         if month:
             first_day, last_day = OfficeFinanceService.get_month_range(year, month)

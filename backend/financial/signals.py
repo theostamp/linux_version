@@ -307,6 +307,86 @@ def create_transactions_for_expense(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=Expense)
+def sync_office_income_from_management_fees(sender, instance, created, **kwargs):
+    """
+    Auto-sync OfficeIncome όταν δημιουργούνται διαχειριστικές δαπάνες.
+    """
+    raise_errors = kwargs.pop('raise_errors', False)
+    invoice_number = f"MGMT-EXP-{instance.id}"
+
+    if instance.category != 'management_fees' or not instance.building_id or not instance.date:
+        try:
+            from office_finance.models import OfficeIncome
+            OfficeIncome.objects.filter(invoice_number=invoice_number).delete()
+        except Exception as e:
+            if raise_errors:
+                raise
+            print(f"⚠️ Auto-sync OfficeIncome cleanup failed: {e}")
+        return
+
+    try:
+        from office_finance.models import OfficeIncome, OfficeIncomeCategory
+
+        category = OfficeIncomeCategory.objects.filter(
+            category_type='management_fee_monthly',
+            group_type='building_fees'
+        ).first()
+
+        if not category:
+            category = OfficeIncomeCategory.objects.create(
+                name='Αμοιβή Διαχείρισης (Μηνιαία)',
+                group_type='building_fees',
+                category_type='management_fee_monthly',
+                icon='Euro',
+                color='emerald',
+                display_order=1,
+                links_to_management_expense=True,
+                is_system=True,
+            )
+
+        title = f"Αμοιβή Διαχείρισης {instance.date.strftime('%m/%Y')} - {instance.building.name}"
+        description = (
+            f"Αυτόματο έσοδο από διαχειριστικές δαπάνες. "
+            f"Expense ID: {instance.id}"
+        )
+
+        existing = OfficeIncome.objects.filter(invoice_number=invoice_number).first()
+        if existing:
+            existing.title = title
+            existing.description = description
+            existing.amount = instance.amount
+            existing.date = instance.date
+            existing.category = category
+            existing.building = instance.building
+            existing.save(update_fields=[
+                'title',
+                'description',
+                'amount',
+                'date',
+                'category',
+                'building',
+                'updated_at',
+            ])
+            return
+
+        OfficeIncome.objects.create(
+            title=title,
+            description=description,
+            amount=instance.amount,
+            date=instance.date,
+            category=category,
+            building=instance.building,
+            status='pending',
+            invoice_number=invoice_number,
+            notes=f"Auto-sync από Expense #{instance.id} (management_fees).",
+        )
+    except Exception as e:
+        if raise_errors:
+            raise
+        print(f"⚠️ Auto-sync OfficeIncome failed for management fees: {e}")
+
+
+@receiver(post_save, sender=Expense)
 def update_building_reserve_on_expense(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση αποθεματικού κτιρίου όταν δημιουργείται/ενημερώνεται δαπάνη
@@ -411,6 +491,22 @@ def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
             return
         print(f"❌ Σφάλμα στον επαναυπολογισμό αποθεματικού κτιρίου: {e}")
 
+
+@receiver(post_delete, sender=Expense)
+def delete_office_income_on_management_fee_delete(sender, instance, **kwargs):
+    """
+    Καθαρίζει auto-synced OfficeIncome όταν διαγράφεται management fee expense.
+    """
+    if instance.category != 'management_fees':
+        return
+
+    try:
+        from office_finance.models import OfficeIncome
+
+        invoice_number = f"MGMT-EXP-{instance.id}"
+        OfficeIncome.objects.filter(invoice_number=invoice_number).delete()
+    except Exception as e:
+        print(f"⚠️ Auto-sync OfficeIncome delete failed: {e}")
 
 @receiver(post_delete, sender=Expense)
 def update_monthly_balance_on_expense_delete(sender, instance, **kwargs):
