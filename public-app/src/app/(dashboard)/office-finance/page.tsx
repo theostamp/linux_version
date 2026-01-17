@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardErrorBoundary } from '@/components/dashboard/DashboardErrorBoundary';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   FinanceSummaryCards,
   IncomeByBuildingChart,
@@ -193,6 +194,35 @@ function GroupedCategorySelect({
         </optgroup>
       ))}
     </select>
+  );
+}
+
+function AccordionSection({
+  title,
+  description,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  description?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/70 p-4 shadow-sm">
+      <Collapsible defaultOpen={defaultOpen}>
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">{title}</h2>
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          </div>
+          <CollapsibleTrigger />
+        </div>
+        <CollapsibleContent>
+          <div className="pt-4">{children}</div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 }
 
@@ -477,7 +507,7 @@ function OfficeFinanceContent() {
     }
 
     const data = [
-      ['Οικονομικά Γραφείου - Αναφορά'],
+      ['Κέντρο Ελέγχου - Αναφορά'],
       [''],
       ['Τρέχων Μήνας'],
       ['Έσοδα', dashboardData.current_month?.income?.total || 0],
@@ -524,8 +554,8 @@ function OfficeFinanceContent() {
             <Wallet className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="page-title-sm">Οικονομικά Γραφείου</h1>
-            <p className="text-muted-foreground">Διαχείριση εσόδων και εξόδων του γραφείου διαχείρισης</p>
+            <h1 className="page-title-sm">Κέντρο Ελέγχου</h1>
+            <p className="text-muted-foreground">Οικονομική εποπτεία, έσοδα/έξοδα και ανάλυση απόδοσης γραφείου</p>
           </div>
         </div>
 
@@ -576,83 +606,105 @@ function OfficeFinanceContent() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <FinanceSummaryCards
-        currentMonth={dashboardData?.current_month || null}
-        previousMonth={dashboardData?.previous_month || null}
-      />
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Income by Building */}
-        <IncomeByBuildingChart
-          data={dashboardData?.income_by_building || null}
-          isLoading={isDashboardLoading}
+      <AccordionSection
+        title="Σύνοψη Μήνα"
+        description="Βασικοί δείκτες εσόδων, εξόδων και καθαρού αποτελέσματος"
+        defaultOpen
+      >
+        <FinanceSummaryCards
+          currentMonth={dashboardData?.current_month || null}
+          previousMonth={dashboardData?.previous_month || null}
         />
+      </AccordionSection>
 
-        {/* Expenses by Category */}
-        <ExpensesByCategoryChart
-          data={dashboardData?.expenses_by_category || null}
-          isLoading={isDashboardLoading}
-        />
-      </div>
-
-      {/* Yearly Chart */}
-      <YearlyChart
-        data={yearlySummary || dashboardData?.yearly_summary || null}
-        isLoading={isDashboardLoading || isYearlyLoading}
-        onYearChange={setSelectedYear}
-      />
-
-      {/* Recent Transactions */}
-      <RecentTransactions
-        recentExpenses={dashboardData?.recent_expenses || null}
-        recentIncomes={dashboardData?.recent_incomes || null}
-        pendingIncomes={dashboardData?.pending_incomes || null}
-        unpaidExpenses={dashboardData?.unpaid_expenses || null}
-        isLoading={isDashboardLoading}
-        onMarkReceived={handleMarkReceived}
-        onMarkPaid={handleMarkPaid}
-        onEditExpense={handleEditExpense}
-        onEditIncome={handleEditIncome}
-        onDeleteExpense={handleDeleteExpense}
-        onDeleteIncome={handleDeleteIncome}
-      />
-
-      {/* Quick Stats Footer */}
-      {dashboardData && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-card/50 rounded-xl border border-border">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-foreground">
-              {dashboardData.income_by_building?.length || 0}
-            </p>
-            <p className="text-sm text-muted-foreground">Κτίρια με έσοδα</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-foreground">
-              {dashboardData.expenses_by_category?.reduce((sum, c) => sum + c.count, 0) || 0}
-            </p>
-            <p className="text-sm text-muted-foreground">Έξοδα μήνα</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-primary">
-              {dashboardData.pending_incomes?.length || 0}
-            </p>
-            <p className="text-sm text-muted-foreground">Εκκρεμή έσοδα</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-amber-500">
-              {dashboardData.unpaid_expenses?.length || 0}
-            </p>
-            <p className="text-sm text-muted-foreground">Προς πληρωμή</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-success">
-              {dashboardData.yearly_summary?.monthly_data?.filter(m => m.net > 0).length || 0}/12
-            </p>
-            <p className="text-sm text-muted-foreground">Κερδοφόροι μήνες</p>
-          </div>
+      <AccordionSection
+        title="Έσοδα & Έξοδα"
+        description="Ανάλυση ανά κτίριο και κατηγορία"
+        defaultOpen
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <IncomeByBuildingChart
+            data={dashboardData?.income_by_building || null}
+            isLoading={isDashboardLoading}
+          />
+          <ExpensesByCategoryChart
+            data={dashboardData?.expenses_by_category || null}
+            isLoading={isDashboardLoading}
+          />
         </div>
+      </AccordionSection>
+
+      <AccordionSection
+        title="Ετήσια Απόδοση"
+        description="Συγκριτική εικόνα μήνα προς μήνα"
+        defaultOpen={false}
+      >
+        <YearlyChart
+          data={yearlySummary || dashboardData?.yearly_summary || null}
+          isLoading={isDashboardLoading || isYearlyLoading}
+          onYearChange={setSelectedYear}
+        />
+      </AccordionSection>
+
+      <AccordionSection
+        title="Κινήσεις & Εκκρεμότητες"
+        description="Πρόσφατες συναλλαγές και πληρωμές που εκκρεμούν"
+        defaultOpen={false}
+      >
+        <RecentTransactions
+          recentExpenses={dashboardData?.recent_expenses || null}
+          recentIncomes={dashboardData?.recent_incomes || null}
+          pendingIncomes={dashboardData?.pending_incomes || null}
+          unpaidExpenses={dashboardData?.unpaid_expenses || null}
+          isLoading={isDashboardLoading}
+          onMarkReceived={handleMarkReceived}
+          onMarkPaid={handleMarkPaid}
+          onEditExpense={handleEditExpense}
+          onEditIncome={handleEditIncome}
+          onDeleteExpense={handleDeleteExpense}
+          onDeleteIncome={handleDeleteIncome}
+        />
+      </AccordionSection>
+
+      {dashboardData && (
+        <AccordionSection
+          title="Συνοπτικά Στατιστικά"
+          description="Γρήγορη εικόνα εκκρεμοτήτων και κερδοφορίας"
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-card/50 rounded-xl border border-border">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">
+                {dashboardData.income_by_building?.length || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">Κτίρια με έσοδα</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">
+                {dashboardData.expenses_by_category?.reduce((sum, c) => sum + c.count, 0) || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">Έξοδα μήνα</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-primary">
+                {dashboardData.pending_incomes?.length || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">Εκκρεμή έσοδα</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-amber-500">
+                {dashboardData.unpaid_expenses?.length || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">Προς πληρωμή</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-success">
+                {dashboardData.yearly_summary?.monthly_data?.filter(m => m.net > 0).length || 0}/12
+              </p>
+              <p className="text-sm text-muted-foreground">Κερδοφόροι μήνες</p>
+            </div>
+          </div>
+        </AccordionSection>
       )}
 
       {/* Income Modal */}

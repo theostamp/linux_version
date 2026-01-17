@@ -500,6 +500,7 @@ class OfficeAnalyticsService:
         """
         return {
             'overview': OfficeAnalyticsService.get_portfolio_overview(),
+            'portfolio_insights': OfficeAnalyticsService.get_portfolio_insights(),
             'buildings': OfficeAnalyticsService.get_buildings_financial_status(),
             'top_debtors': OfficeAnalyticsService.get_top_debtors(),
             'pending_tasks': OfficeAnalyticsService.get_pending_maintenance_tasks(),
@@ -507,6 +508,187 @@ class OfficeAnalyticsService:
             'alerts': OfficeAnalyticsService.get_alerts(),
             'generated_at': timezone.now().isoformat(),
         }
+
+    @staticmethod
+    def get_portfolio_insights() -> dict:
+        """
+        Επιστρέφει μη-οικονομικά insights για το χαρτοφυλάκιο.
+        """
+        try:
+            buildings = Building.objects.all()
+            apartments = Apartment.objects.all()
+
+            total_buildings = buildings.count()
+            total_apartments = apartments.count()
+
+            closed_apartments = apartments.filter(is_closed=True).count()
+            active_apartments = apartments.filter(is_closed=False)
+            active_apartments_count = max(total_apartments - closed_apartments, 0)
+
+            owners_qs = active_apartments.exclude(owner_name__isnull=True).exclude(owner_name__exact='')
+            tenants_qs = active_apartments.exclude(tenant_name__isnull=True).exclude(tenant_name__exact='')
+
+            owners_count = owners_qs.values_list('owner_name', flat=True).distinct().count()
+            tenants_count = tenants_qs.values_list('tenant_name', flat=True).distinct().count()
+
+            occupied_apartments = active_apartments.filter(
+                Q(owner_name__isnull=False, owner_name__gt='') |
+                Q(tenant_name__isnull=False, tenant_name__gt='')
+            ).count()
+            empty_apartments = max(active_apartments_count - occupied_apartments, 0)
+
+            occupancy_rate = 0.0
+            if total_apartments > 0:
+                occupancy_rate = round((occupied_apartments / total_apartments) * 100, 1)
+
+            today = timezone.now().date()
+            trial_building_ids = buildings.filter(trial_ends_at__gte=today).values_list('id', flat=True)
+
+            premium_iot_count = buildings.filter(iot_enabled=True).exclude(id__in=trial_building_ids).count()
+            premium_count = buildings.filter(premium_enabled=True, iot_enabled=False).exclude(id__in=trial_building_ids).count()
+            standard_count = buildings.exclude(id__in=trial_building_ids).exclude(iot_enabled=True).exclude(premium_enabled=True).count()
+            trial_count = buildings.filter(trial_ends_at__gte=today).count()
+
+            city_rows = (
+                buildings.values('city')
+                .annotate(
+                    buildings_count=Count('id'),
+                    apartments_count=Coalesce(Sum('apartments_count'), 0)
+                )
+                .order_by('-buildings_count', 'city')
+            )
+
+            city_breakdown = []
+            for row in city_rows:
+                city_breakdown.append({
+                    'city': row['city'] or 'Άγνωστη',
+                    'buildings': int(row['buildings_count'] or 0),
+                    'apartments': int(row['apartments_count'] or 0),
+                })
+
+            directory_rows = buildings.order_by('name').values(
+                'id', 'name', 'city', 'apartments_count', 'premium_enabled', 'iot_enabled', 'trial_ends_at'
+            )[:24]
+            building_directory = []
+            for row in directory_rows:
+                trial_active = bool(row['trial_ends_at'] and row['trial_ends_at'] >= today)
+                building_directory.append({
+                    'id': row['id'],
+                    'name': row['name'],
+                    'city': row['city'] or 'Άγνωστη',
+                    'apartments_count': row['apartments_count'] or 0,
+                    'premium_enabled': bool(row['premium_enabled']),
+                    'iot_enabled': bool(row['iot_enabled']),
+                    'trial_active': trial_active,
+                })
+
+            return {
+                'totals': {
+                    'buildings': total_buildings,
+                    'apartments': total_apartments,
+                    'owners': owners_count,
+                    'tenants': tenants_count,
+                    'residents': owners_count + tenants_count,
+                    'occupied_apartments': occupied_apartments,
+                    'empty_apartments': empty_apartments,
+                    'closed_apartments': closed_apartments,
+                    'occupancy_rate': occupancy_rate,
+                    'premium_buildings': premium_count,
+                    'premium_iot_buildings': premium_iot_count,
+                    'standard_buildings': standard_count,
+                    'trial_buildings': trial_count,
+                },
+                'premium_breakdown': {
+                    'premium_iot': premium_iot_count,
+                    'premium': premium_count,
+                    'standard': standard_count,
+                    'trial': trial_count,
+                },
+                'occupancy_breakdown': {
+                    'occupied': occupied_apartments,
+                    'empty': empty_apartments,
+                    'closed': closed_apartments,
+                },
+                'city_breakdown': city_breakdown,
+                'building_directory': building_directory,
+            }
+        except Exception as e:
+            logger.error(f"Error in get_portfolio_insights: {e}")
+            return {}
+
+    @staticmethod
+    def search_residents(query: str, limit: int = 20) -> list:
+        """
+        Αναζήτηση κατοίκων (ιδιοκτήτες/ενοικιαστές) με βάση όνομα ή στοιχεία.
+        """
+        try:
+            query = (query or '').strip()
+            if not query:
+                return []
+
+            query_lower = query.lower()
+            apartments = Apartment.objects.select_related('building').filter(is_closed=False).filter(
+                Q(owner_name__icontains=query) |
+                Q(tenant_name__icontains=query) |
+                Q(owner_email__icontains=query) |
+                Q(tenant_email__icontains=query) |
+                Q(owner_phone__icontains=query) |
+                Q(owner_phone2__icontains=query) |
+                Q(tenant_phone__icontains=query) |
+                Q(tenant_phone2__icontains=query) |
+                Q(number__icontains=query)
+            ).order_by('building__name', 'number')[: max(limit * 3, 20)]
+
+            results = []
+            for apartment in apartments:
+                owner_fields = [
+                    apartment.owner_name,
+                    apartment.owner_email,
+                    apartment.owner_phone,
+                    apartment.owner_phone2,
+                ]
+                tenant_fields = [
+                    apartment.tenant_name,
+                    apartment.tenant_email,
+                    apartment.tenant_phone,
+                    apartment.tenant_phone2,
+                ]
+                matches_owner = any(
+                    field and query_lower in str(field).lower()
+                    for field in owner_fields
+                )
+                matches_tenant = any(
+                    field and query_lower in str(field).lower()
+                    for field in tenant_fields
+                )
+
+                if apartment.owner_name and matches_owner:
+                    results.append({
+                        'name': apartment.owner_name,
+                        'role': 'owner',
+                        'building_id': apartment.building_id,
+                        'building_name': apartment.building.name,
+                        'apartment_number': apartment.number,
+                        'email': apartment.owner_email,
+                        'phone': apartment.owner_phone,
+                    })
+                if apartment.tenant_name and matches_tenant:
+                    results.append({
+                        'name': apartment.tenant_name,
+                        'role': 'tenant',
+                        'building_id': apartment.building_id,
+                        'building_name': apartment.building.name,
+                        'apartment_number': apartment.number,
+                        'email': apartment.tenant_email,
+                        'phone': apartment.tenant_phone,
+                    })
+                if len(results) >= limit:
+                    break
+
+            return results[:limit]
+        except Exception as e:
+            logger.error(f"Error in search_residents: {e}")
+            return []
 
 
 # Global service instance

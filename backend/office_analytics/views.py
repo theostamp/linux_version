@@ -167,3 +167,38 @@ class AlertsView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class ResidentSearchView(APIView):
+    """
+    GET /api/office-analytics/residents/?query=...
+
+    Αναζήτηση κατοίκων με βάση όνομα ή στοιχεία.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user = request.user
+            allowed_roles = ['manager', 'staff', 'superuser', 'internal_manager']
+
+            if not hasattr(user, 'role') or user.role not in allowed_roles:
+                return Response(
+                    {'error': 'Δεν έχετε δικαίωμα πρόσβασης στην αναζήτηση κατοίκων'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            query = request.query_params.get('query', '')
+            try:
+                limit = int(request.query_params.get('limit', 20))
+            except (TypeError, ValueError):
+                limit = 20
+            limit = max(1, min(limit, 50))
+            data = office_analytics_service.search_residents(query=query, limit=limit)
+
+            return Response({'results': data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error in ResidentSearchView: {e}")
+            return Response(
+                {'error': 'Σφάλμα κατά την αναζήτηση κατοίκων'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

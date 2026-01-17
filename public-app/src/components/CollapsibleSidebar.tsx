@@ -20,7 +20,6 @@ import {
   Loader2,
   Building,
   MapPin,
-  Shield,
   X,
   Menu,
   MessageCircle,
@@ -88,17 +87,17 @@ const navigationGroups: NavigationGroup[] = [
     links: [
       {
         href: '/dashboard',
-        label: 'Πίνακας Ελέγχου',
+        label: 'Επισκόπηση Κτιρίου',
         icon: <Home className="w-5 h-5" />,
         roles: ['manager', 'internal_manager', 'staff', 'superuser'],
-        tooltip: 'Εδώ βλέπετε την συνολική εικόνα του κτιρίου που έχετε επιλέξει ή όλων των κτιρίων',
+        tooltip: 'Συνολική εικόνα για το κτίριο που έχετε επιλέξει',
       },
       {
         href: '/office-dashboard',
-        label: 'Κέντρο Ελέγχου',
-        icon: <Shield className="w-5 h-5" />,
+        label: 'Εποπτεία Χαρτοφυλακίου',
+        icon: <Activity className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
-        tooltip: 'Συγκεντρωτική εικόνα όλων των κτιρίων και οικονομικών στοιχείων του γραφείου',
+        tooltip: 'Δείκτες κατοίκων, συνδρομών και λειτουργικής κατάστασης για όλα τα κτίρια',
       },
       {
         href: '/my-apartment',
@@ -251,11 +250,11 @@ const navigationGroups: NavigationGroup[] = [
       },
       {
         href: '/office-finance',
-        label: 'Οικονομικά Γραφείου',
+        label: 'Κέντρο Ελέγχου',
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         staffPermission: 'can_access_office_finance', // Staff needs this permission
-        tooltip: 'Συνολική οικονομική εικόνα του γραφείου διαχείρισης',
+        tooltip: 'Οικονομική εποπτεία γραφείου με έσοδα, έξοδα και αναλύσεις',
       },
       {
         href: '/my-profile',

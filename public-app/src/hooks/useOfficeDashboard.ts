@@ -24,6 +24,55 @@ export interface PortfolioOverview {
   };
 }
 
+export interface PortfolioTotals {
+  buildings: number;
+  apartments: number;
+  owners: number;
+  tenants: number;
+  residents: number;
+  occupied_apartments: number;
+  empty_apartments: number;
+  closed_apartments: number;
+  occupancy_rate: number;
+  premium_buildings: number;
+  premium_iot_buildings: number;
+  standard_buildings: number;
+  trial_buildings: number;
+}
+
+export interface PortfolioCityBreakdown {
+  city: string;
+  buildings: number;
+  apartments: number;
+}
+
+export interface PortfolioBuildingDirectory {
+  id: number;
+  name: string;
+  city: string;
+  apartments_count: number;
+  premium_enabled: boolean;
+  iot_enabled: boolean;
+  trial_active: boolean;
+}
+
+export interface PortfolioInsights {
+  totals: PortfolioTotals;
+  premium_breakdown: {
+    premium_iot: number;
+    premium: number;
+    standard: number;
+    trial: number;
+  };
+  occupancy_breakdown: {
+    occupied: number;
+    empty: number;
+    closed: number;
+  };
+  city_breakdown: PortfolioCityBreakdown[];
+  building_directory: PortfolioBuildingDirectory[];
+}
+
 export interface BuildingStatus {
   id: number;
   name: string;
@@ -74,6 +123,7 @@ export interface Alert {
 
 export interface OfficeDashboardData {
   overview: PortfolioOverview;
+  portfolio_insights: PortfolioInsights;
   buildings: BuildingStatus[];
   top_debtors: Debtor[];
   pending_tasks: PendingTask[];

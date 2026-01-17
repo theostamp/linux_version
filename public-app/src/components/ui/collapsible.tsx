@@ -10,7 +10,7 @@ interface CollapsibleProps {
 }
 
 interface CollapsibleTriggerProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   asChild?: boolean
   onClick?: () => void
 }

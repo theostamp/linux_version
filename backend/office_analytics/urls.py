@@ -11,6 +11,7 @@ from .views import (
     PendingMaintenanceView,
     CashFlowView,
     AlertsView,
+    ResidentSearchView,
 )
 
 app_name = 'office_analytics'
@@ -26,5 +27,5 @@ urlpatterns = [
     path('pending-maintenance/', PendingMaintenanceView.as_view(), name='pending-maintenance'),
     path('cash-flow/', CashFlowView.as_view(), name='cash-flow'),
     path('alerts/', AlertsView.as_view(), name='alerts'),
+    path('residents/', ResidentSearchView.as_view(), name='residents'),
 ]
-
