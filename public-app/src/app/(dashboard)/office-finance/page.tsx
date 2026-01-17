@@ -203,6 +203,19 @@ function GroupedCategorySelect({
   );
 }
 
+const FREQUENT_EXPENSE_CATEGORY_NAMES = [
+  'Ενοίκιο Γραφείου',
+  'Κοινόχρηστα Γραφείου',
+  'ΔΕΗ Γραφείου',
+  'Νερό Γραφείου',
+  'Τηλεφωνία & Internet',
+  'Γραφική Ύλη & Αναλώσιμα',
+  'Λογισμικό & Εφαρμογές',
+  'Μισθοδοσία',
+  'Ασφαλιστικές Εισφορές',
+  'Λογιστής',
+];
+
 function AccordionSection({
   title,
   description,
@@ -356,6 +369,23 @@ function OfficeFinanceContent() {
   const { data: expenseCategories } = useExpenseCategories();
   const { data: incomeCategories } = useIncomeCategories();
   const { buildings } = useBuildings();
+
+  const frequentExpenseCategories = useMemo(() => {
+    if (!expenseCategories?.length) return [];
+    const byName = new Map(expenseCategories.map((category) => [category.name, category]));
+    const selected: ExpenseCategory[] = [];
+    const usedIds = new Set<number>();
+
+    FREQUENT_EXPENSE_CATEGORY_NAMES.forEach((name) => {
+      const match = byName.get(name);
+      if (match && !usedIds.has(match.id)) {
+        usedIds.add(match.id);
+        selected.push(match);
+      }
+    });
+
+    return selected;
+  }, [expenseCategories]);
 
   const incomeGroupTotals = useMemo(() => {
     if (!dashboardData?.income_by_category) return null;
@@ -1164,6 +1194,37 @@ function OfficeFinanceContent() {
               className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-gray-200 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-rose-500/30 focus:!border-rose-500 !shadow-sm"
             />
           </div>
+
+          {frequentExpenseCategories.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Συχνές κατηγορίες
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Γρήγορη επιλογή</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {frequentExpenseCategories.map((category) => {
+                  const isSelected = expenseForm.category === String(category.id);
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setExpenseForm(prev => ({ ...prev, category: String(category.id) }))}
+                      aria-pressed={isSelected}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                        isSelected
+                          ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700'
+                          : 'bg-white/80 text-slate-600 border-slate-200 hover:bg-rose-50 hover:border-rose-200 dark:bg-slate-800/70 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-rose-900/20'
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
