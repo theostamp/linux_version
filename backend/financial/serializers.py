@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Expense, ExpensePayment, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt, MonthlyBalance
+from .models import Expense, ExpensePayment, CashFunding, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt, MonthlyBalance
 from .services import FileUploadService
 
 
@@ -434,6 +434,52 @@ class ExpensePaymentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'created_by',
             'created_by_name', 'expense_title', 'expense_amount', 'receipt_url'
+        ]
+
+    def get_receipt_url(self, obj):
+        if obj.receipt:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.receipt.url)
+            return obj.receipt.url
+        return None
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Το ποσό πρέπει να είναι μεγαλύτερο του μηδενός.")
+        return value
+
+    def validate_receipt(self, value):
+        if value:
+            try:
+                result = FileUploadService.validate_file(value)
+                if not result.get('is_valid'):
+                    errors = result.get('errors') or []
+                    raise serializers.ValidationError("; ".join(errors) or "Μη έγκυρο αρχείο.")
+            except Exception as e:
+                raise serializers.ValidationError(f"Σφάλμα στο αρχείο: {str(e)}")
+
+
+class CashFundingSerializer(serializers.ModelSerializer):
+    """Serializer για έκτακτη χρηματοδότηση ταμείου"""
+
+    method_display = serializers.CharField(source='get_method_display', read_only=True)
+    source_type_display = serializers.CharField(source='get_source_type_display', read_only=True)
+    building_name = serializers.CharField(source='building.name', read_only=True)
+    receipt_url = serializers.SerializerMethodField()
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = CashFunding
+        fields = [
+            'id', 'building', 'building_name', 'amount', 'funding_date',
+            'method', 'method_display', 'source_type', 'source_type_display',
+            'source_name', 'reference_number', 'notes', 'receipt', 'receipt_url',
+            'created_by', 'created_by_name', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'created_by',
+            'created_by_name', 'building_name', 'receipt_url'
         ]
 
     def get_receipt_url(self, obj):

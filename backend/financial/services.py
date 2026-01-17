@@ -7,7 +7,7 @@ from django.db.models import Sum
 from datetime import datetime, date
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .models import Expense, ExpensePayment, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
+from .models import Expense, ExpensePayment, CashFunding, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
 from apartments.models import Apartment
 from buildings.models import Building
 from .monthly_balance_service import MonthlyBalanceService
@@ -1239,7 +1239,7 @@ class FinancialDashboardService:
 
     def _get_cash_available(self, month: str | None = None) -> Decimal:
         """
-        Υπολογίζει το ταμειακό διαθέσιμο (εισπράξεις μείον εξοφλήσεις δαπανών).
+        Υπολογίζει το ταμειακό διαθέσιμο (εισπράξεις + χρηματοδοτήσεις μείον εξοφλήσεις).
 
         Αν δοθεί month (YYYY-MM), υπολογίζει μέχρι το τέλος του μήνα (exclusive).
         """
@@ -1248,6 +1248,10 @@ class FinancialDashboardService:
             payments_qs = Payment.objects.filter(
                 apartment__building_id=self.building_id,
                 date__lt=month_end
+            )
+            cash_fundings_qs = CashFunding.objects.filter(
+                building_id=self.building_id,
+                funding_date__lt=month_end
             )
             expense_payments_qs = ExpensePayment.objects.filter(
                 expense__building_id=self.building_id,
@@ -1259,14 +1263,19 @@ class FinancialDashboardService:
                 apartment__building_id=self.building_id,
                 date__lte=today
             )
+            cash_fundings_qs = CashFunding.objects.filter(
+                building_id=self.building_id,
+                funding_date__lte=today
+            )
             expense_payments_qs = ExpensePayment.objects.filter(
                 expense__building_id=self.building_id,
                 payment_date__lte=today
             )
 
         payments_total = payments_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        cash_fundings_total = cash_fundings_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         expense_payments_total = expense_payments_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        available = payments_total - expense_payments_total
+        available = payments_total + cash_fundings_total - expense_payments_total
         if available < 0:
             available = Decimal('0.00')
         return available

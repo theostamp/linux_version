@@ -1161,6 +1161,66 @@ class ExpensePayment(models.Model):
         return f"Πληρωμή {self.expense.title} - {self.amount}€ ({self.payment_date})"
 
 
+class CashFunding(models.Model):
+    """Μοντέλο για έκτακτη χρηματοδότηση ταμείου"""
+
+    SOURCE_TYPES = [
+        ('manager', 'Διαχειριστής'),
+        ('office', 'Γραφείο Διαχείρισης'),
+        ('other', 'Άλλο'),
+    ]
+
+    PAYMENT_METHODS = [
+        ('cash', 'Μετρητά'),
+        ('bank_transfer', 'Τραπεζική Μεταφορά'),
+        ('check', 'Επιταγή'),
+        ('card', 'Κάρτα'),
+    ]
+
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.CASCADE,
+        related_name='cash_fundings',
+        verbose_name="Κτίριο"
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name="Ποσό Χρηματοδότησης"
+    )
+    funding_date = models.DateField(verbose_name="Ημερομηνία Χρηματοδότησης")
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, verbose_name="Τρόπος Χρηματοδότησης")
+    source_type = models.CharField(max_length=20, choices=SOURCE_TYPES, verbose_name="Πηγή Χρηματοδότησης")
+    source_name = models.CharField(max_length=200, blank=True, verbose_name="Όνομα Πηγής")
+    reference_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Αναφοράς")
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    receipt = models.FileField(
+        upload_to='cash_fundings/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name="Απόδειξη Χρηματοδότησης"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cash_fundings',
+        verbose_name="Καταχωρήθηκε από"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Χρηματοδότηση Ταμείου"
+        verbose_name_plural = "Χρηματοδοτήσεις Ταμείου"
+        ordering = ['-funding_date', '-created_at']
+
+    def __str__(self):
+        return f"Χρηματοδότηση {self.amount}€ ({self.funding_date})"
+
+
 class ExpenseApartment(models.Model):
     """Μοντέλο για τη σύνδεση δαπανών με συγκεκριμένα διαμερίσματα"""
 

@@ -18,6 +18,7 @@ from django.shortcuts import redirect
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.views import APIView
 
 
@@ -27,9 +28,9 @@ def get_query_params(request):
     """
     return getattr(request, 'query_params', request.GET)
 
-from .models import Expense, ExpensePayment, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt, MonthlyBalance
+from .models import Expense, ExpensePayment, CashFunding, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt, MonthlyBalance
 from .serializers import (
-    ExpenseSerializer, ExpensePaymentSerializer, TransactionSerializer, PaymentSerializer,
+    ExpenseSerializer, ExpensePaymentSerializer, CashFundingSerializer, TransactionSerializer, PaymentSerializer,
     MeterReadingSerializer, SupplierSerializer,
     FinancialSummarySerializer, FinancialReceiptSerializer, MonthlyBalanceSerializer
 )
@@ -956,7 +957,7 @@ class ExpensePaymentViewSet(viewsets.ModelViewSet):
         building = BuildingService.resolve_building_from_request(self.request, required=True)
         expense = serializer.validated_data.get('expense')
         if expense and building and expense.building_id != building.id:
-            raise ValidationError("Η δαπάνη δεν ανήκει στο επιλεγμένο κτίριο.")
+            raise DRFValidationError({'expense': "Η δαπάνη δεν ανήκει στο επιλεγμένο κτίριο."})
 
         payment_amount = serializer.validated_data.get('amount') or Decimal('0.00')
         payment_date = serializer.validated_data.get('payment_date') or date.today()
@@ -966,21 +967,50 @@ class ExpensePaymentViewSet(viewsets.ModelViewSet):
             date__lte=payment_date
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
 
+        cash_fundings_total = CashFunding.objects.filter(
+            building_id=building.id,
+            funding_date__lte=payment_date
+        ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+
         supplier_payments_total = ExpensePayment.objects.filter(
             expense__building_id=building.id,
             payment_date__lte=payment_date
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
 
-        cash_available = payments_total - supplier_payments_total
+        cash_available = payments_total + cash_fundings_total - supplier_payments_total
         if cash_available < 0:
             cash_available = Decimal('0.00')
 
         if payment_amount > cash_available:
-            raise ValidationError({
+            raise DRFValidationError({
                 'amount': f'Μη επαρκές ταμειακό διαθέσιμο. Διαθέσιμο: {cash_available:.2f}€.'
             })
 
         serializer.save(created_by=self.request.user if self.request.user.is_authenticated else None)
+
+
+class CashFundingViewSet(BuildingContextMixin, viewsets.ModelViewSet):
+    """ViewSet για έκτακτες χρηματοδοτήσεις ταμείου"""
+
+    queryset = CashFunding.objects.select_related('building', 'created_by').all()
+    serializer_class = CashFundingSerializer
+    permission_classes = [TransactionPermission]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    # BuildingContextMixin configuration
+    building_required = True
+    building_field_name = 'building'
+    auto_filter_by_building = True
+
+    def perform_create(self, serializer):
+        building = self.get_building_context()
+        created_by = self.request.user if self.request.user.is_authenticated else None
+
+        if building and self.building_field_name not in serializer.validated_data:
+            serializer.save(**{self.building_field_name: building}, created_by=created_by)
+            return
+
+        serializer.save(created_by=created_by)
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
