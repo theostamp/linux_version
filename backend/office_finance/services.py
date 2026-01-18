@@ -21,6 +21,14 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
+PLATFORM_SUBSCRIPTION_CATEGORY_NAME = 'Συνδρομή Digital Concierge'
+PLATFORM_SUBSCRIPTION_TITLE_PREFIX = 'Συνδρομή Πλατφόρμας'
+PLATFORM_SUBSCRIPTION_DESCRIPTION_TEMPLATE = (
+    'Αυτόματη καταχώρηση συνδρομής πλατφόρμας για {month_label}. '
+    'Διαμερίσματα: {total_apartments} (web), {premium_apartments} premium, {iot_apartments} iot. '
+    'Κόστος: web {web_cost}€, premium {premium_cost}€, iot {iot_cost}€.'
+)
+
 
 class OfficeFinanceService:
     """
