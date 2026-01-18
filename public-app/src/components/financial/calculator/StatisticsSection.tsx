@@ -41,18 +41,41 @@ import {
   BarChart3,
   PieChart as PieChartIcon
 } from 'lucide-react';
-import { CalculatorState } from './types/financial';
+import { CalculatorState, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo } from './types/financial';
 import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 
 interface StatisticsSectionProps {
   state: CalculatorState;
   buildingName?: string;
   apartmentsCount?: number;
-  expenseBreakdown: any;
-  reserveFundInfo: any;
-  managementFeeInfo: any;
+  expenseBreakdown: ExpenseBreakdown;
+  reserveFundInfo: ReserveFundInfo;
+  managementFeeInfo: ManagementFeeInfo;
   aptWithFinancial: ApartmentWithFinancialData[];
 }
+
+type ExpenseDistributionItem = {
+  name: string;
+  value: number;
+  color: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+type ApartmentPaymentStatus = {
+  apartment: string;
+  owner: string;
+  previousBalance: number;
+  totalDue: number;
+  status: 'paid' | 'pending' | 'overdue';
+  color: string;
+};
+
+type MonthlyTrend = {
+  month: string;
+  expenses: number;
+  payments: number;
+  balance: number;
+};
 
 // Colors for different expense categories
 const EXPENSE_COLORS = {
@@ -139,7 +162,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
   };
 
   // Calculate expense distribution for pie chart
-  const expenseDistribution = useMemo(() => {
+  const expenseDistribution = useMemo<ExpenseDistributionItem[]>(() => {
     console.debug('[StatisticsSection] expenseBreakdown snapshot', {
       common: expenseBreakdown?.common,
       elevator: expenseBreakdown?.elevator,
@@ -147,7 +170,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
       other: expenseBreakdown?.other,
       coownership: expenseBreakdown?.coownership,
     });
-    const data = [];
+    const data: ExpenseDistributionItem[] = [];
 
     if (expenseBreakdown.common > 0) {
       data.push({
@@ -216,14 +239,14 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
   }, [expenseBreakdown, managementFeeInfo, reserveFundInfo]);
 
   // Calculate apartment payment status
-  const apartmentPaymentStatus = useMemo(() => {
+  const apartmentPaymentStatus = useMemo<ApartmentPaymentStatus[]>(() => {
     console.debug('[StatisticsSection] apartmentPaymentStatus inputs', {
       sharesCount: Object.values(state.shares || {}).length,
       aptWithFinancialCount: aptWithFinancial?.length,
       managementFeePerApartment: managementFeeInfo?.feePerApartment,
     });
-    return Object.values(state.shares).map((share: any) => {
-      const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
+    return Object.values(state.shares).map((share) => {
+      const apartmentData = aptWithFinancial.find((apt) => apt.id === share.apartment_id);
       const previousBalance = toNumber(apartmentData?.previous_balance || 0);
       const breakdown = share.breakdown || {};
       const totalDue = toNumber(breakdown.general_expenses || 0) +
@@ -268,7 +291,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
 
   // Monthly trends - placeholder until real historical data is available from API
   // TODO: Replace with actual historical data from /api/financial/monthly-trends endpoint
-  const monthlyTrends = useMemo(() => {
+  const monthlyTrends = useMemo<MonthlyTrend[]>(() => {
     const months = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
 
     // Return empty data - chart will show "Δεν υπάρχουν ιστορικά δεδομένα" message
@@ -282,8 +305,8 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
 
   // Calculate total previous balance from all apartments
   const getTotalPreviousBalance = () => {
-    return Object.values(state.shares).reduce((sum: number, s: any) => {
-      const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
+    return Object.values(state.shares).reduce((sum, share) => {
+      const apartmentData = aptWithFinancial.find((apt) => apt.id === share.apartment_id);
       return sum + toNumber(apartmentData?.previous_balance ?? 0);
     }, 0);
   };
@@ -514,7 +537,9 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }: any) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -523,7 +548,11 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => `${formatAmount(value)}€`} />
+                    <Tooltip
+                      formatter={(value: number | string) =>
+                        `${formatAmount(typeof value === 'number' ? value : Number(value))}€`
+                      }
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -550,7 +579,11 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="apartment" />
                   <YAxis />
-                  <Tooltip formatter={(value: any) => `${formatAmount(value)}€`} />
+                  <Tooltip
+                    formatter={(value: number | string) =>
+                      `${formatAmount(typeof value === 'number' ? value : Number(value))}€`
+                    }
+                  />
                   <Bar dataKey="totalDue" fill="#3B82F6" name="Πληρωτέο Ποσό" />
                 </BarChart>
               </ResponsiveContainer>
@@ -666,7 +699,11 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value: any) => `${formatAmount(value)}€`} />
+                <Tooltip
+                  formatter={(value: number | string) =>
+                    `${formatAmount(typeof value === 'number' ? value : Number(value))}€`
+                  }
+                />
                 <Legend />
                 <Area type="monotone" dataKey="expenses" stackId="1" stroke="#EF4444" fill="#FEE2E2" name="Δαπάνες" />
                 <Area type="monotone" dataKey="payments" stackId="1" stroke="#10B981" fill="#D1FAE5" name="Πληρωμές" />

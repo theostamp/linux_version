@@ -18,9 +18,74 @@ export interface Share {
     equal_share_expenses?: number;
     individual_expenses?: number;
     reserve_fund_contribution?: number;
+    management_fee?: number;
     owner_expenses?: number;
     resident_expenses?: number;
   };
+}
+
+export type PeriodMode = 'quick' | 'custom' | 'advanced' | string;
+
+export interface QuickOptions {
+  currentMonth: boolean;
+  previousMonth: boolean;
+  customRange: boolean;
+}
+
+export interface CustomPeriod {
+  startDate: string;
+  endDate: string;
+  periodName: string;
+}
+
+export interface AdvancedOptions {
+  includeReserveFund: boolean;
+  reserveFundMonthlyAmount: number;
+  heatingFixedPercentage: number;
+  elevatorMills: boolean;
+}
+
+export interface AdvancedExpenseTotals {
+  general?: number;
+  elevator?: number;
+  heating?: number;
+  equal_share?: number;
+  individual?: number;
+}
+
+export interface AdvancedShares {
+  shares?: Record<string, Share>;
+  expense_totals?: AdvancedExpenseTotals;
+  expense_breakdown?: Array<Record<string, any>>;
+  management_fee_per_apartment?: number;
+  reserve_contribution?: number;
+  reserve_fund_goal?: number;
+  reserve_fund_duration?: number;
+  reserve_fund_start_date?: string;
+  reserve_fund_target_date?: string;
+  actual_reserve_collected?: number;
+  heating_costs?:
+    | {
+        total?: number;
+        fixed?: number;
+        variable?: number;
+        [key: string]: any;
+      }
+    | number;
+  elevator_costs?: number;
+  elevator_shares?: Record<string, Share>;
+  [key: string]: any;
+}
+
+export interface CalculatorState {
+  periodMode: PeriodMode;
+  quickOptions: QuickOptions;
+  customPeriod: CustomPeriod;
+  advancedOptions: AdvancedOptions;
+  shares: Record<string, Share>;
+  totalExpenses: number;
+  advancedShares: any;
+  isIssuing: boolean;
 }
 
 export interface ExpenseBreakdown {
@@ -106,7 +171,7 @@ export interface ValidationResult {
 export interface CommonExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  state: any; // CalculatorState - should be properly typed
+  state: CalculatorState;
   buildingId?: number;
   selectedMonth?: string; // Format: "YYYY-MM"
   buildingName?: string;
