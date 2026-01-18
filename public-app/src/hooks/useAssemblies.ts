@@ -41,6 +41,7 @@ import {
   type RSVPStatus,
   type AttendanceType,
   type VoteChoice,
+  type VoteConsent,
 } from '@/lib/api';
 
 // ============================================================
@@ -484,12 +485,13 @@ export function useCastVote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ attendeeId, agendaItemId, vote, notes }: {
+    mutationFn: ({ attendeeId, agendaItemId, vote, notes, consent }: {
       attendeeId: string;
       agendaItemId: string;
       vote: VoteChoice;
-      notes?: string
-    }) => attendeeCastVote(attendeeId, agendaItemId, vote, notes),
+      notes?: string;
+      consent?: VoteConsent;
+    }) => attendeeCastVote(attendeeId, agendaItemId, vote, notes, consent),
     onSuccess: (data, { agendaItemId }) => {
       queryClient.invalidateQueries({ queryKey: ['agenda-items'] });
       queryClient.invalidateQueries({ queryKey: ['agenda-item-votes', agendaItemId] });

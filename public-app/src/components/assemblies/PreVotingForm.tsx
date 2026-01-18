@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useCastVote } from '@/hooks/useAssemblies';
+import { LegalConsent, TERMS_VERSION } from '@/components/legal/LegalConsent';
 import type { Assembly, AgendaItem, AssemblyAttendee, VoteChoice } from '@/lib/api';
 
 interface PreVotingFormProps {
@@ -60,19 +61,22 @@ interface VotingItemCardProps {
   votedItems: Set<string>;
   onVote: (itemId: string, vote: VoteChoice) => void;
   isSubmitting: boolean;
+  termsAccepted: boolean;
 }
 
-function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: VotingItemCardProps) {
+function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting, termsAccepted }: VotingItemCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null);
   const hasVoted = votedItems.has(item.id);
+  const isVotingDisabled = !termsAccepted || hasVoted;
 
   const handleVoteSelect = (vote: VoteChoice) => {
-    if (hasVoted) return;
+    if (isVotingDisabled) return;
     setSelectedVote(vote);
   };
 
   const handleSubmitVote = () => {
+    if (!termsAccepted) return;
     if (selectedVote && !hasVoted) {
       onVote(item.id, selectedVote);
     }
@@ -180,12 +184,14 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
                     <button
                       key={option.value}
                       onClick={() => handleVoteSelect(option.value)}
+                      disabled={isVotingDisabled}
                       className={cn(
                         'p-3 rounded-xl border-2 transition-all duration-200',
                         'flex flex-col items-center justify-center gap-2',
                         selectedVote === option.value
                           ? `${option.borderColor.split(' ')[0]} ${option.bgColor} ring-2 ring-offset-1 ${option.borderColor.split(' ')[0].replace('border', 'ring')}`
-                          : `${option.borderColor} bg-white`
+                          : `${option.borderColor} bg-white`,
+                        isVotingDisabled && 'opacity-50 cursor-not-allowed'
                       )}
                     >
                       <div className={cn(
@@ -218,7 +224,7 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
               {/* Submit button */}
               <Button
                 onClick={handleSubmitVote}
-                disabled={!selectedVote || isSubmitting}
+                disabled={!selectedVote || isSubmitting || !termsAccepted}
                 className={cn(
                   'w-full',
                   selectedVote
@@ -249,6 +255,7 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
 export default function PreVotingForm({ assembly, attendee, onComplete }: PreVotingFormProps) {
   const [votedItems, setVotedItems] = useState<Set<string>>(new Set());
   const [currentSubmitting, setCurrentSubmitting] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const castVoteMutation = useCastVote();
 
   // Filter voting items that allow pre-voting
@@ -260,6 +267,7 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
 
   const handleVote = async (itemId: string, vote: VoteChoice) => {
     if (!attendee) return;
+    if (!termsAccepted) return;
 
     setCurrentSubmitting(itemId);
 
@@ -268,6 +276,11 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
         attendeeId: attendee.id,
         agendaItemId: itemId,
         vote,
+        consent: {
+          termsAccepted: true,
+          termsVersion: TERMS_VERSION,
+          termsAcceptedVia: 'app_pre_vote',
+        },
       });
 
       setVotedItems(prev => new Set([...prev, itemId]));
@@ -387,6 +400,15 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
         </div>
       </div>
 
+      <div className="space-y-2">
+        <LegalConsent accepted={termsAccepted} onAcceptedChange={setTermsAccepted} />
+        {!termsAccepted && (
+          <p className="text-xs text-amber-700">
+            Αποδεχθείτε τους όρους για να ενεργοποιηθεί η υποβολή ψήφου.
+          </p>
+        )}
+      </div>
+
       {/* Info about mills */}
       <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-start gap-3">
         <Users className="w-5 h-5 text-indigo-600 mt-0.5" />
@@ -416,6 +438,7 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
             votedItems={votedItems}
             onVote={handleVote}
             isSubmitting={currentSubmitting === item.id}
+            termsAccepted={termsAccepted}
           />
         ))}
       </div>

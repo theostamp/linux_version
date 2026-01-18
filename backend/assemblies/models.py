@@ -698,6 +698,21 @@ class AssemblyAttendee(models.Model):
     # Pre-voting
     has_pre_voted = models.BooleanField(default=False, verbose_name="Έχει Pre-voted")
     pre_voted_at = models.DateTimeField(null=True, blank=True, verbose_name="Ώρα Pre-vote")
+
+    # Terms acceptance
+    terms_accepted_at = models.DateTimeField(null=True, blank=True, verbose_name="Αποδοχή Όρων - Ώρα")
+    terms_accepted_version = models.CharField(
+        max_length=32,
+        blank=True,
+        default='',
+        verbose_name="Έκδοση Όρων"
+    )
+    terms_accepted_via = models.CharField(
+        max_length=32,
+        blank=True,
+        default='',
+        verbose_name="Μέσο Αποδοχής"
+    )
     
     # Contact info (για όσους δεν είναι users)
     attendee_name = models.CharField(

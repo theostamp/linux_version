@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { LegalConsent, TERMS_VERSION } from '@/components/legal/LegalConsent';
 
 type VoteChoice = 'approve' | 'reject' | 'abstain';
 
@@ -75,6 +76,8 @@ export default function VoteByEmailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submittedCount, setSubmittedCount] = useState(0);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
 
   // Fetch vote data on mount
   useEffect(() => {
@@ -105,6 +108,10 @@ export default function VoteByEmailPage() {
 
   const handleSubmit = async () => {
     if (!data) return;
+    if (!termsAccepted) {
+      setTermsError('Πρέπει να αποδεχθείτε τους Όρους Χρήσης για να υποβάλετε ψήφο.');
+      return;
+    }
 
     const votesToSubmit = Object.entries(votes).map(([itemId, vote]) => ({
       agenda_item_id: itemId,
@@ -121,7 +128,12 @@ export default function VoteByEmailPage() {
       const response = await fetch(`/api/vote-by-email/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ votes: votesToSubmit }),
+        body: JSON.stringify({
+          votes: votesToSubmit,
+          terms_accepted: true,
+          terms_version: TERMS_VERSION,
+          terms_accepted_via: 'email_link',
+        }),
       });
 
       const result = await response.json();
@@ -232,6 +244,7 @@ export default function VoteByEmailPage() {
 
   const pendingItems = data.voting_items.filter(item => !item.has_voted);
   const allVotesSelected = pendingItems.every(item => votes[item.id]);
+  const canSubmit = allVotesSelected && termsAccepted;
 
   return (
     <div className="min-h-screen bg-bg-app-main">
@@ -343,6 +356,19 @@ export default function VoteByEmailPage() {
           ))}
         </div>
 
+        <div className="mt-8 space-y-2">
+          <LegalConsent
+            accepted={termsAccepted}
+            onAcceptedChange={(value) => {
+              setTermsAccepted(value);
+              if (value) setTermsError(null);
+            }}
+          />
+          {termsError && (
+            <p className="text-center text-rose-600 text-sm">{termsError}</p>
+          )}
+        </div>
+
         {/* Submit button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -352,10 +378,10 @@ export default function VoteByEmailPage() {
         >
           <Button
             onClick={handleSubmit}
-            disabled={!allVotesSelected || isSubmitting}
+            disabled={!canSubmit || isSubmitting}
             className={cn(
               'w-full py-6 text-lg font-semibold rounded-xl transition-all',
-              allVotesSelected
+              canSubmit
                 ? 'bg-accent-primary text-white hover:opacity-90'
                 : 'bg-bg-app-main text-text-secondary border border-gray-200 cursor-not-allowed'
             )}
@@ -376,6 +402,11 @@ export default function VoteByEmailPage() {
           {!allVotesSelected && (
             <p className="text-center text-text-secondary text-sm mt-3">
               Επιλέξτε ψήφο για όλα τα θέματα για να συνεχίσετε
+            </p>
+          )}
+          {allVotesSelected && !termsAccepted && (
+            <p className="text-center text-text-secondary text-sm mt-3">
+              Αποδεχθείτε τους όρους για να συνεχίσετε
             </p>
           )}
         </motion.div>

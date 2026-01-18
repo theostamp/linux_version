@@ -105,6 +105,40 @@ def broadcast_assembly_event(assembly_id, event_type, payload):
         pass
 
 
+def is_truthy(value) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in {'true', '1', 'yes', 'y', 'on'}
+    return bool(value)
+
+
+def record_terms_acceptance(
+    attendee: AssemblyAttendee,
+    *,
+    terms_version: str = '',
+    terms_accepted_via: str = ''
+) -> None:
+    updates = []
+    now = timezone.now()
+
+    if terms_version and attendee.terms_accepted_version != terms_version:
+        attendee.terms_accepted_version = terms_version
+        attendee.terms_accepted_at = now
+        updates.extend(['terms_accepted_version', 'terms_accepted_at'])
+    elif not attendee.terms_accepted_at:
+        attendee.terms_accepted_at = now
+        updates.append('terms_accepted_at')
+        if terms_version:
+            attendee.terms_accepted_version = terms_version
+            updates.append('terms_accepted_version')
+
+    if terms_accepted_via and attendee.terms_accepted_via != terms_accepted_via:
+        attendee.terms_accepted_via = terms_accepted_via
+        updates.append('terms_accepted_via')
+
+    if updates:
+        attendee.save(update_fields=updates)
+
+
 class AssemblyViewSet(viewsets.ModelViewSet):
     """
     ViewSet για διαχείριση Γενικών Συνελεύσεων
@@ -719,6 +753,13 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
         attendee = self.get_object()
         serializer = CastVoteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        if serializer.validated_data.get('terms_accepted'):
+            record_terms_acceptance(
+                attendee,
+                terms_version=serializer.validated_data.get('terms_version', ''),
+                terms_accepted_via=serializer.validated_data.get('terms_accepted_via', ''),
+            )
         
         agenda_item_id = request.data.get('agenda_item_id')
         if not agenda_item_id:
@@ -1090,6 +1131,13 @@ class EmailVoteView(APIView):
             )
         
         assembly = attendee.assembly
+
+        if is_truthy(request.data.get('terms_accepted')):
+            record_terms_acceptance(
+                attendee,
+                terms_version=str(request.data.get('terms_version', '') or ''),
+                terms_accepted_via=str(request.data.get('terms_accepted_via', '') or ''),
+            )
         
         # Validate request data
         votes_data = request.data.get('votes', [])

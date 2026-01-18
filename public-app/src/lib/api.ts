@@ -3113,16 +3113,30 @@ export async function attendeeRSVP(
   return await apiPost(`/assembly-attendees/${attendeeId}/rsvp/`, { rsvp_status: status, notes });
 }
 
+export type VoteConsent = {
+  termsAccepted?: boolean;
+  termsVersion?: string;
+  termsAcceptedVia?: string;
+};
+
 export async function attendeeCastVote(
   attendeeId: string,
   agendaItemId: string,
   vote: VoteChoice,
-  notes?: string
+  notes?: string,
+  consent?: VoteConsent
 ): Promise<{ message: string; vote: AssemblyVote; created?: boolean; updated?: boolean; previous_vote?: VoteChoice }> {
   return await apiPost(`/assembly-attendees/${attendeeId}/vote/`, {
     agenda_item_id: agendaItemId,
     vote,
-    notes
+    notes,
+    ...(consent?.termsAccepted
+      ? {
+          terms_accepted: true,
+          terms_version: consent.termsVersion,
+          terms_accepted_via: consent.termsAcceptedVia,
+        }
+      : {}),
   });
 }
 

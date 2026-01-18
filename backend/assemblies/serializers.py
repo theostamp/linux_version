@@ -406,6 +406,9 @@ class CastVoteSerializer(serializers.Serializer):
     """Serializer για ψηφοφορία"""
     vote = serializers.ChoiceField(choices=AssemblyVote.VOTE_CHOICES)
     notes = serializers.CharField(required=False, allow_blank=True)
+    terms_accepted = serializers.BooleanField(required=False)
+    terms_version = serializers.CharField(required=False, allow_blank=True)
+    terms_accepted_via = serializers.CharField(required=False, allow_blank=True)
 
 
 class StartAssemblySerializer(serializers.Serializer):
