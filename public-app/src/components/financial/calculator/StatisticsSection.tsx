@@ -140,6 +140,13 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
 
   // Calculate expense distribution for pie chart
   const expenseDistribution = useMemo(() => {
+    console.debug('[StatisticsSection] expenseBreakdown snapshot', {
+      common: expenseBreakdown?.common,
+      elevator: expenseBreakdown?.elevator,
+      heating: expenseBreakdown?.heating,
+      other: expenseBreakdown?.other,
+      coownership: expenseBreakdown?.coownership,
+    });
     const data = [];
 
     if (expenseBreakdown.common > 0) {
@@ -210,6 +217,11 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
 
   // Calculate apartment payment status
   const apartmentPaymentStatus = useMemo(() => {
+    console.debug('[StatisticsSection] apartmentPaymentStatus inputs', {
+      sharesCount: Object.values(state.shares || {}).length,
+      aptWithFinancialCount: aptWithFinancial?.length,
+      managementFeePerApartment: managementFeeInfo?.feePerApartment,
+    });
     return Object.values(state.shares).map((share: any) => {
       const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
       const previousBalance = toNumber(apartmentData?.previous_balance || 0);
@@ -254,16 +266,17 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
     };
   }, [apartmentPaymentStatus]);
 
-  // Calculate monthly trends (mock data for now)
+  // Monthly trends - placeholder until real historical data is available from API
+  // TODO: Replace with actual historical data from /api/financial/monthly-trends endpoint
   const monthlyTrends = useMemo(() => {
     const months = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
-    const currentMonth = new Date().getMonth();
 
-    return months.map((month, index) => ({
+    // Return empty data - chart will show "Δεν υπάρχουν ιστορικά δεδομένα" message
+    return months.map((month) => ({
       month,
-      expenses: Math.random() * 5000 + 2000, // Mock data
-      payments: Math.random() * 4000 + 1500, // Mock data
-      balance: Math.random() * 1000 - 500 // Mock data
+      expenses: 0,
+      payments: 0,
+      balance: 0
     }));
   }, []);
 

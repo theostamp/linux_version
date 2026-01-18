@@ -144,6 +144,11 @@ function DashboardContent() {
 
   // Don't render dashboard for residents - they're being redirected
   if (isAuthReady && user && isResident(user)) {
+    console.debug('[Dashboard] Resident redirect guard active', {
+      userId: user.id,
+      role: user.role,
+      isAuthReady,
+    });
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -319,8 +324,8 @@ function DashboardContent() {
           description="Έσοδα και Έξοδα τρέχοντος έτους"
           header={
             <FinancialOverview
-              data={activeBuildingId ? buildingDashboardData : dashboardData}
-              loading={activeBuildingId ? buildingDashboardLoading : dashboardLoading}
+              data={selectedBuilding ? buildingDashboardData : dashboardData}
+              loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
             />
           }
         />
@@ -501,8 +506,8 @@ function DashboardContent() {
             description="Συνοπτική εικόνα των κτιρίων σας"
             header={
               <BuildingHealthCards
-                data={dashboardData}
-                loading={dashboardLoading}
+                data={selectedBuilding ? buildingDashboardData : dashboardData}
+                loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
               />
             }
           />
