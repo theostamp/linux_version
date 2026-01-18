@@ -40,8 +40,8 @@ html {
   --accent-foreground: 174 63% 30%;    /* Darker teal */
 
   /* Soft borders - NO dark colors */
-  --border: 214 20% 88%;               /* #E0E4E8 - very soft gray */
-  --input: 214 20% 88%;
+  --border: 214 24% 93%;               /* Softer border to reduce hard frames */
+  --input: 214 24% 93%;
   --ring: 174 63% 40%;                 /* Teal focus ring */
 
   /* Semantic - Destructive */
@@ -169,8 +169,8 @@ html {
   --accent-foreground: 174 63% 60%;
 
   /* Borders - Subtle in dark mode */
-  --border: 220 15% 25%;
-  --input: 220 15% 25%;
+  --border: 220 14% 20%;
+  --input: 220 14% 20%;
   --ring: 174 63% 50%;
 
   /* Cards */
@@ -504,7 +504,23 @@ body {
 [class*="border-gray-800"],
 [class*="border-gray-900"],
 [class*="border-black"] {
-  border-color: hsl(var(--border)) !important;
+  border-color: hsl(var(--border) / 0.55) !important;
+}
+
+/* Soften common light borders for a less rigid frame */
+[class*="border-gray-200"],
+[class*="border-gray-300"],
+[class*="border-slate-200"],
+[class*="border-slate-300"],
+[class*="border-zinc-200"],
+[class*="border-zinc-300"],
+[class*="border-neutral-200"],
+[class*="border-neutral-300"],
+[class*="border-stone-200"],
+[class*="border-stone-300"],
+.border-border,
+.border-secondary {
+  border-color: hsl(var(--border) / 0.55) !important;
 }
 
 /* Ensure spinner borders work correctly */
