@@ -23,6 +23,8 @@ interface MorningOverviewSceneCustomProps {
 export default function MorningOverviewSceneCustom({ data, buildingId }: MorningOverviewSceneCustomProps) {
   const [currentSidebarWidget, setCurrentSidebarWidget] = useState(0);
   const [paletteHour, setPaletteHour] = useState(() => new Date().getHours());
+  const isQuietHours = useMemo(() => paletteHour >= 22 || paletteHour < 6, [paletteHour]);
+  const isPeakMorning = useMemo(() => paletteHour >= 7 && paletteHour < 10, [paletteHour]);
 
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = useMemo(() => {
@@ -31,13 +33,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
       { id: 'qr-connect', name: 'Σύνδεση με QR', Component: QRCodeWidget },
     ];
     const hasBannerAds = Array.isArray((data as any)?.ads?.banner) && (data as any).ads.banner.length > 0;
-    if (hasBannerAds) {
+    if (hasBannerAds && !isQuietHours) {
       base.push({ id: 'ad-banner', name: 'Χορηγούμενο', Component: AdBannerWidget });
       // Extra dedicated ad slot for rotation
       base.push({ id: 'ad-slot-2', name: 'Διαφήμιση', Component: AdBannerWidget });
     }
     return base;
-  }, [data]);
+  }, [data, isQuietHours]);
 
   // Per-widget display durations (ms)
   const sidebarWidgetDurations = useMemo(() => {
@@ -55,14 +57,20 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
     if (sidebarWidgets.length <= 1) return;
 
     const currentId = sidebarWidgets[currentSidebarWidget]?.id;
-    const duration = sidebarWidgetDurations[currentId] ?? sidebarWidgetDurations.default ?? 10000;
+    const baseDuration = sidebarWidgetDurations[currentId] ?? sidebarWidgetDurations.default ?? 10000;
+    const multiplier = isPeakMorning ? 0.8 : isQuietHours ? 1.3 : 1;
+    const duration = Math.round(baseDuration * multiplier);
 
     const timer = setTimeout(() => {
       setCurrentSidebarWidget((prev) => (prev + 1) % sidebarWidgets.length);
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [currentSidebarWidget, sidebarWidgets, sidebarWidgetDurations]);
+  }, [currentSidebarWidget, sidebarWidgets, sidebarWidgetDurations, isPeakMorning, isQuietHours]);
+
+  useEffect(() => {
+    console.log('[MorningOverview] sidebarWidgets', sidebarWidgets.map((widget) => widget.id));
+  }, [sidebarWidgets]);
 
   useEffect(() => {
     const timer = setInterval(() => setPaletteHour(new Date().getHours()), 60 * 1000);
@@ -72,6 +80,17 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   const palette = useMemo(() => getScenePalette(paletteHour), [paletteHour]);
   const todayIso = new Date().toISOString().split('T')[0];
   const votes = useMemo(() => (Array.isArray(data?.votes) ? data.votes : []), [data?.votes]);
+  const announcements = useMemo(
+    () => (Array.isArray(data?.announcements) ? data.announcements : []),
+    [data?.announcements]
+  );
+  const todaySummary = useMemo(
+    () =>
+      announcements
+        .filter((announcement: any) => Boolean(announcement?.title || announcement?.content))
+        .slice(0, 2),
+    [announcements]
+  );
   const activeVotes = useMemo(
     () => votes.filter((vote: any) => !vote?.end_date || vote.end_date >= todayIso),
     [votes, todayIso]
@@ -131,7 +150,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
                     }}
                   >
                     <div className="h-full w-full p-4">
-                      <WidgetComp data={data} isLoading={false} error={undefined} buildingId={buildingId} />
+                      <WidgetComp data={data} isLoading={false} error={undefined} />
                     </div>
                   </div>
                 );
@@ -185,6 +204,23 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
               {data?.building_info?.name || 'Κτίριο'}
             </div>
           </div>
+          {todaySummary.length > 0 && (
+            <div
+              className="backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
+              style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
+            >
+              <div className="p-4">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Σήμερα</p>
+                <ul className="mt-2 space-y-2 text-sm text-white/90">
+                  {todaySummary.map((announcement: any, index: number) => (
+                    <li key={announcement?.id ?? `${announcement?.title}-${index}`} className="line-clamp-2">
+                      • {announcement?.title || announcement?.content}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
           <div className="flex-1 min-h-0 flex flex-col gap-3">
             <div
               className="flex-1 min-h-0 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
@@ -216,7 +252,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
       </div>
 
       {/* Whole-page interstitial ad (low frequency) */}
-      <AdInterstitialOverlay data={data} isLoading={false} error={undefined} />
+      {!isQuietHours && <AdInterstitialOverlay data={data} isLoading={false} error={undefined} />}
     </div>
   );
 }

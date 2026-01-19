@@ -646,6 +646,10 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     [data, brandingConfig]
   );
 
+  useEffect(() => {
+    console.log('[AmbientShowcaseScene] branding', branding);
+  }, [branding]);
+
   const backgroundImage = branding.background?.type === 'image' ? branding.background?.src : undefined;
   const backgroundGradient = branding.background?.type === 'gradient'
     ? branding.background?.gradient
@@ -659,7 +663,10 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     ? branding.background?.poster || backgroundImage
     : backgroundImage;
   const [videoError, setVideoError] = useState(false);
-  const shouldShowVideo = Boolean(backgroundVideo) && !videoError;
+  const prefersReducedMotion = typeof window !== 'undefined'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+  const shouldShowVideo = Boolean(backgroundVideo) && !videoError && !prefersReducedMotion;
 
   const dateInfo = formatGreekDate(now);
   const formattedTime = now.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
@@ -712,6 +719,10 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     });
   }, [data?.votes]);
 
+  useEffect(() => {
+    console.log('[AmbientShowcaseScene] hasActiveVote', hasActiveVote, 'shouldShowAssemblyBanner', shouldShowAssemblyBanner);
+  }, [hasActiveVote, shouldShowAssemblyBanner]);
+
   // Measure sidebar width so footer ticker does NOT cover it.
   useEffect(() => {
     if (!sidebarRef.current) return;
@@ -735,9 +746,9 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
       <div className="absolute inset-0">
         {shouldShowVideo ? (
           <video
-            key={backgroundVideo}
+            key={backgroundVideo ?? 'ambient-video'}
             className="h-full w-full object-cover"
-            src={backgroundVideo}
+            src={backgroundVideo ?? undefined}
             autoPlay
             muted
             loop
@@ -771,7 +782,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
           {hasActiveVote && (
             <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
-              <ActiveVoteWidget data={data} variant="ambient" />
+              <ActiveVoteWidget data={data ?? null} variant="ambient" />
             </div>
           )}
         </div>
