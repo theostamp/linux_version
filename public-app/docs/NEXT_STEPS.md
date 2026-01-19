@@ -94,6 +94,7 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 - [ ] View vote results
 - [ ] Create vote (if admin)
 - [ ] Delete vote (if admin)
+- [ ] Document the terms acceptance prompt and privacy modal in `VOTING_TERMS_HELP.md`
 
 **Requests (`/requests`):**
 - [ ] Lists requests correctly
@@ -321,4 +322,3 @@ npm run analyze
 - Missing components (can be added later)
 
 **Recommendation:** Proceed with production deployment after verifying environment variables and doing basic manual testing.
-

@@ -153,6 +153,7 @@
 - [ ] Vote details display
 - [ ] Choices display correctly
 - [ ] Submit vote works (if not voted)
+- [ ] Terms checkbox appears and opens the “Όροι Χρήσης / Πολιτική Απορρήτου” modals before submitting
 - [ ] View results works
 - [ ] Results display correctly
 
@@ -325,4 +326,3 @@ If you find issues:
 - Error handling works gracefully
 - Responsive design works
 - API connectivity verified
-
