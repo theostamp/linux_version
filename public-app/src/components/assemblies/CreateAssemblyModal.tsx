@@ -317,6 +317,18 @@ export default function CreateAssemblyModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const normalizeDate = (value?: string) => {
+      const trimmed = value?.trim();
+      if (!trimmed) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+      const match = trimmed.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+      if (match) {
+        const [, day, month, year] = match;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return trimmed;
+    };
+
     // Calculate pre-voting dates if not set
     let preVotingStartDate = formData.pre_voting_start_date;
     let preVotingEndDate = formData.pre_voting_end_date;
@@ -343,7 +355,7 @@ export default function CreateAssemblyModal({
       title: formData.title || `Γενική Συνέλευση - ${new Date(formData.scheduled_date).toLocaleDateString('el-GR')}`,
       building: formData.building,
       description: formData.description,
-      scheduled_date: formData.scheduled_date,
+      scheduled_date: normalizeDate(formData.scheduled_date),
       scheduled_time: formData.scheduled_time,
       estimated_duration: formData.estimated_duration,
       is_physical: formData.is_physical,
@@ -351,8 +363,8 @@ export default function CreateAssemblyModal({
       location: formData.location,
       meeting_link: formData.meeting_link,
       pre_voting_enabled: formData.pre_voting_enabled,
-      pre_voting_start_date: preVotingStartDate,
-      pre_voting_end_date: preVotingEndDate,
+      pre_voting_start_date: normalizeDate(preVotingStartDate),
+      pre_voting_end_date: normalizeDate(preVotingEndDate),
       agenda_items: agendaItems.filter(item => item.title.trim()).map(item => ({
         order: item.order,
         title: item.title,
@@ -533,6 +545,32 @@ export default function CreateAssemblyModal({
                     className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
                   />
                 </div>
+                {formData.pre_voting_enabled && (
+                  <div className="grid md:grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <Label className="text-xs">Έναρξη pre-voting</Label>
+                      <Input
+                        type="date"
+                        value={formData.pre_voting_start_date}
+                        onChange={(e) => setFormData({ ...formData, pre_voting_start_date: e.target.value })}
+                        className="mt-1"
+                        placeholder="YYYY-MM-DD"
+                      />
+                      <p className="text-[11px] text-gray-500 mt-1">Μορφή: YYYY-MM-DD</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Λήξη pre-voting</Label>
+                      <Input
+                        type="date"
+                        value={formData.pre_voting_end_date}
+                        onChange={(e) => setFormData({ ...formData, pre_voting_end_date: e.target.value })}
+                        className="mt-1"
+                        placeholder="YYYY-MM-DD"
+                      />
+                      <p className="text-[11px] text-gray-500 mt-1">Μορφή: YYYY-MM-DD</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Agenda */}

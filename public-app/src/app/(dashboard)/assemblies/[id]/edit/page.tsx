@@ -285,7 +285,7 @@ function EditAssemblyContent() {
     }
   }, [selectedBuilding?.id, currentBuilding?.id, userTouchedBuilding, formData.building]);
 
-  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, (selectedBuilding ?? currentBuilding ?? undefined) as any);
 
   // Loading state
   if (isLoading) {
@@ -366,10 +366,22 @@ function EditAssemblyContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const normalizeDate = (value?: string) => {
+      const trimmed = value?.trim();
+      if (!trimmed) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+      const match = trimmed.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+      if (match) {
+        const [, day, month, year] = match;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return trimmed;
+    };
+
     const payload: Partial<CreateAssemblyPayload> = {
       title: formData.title,
       description: formData.description,
-      scheduled_date: formData.scheduled_date,
+      scheduled_date: normalizeDate(formData.scheduled_date),
       scheduled_time: formData.scheduled_time,
       estimated_duration: formData.estimated_duration,
       is_physical: formData.is_physical,
@@ -377,8 +389,8 @@ function EditAssemblyContent() {
       location: formData.location,
       meeting_link: formData.meeting_link,
       pre_voting_enabled: formData.pre_voting_enabled,
-      pre_voting_start_date: formData.pre_voting_start_date || undefined,
-      pre_voting_end_date: formData.pre_voting_end_date || undefined,
+      pre_voting_start_date: normalizeDate(formData.pre_voting_start_date) || undefined,
+      pre_voting_end_date: normalizeDate(formData.pre_voting_end_date) || undefined,
       agenda_items: agendaItems.filter(item => item.title.trim()).map(item => ({
         order: item.order,
         title: item.title,
@@ -598,6 +610,7 @@ function EditAssemblyContent() {
                 onChange={(e) => setFormData({ ...formData, pre_voting_start_date: e.target.value })}
                 className="mt-1"
               />
+              <p className="text-xs text-gray-500 mt-1">Μορφή: YYYY-MM-DD</p>
             </div>
             <div>
               <Label>Λήξη pre-voting</Label>
@@ -607,6 +620,7 @@ function EditAssemblyContent() {
                 onChange={(e) => setFormData({ ...formData, pre_voting_end_date: e.target.value })}
                 className="mt-1"
               />
+              <p className="text-xs text-gray-500 mt-1">Μορφή: YYYY-MM-DD</p>
             </div>
           </div>
         )}

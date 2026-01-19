@@ -268,7 +268,7 @@ function CreateAssemblyContent() {
     }
   ]);
 
-  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, (selectedBuilding ?? currentBuilding ?? undefined) as any);
 
   if (!canManage) {
     router.push('/assemblies');
@@ -305,6 +305,18 @@ function CreateAssemblyContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const normalizeDate = (value?: string) => {
+      const trimmed = value?.trim();
+      if (!trimmed) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+      const match = trimmed.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+      if (match) {
+        const [, day, month, year] = match;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return trimmed;
+    };
+
     // Calculate pre-voting dates if not set
     let preVotingStartDate = formData.pre_voting_start_date;
     let preVotingEndDate = formData.pre_voting_end_date;
@@ -331,7 +343,7 @@ function CreateAssemblyContent() {
       title: formData.title || `Γενική Συνέλευση - ${new Date(formData.scheduled_date).toLocaleDateString('el-GR')}`,
       building: formData.building,
       description: formData.description,
-      scheduled_date: formData.scheduled_date,
+      scheduled_date: normalizeDate(formData.scheduled_date),
       scheduled_time: formData.scheduled_time,
       estimated_duration: formData.estimated_duration,
       is_physical: formData.is_physical,
@@ -341,8 +353,8 @@ function CreateAssemblyContent() {
       meeting_id: formData.zoom_settings.meetingId || '',
       meeting_password: formData.zoom_settings.password || '',
       pre_voting_enabled: formData.pre_voting_enabled,
-      pre_voting_start_date: preVotingStartDate,
-      pre_voting_end_date: preVotingEndDate,
+      pre_voting_start_date: normalizeDate(preVotingStartDate),
+      pre_voting_end_date: normalizeDate(preVotingEndDate),
       agenda_items: agendaItems.filter(item => item.title.trim()).map(item => ({
         order: item.order,
         title: item.title,
@@ -594,6 +606,7 @@ function CreateAssemblyContent() {
                 placeholder="7 ημέρες πριν"
               />
               <p className="text-xs text-indigo-500 mt-1">Αφήστε κενό για 7 ημέρες πριν</p>
+              <p className="text-xs text-gray-500 mt-1">Μορφή: YYYY-MM-DD</p>
             </div>
             <div>
               <Label>Λήξη pre-voting</Label>
@@ -605,6 +618,7 @@ function CreateAssemblyContent() {
                 placeholder="3 ημέρες μετά"
               />
               <p className="text-xs text-indigo-500 mt-1">Αφήστε κενό για 3 ημέρες μετά τη συνέλευση</p>
+              <p className="text-xs text-gray-500 mt-1">Μορφή: YYYY-MM-DD</p>
             </div>
           </div>
         )}
