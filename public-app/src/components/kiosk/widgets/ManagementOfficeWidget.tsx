@@ -87,6 +87,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
               {building?.management_office_name || 'Γραφείο Διαχείρισης'}
             </h3>
           </div>
+          <p className="text-[11px] text-blue-200/80">Άμεση εξυπηρέτηση για αιτήματα & ενημερώσεις</p>
 
           {building?.management_office_address && (
             <div className="flex items-center space-x-3">
@@ -106,6 +107,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
               >
                 {building.management_office_phone}
               </a>
+              <span className="text-[11px] text-blue-200/70">(καθημερινά)</span>
             </div>
           )}
         </div>

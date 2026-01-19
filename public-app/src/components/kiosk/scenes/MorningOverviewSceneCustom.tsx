@@ -29,14 +29,12 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = useMemo(() => {
     const base = [
-      { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
+      { id: 'emergency-contacts', name: 'Επείγοντα & Άμεσα', Component: EmergencyWidget },
       { id: 'qr-connect', name: 'Σύνδεση με QR', Component: QRCodeWidget },
     ];
     const hasBannerAds = Array.isArray((data as any)?.ads?.banner) && (data as any).ads.banner.length > 0;
     if (hasBannerAds && !isQuietHours) {
       base.push({ id: 'ad-banner', name: 'Χορηγούμενο', Component: AdBannerWidget });
-      // Extra dedicated ad slot for rotation
-      base.push({ id: 'ad-slot-2', name: 'Διαφήμιση', Component: AdBannerWidget });
     }
     return base;
   }, [data, isQuietHours]);
@@ -45,10 +43,9 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   const sidebarWidgetDurations = useMemo(() => {
     return {
       default: 10000,
-      'emergency-contacts': 12000,
-      'qr-connect': 9000,
-      'ad-banner': 15000,
-      'ad-slot-2': 15000,
+      'emergency-contacts': 16000,
+      'qr-connect': 12000,
+      'ad-banner': 12000,
     } as Record<string, number>;
   }, []);
 
@@ -197,7 +194,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           <div className="flex items-center justify-between px-1">
             <div>
               <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Κοινόχρηστα</p>
-              <p className="text-sm font-semibold text-white">Πορεία εισπράξεων</p>
+              <p className="text-sm font-semibold text-white">Κατάσταση μήνα</p>
+              <p className="text-[11px] text-indigo-200/70">Σύντομη εικόνα για όλους</p>
             </div>
             <div className="flex items-center text-[11px] text-indigo-200/70">
               <Building2 className="w-3.5 h-3.5 mr-1" />
@@ -210,7 +208,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
               style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
             >
               <div className="p-4">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Σήμερα</p>
+                <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Σήμερα στο κτίριο</p>
                 <ul className="mt-2 space-y-2 text-sm text-white/90">
                   {todaySummary.map((announcement: any, index: number) => (
                     <li key={announcement?.id ?? `${announcement?.title}-${index}`} className="line-clamp-2">

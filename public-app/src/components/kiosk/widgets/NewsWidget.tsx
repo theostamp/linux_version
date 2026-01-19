@@ -29,7 +29,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
 
     // Fallback if no ads yet
     if (safeAds.length === 0) {
-      safeAds = [{ text: 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας' }];
+      safeAds = [{ text: 'Χορηγούμενο μήνυμα γειτονιάς' }];
     }
 
     if (safeNews.length === 0 && safeAds.length === 0) return null;
@@ -54,15 +54,15 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
       <span key={idx} className="inline-flex items-center">
         {item.kind === 'ad' ? (
           <>
-            <span className={`text-[13px] px-2 py-0.5 rounded-md font-black uppercase tracking-tighter mr-3 shadow-lg ${
-              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας'
-                ? 'bg-blue-500 text-white animate-pulse'
+            <span className={`text-[11px] px-2 py-0.5 rounded-md font-semibold uppercase tracking-widest mr-3 shadow-lg ${
+              item.text === 'Χορηγούμενο μήνυμα γειτονιάς'
+                ? 'bg-blue-500/70 text-white'
                 : 'bg-yellow-400 text-black shadow-[0_0_10px_rgba(250,204,21,0.3)]'
             }`}>
-              AD
+              ΧΟΡΗΓΙΑ
             </span>
             <span className={`text-lg font-bold ${
-              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας'
+              item.text === 'Χορηγούμενο μήνυμα γειτονιάς'
                 ? 'text-blue-100 italic'
                 : 'text-yellow-100'
             }`}>
@@ -114,10 +114,10 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
       {/* News ticker - Horizontal layout */}
       <div className="flex items-center space-x-6 w-full h-full">
         {/* News label */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[12px] font-black uppercase tracking-[0.2em] text-white/40 flex-shrink-0">
-          <Globe className="w-4 h-4" />
-          <span>News</span>
-        </div>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[12px] font-black uppercase tracking-[0.2em] text-white/40 flex-shrink-0">
+            <Globe className="w-4 h-4" />
+            <span>Τοπικά</span>
+          </div>
 
         {/* Continuous scrolling ticker - slower speed, tighter spacing */}
         <div className="relative flex-1 overflow-hidden h-full flex items-center">

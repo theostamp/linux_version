@@ -122,16 +122,16 @@ export default function ApartmentDebtsWidget({ data, isLoading, error }: BaseWid
         </div>
       ) : (
         <>
-          {showWarning && (
-            <div className="bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
-              <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη Εισπράξεων</p>
-            </div>
-          )}
+            {showWarning && (
+              <div className="bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center">
+                <p className="text-orange-200 text-xs font-semibold">Υπενθύμιση: χαμηλή κάλυψη αυτόν τον μήνα</p>
+              </div>
+            )}
 
           {/* Coverage bar */}
           <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-4">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-indigo-200 font-semibold">Κάλυψη Μήνα</span>
+              <span className="text-indigo-200 font-semibold">Κάλυψη μήνα</span>
               <span className={`text-base font-black ${paymentCoveragePercentage < 75 ? 'text-orange-300' : 'text-white'}`}>
                 {paymentCoveragePercentage.toFixed(1)}%
               </span>

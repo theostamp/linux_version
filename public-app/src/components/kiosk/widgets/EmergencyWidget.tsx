@@ -64,9 +64,12 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-red-500/20">
+      <div className="flex items-center space-x-2 mb-3 pb-2 border-b border-red-500/20">
         <AlertTriangle className="w-6 h-6 text-red-300" />
-        <h2 className="text-lg font-bold text-white">Τηλέφωνα Έκτακτης Ανάγκης</h2>
+        <div>
+          <h2 className="text-lg font-bold text-white">Επείγοντα – Άμεσα Τηλέφωνα</h2>
+          <p className="text-[11px] text-red-200/80">Καλέστε πρώτα 112 σε κίνδυνο</p>
+        </div>
       </div>
 
       <div className="space-y-3 h-full">
@@ -99,11 +102,10 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
       <div className="mt-4 bg-gradient-to-br from-red-900/30 to-red-800/30 backdrop-blur-sm p-3 rounded-xl border border-red-500/20">
         <div className="flex items-center space-x-2 mb-2">
           <AlertTriangle className="w-4 h-4 text-red-300" />
-          <h4 className="text-sm font-semibold text-red-100">Σημαντική Παρατήρηση</h4>
+          <h4 className="text-sm font-semibold text-red-100">Σημαντικό</h4>
         </div>
         <p className="text-xs text-red-200 leading-relaxed">
-          Χρησιμοποιήστε αυτά τα τηλέφωνα μόνο σε περίπτωση πραγματικής έκτακτης ανάγκης.
-          Για μη επείγουσες υποθέσεις, επικοινωνήστε με τη διοίκηση του κτιρίου.
+          Για μη επείγοντα ζητήματα, προτιμήστε το γραφείο διαχείρισης.
         </p>
       </div>
     </div>

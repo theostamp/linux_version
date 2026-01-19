@@ -47,7 +47,7 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
       <div className="h-full flex flex-col gap-2 min-h-0">
         <div className="flex items-center justify-between text-[11px] text-blue-200/80">
           <span className={`px-2 py-1 rounded-full border ${item.type === 'announcement' ? 'border-blue-500/40 bg-blue-700/20' : 'border-purple-500/40 bg-purple-700/20'}`}>
-            {item.type === 'announcement' ? 'Ανακοίνωση' : 'Ψηφοφορία'}
+            {item.type === 'announcement' ? 'Ενημέρωση' : 'Ψηφοφορία'}
           </span>
           <span className="text-[11px] text-blue-100">
             {format(new Date(item.date), 'dd/MM', { locale: el })}
@@ -121,9 +121,10 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-blue-500/20">
         <div className="flex items-center space-x-2">
           <IconComponent className="w-5 h-5 text-blue-300" />
-          <h3 className="text-lg font-semibold text-white">
-            {currentItem.type === 'announcement' ? 'Ανακοίνωση' : 'Ψηφοφορία'}
-          </h3>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Σήμερα στο κτίριο</h3>
+            <p className="text-[11px] text-blue-200/80">Νέα & χρήσιμες ενημερώσεις</p>
+          </div>
         </div>
 
         {/* Navigation indicators */}
@@ -174,7 +175,7 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
             renderCard(carouselItems[(currentIndex + 1) % carouselItems.length])
           ) : (
             <div className="h-full bg-gradient-to-br from-gray-800/20 to-gray-900/20 backdrop-blur-sm rounded-lg border border-gray-600/30 p-3 flex items-center justify-center">
-              <p className="text-xs text-gray-400 text-center">Δεν υπάρχει δεύτερη ανακοίνωση</p>
+              <p className="text-xs text-gray-400 text-center">Δεν υπάρχουν άλλες ενημερώσεις</p>
             </div>
           )}
         </div>

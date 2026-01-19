@@ -110,18 +110,18 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
           <Smartphone className="w-5 h-5 text-blue-300 flex-shrink-0 mt-0.5" />
           <div className="text-left">
             <p className="text-sm font-semibold text-blue-100 mb-1">
-              Σαρώστε για σύνδεση
+              Σκάναρε για άμεση σύνδεση
             </p>
             <p className="text-xs text-blue-200/80 leading-relaxed">
-              Ανοίξτε την κάμερα του κινητού σας και σαρώστε το QR code για άμεση πρόσβαση στην εφαρμογή.
+              Με το κινητό σου: κάμερα ➜ QR. Πρόσβαση σε ανακοινώσεις, αιτήματα και κοινόχρηστα.
             </p>
           </div>
         </div>
 
         <div className="text-xs text-blue-200/60 leading-relaxed border-t border-blue-400/20 pt-3">
-          <p>✓ Αυτόματη σύνδεση με το κτίριο</p>
-          <p>✓ Δεν χρειάζεται εγκατάσταση</p>
-          <p>✓ Άμεση πρόσβαση στα δεδομένα σας</p>
+          <p>✓ 10ʺ για σύνδεση στο κτίριο</p>
+          <p>✓ Χωρίς εγκατάσταση</p>
+          <p>✓ Δήλωση βλάβης & ενημερώσεις</p>
         </div>
       </div>
 

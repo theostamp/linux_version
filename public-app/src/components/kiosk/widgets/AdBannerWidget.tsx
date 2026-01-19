@@ -40,8 +40,8 @@ export default function AdBannerWidget({ data }: BaseWidgetProps) {
   return (
     <div className="h-full w-full flex flex-col justify-between">
       <div className="flex items-center justify-between">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-amber-200/90">Χορηγούμενο</div>
-        <div className="text-[10px] text-white/50">Ad</div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-amber-200/80">Χορηγούμενο μήνυμα</div>
+        <div className="text-[10px] text-white/40">Ad</div>
       </div>
 
       <div className="mt-2 flex-1 min-h-0 flex gap-3">

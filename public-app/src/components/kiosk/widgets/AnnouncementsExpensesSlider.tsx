@@ -45,20 +45,20 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
 
   // Filter widgets based on heating season
   const widgets = useMemo(() => {
-    const baseWidgets = [
-      {
-        id: 'expenses',
-        name: 'Σύνολο Οφειλών',
-        Component: CurrentMonthExpensesWidget,
-      },
-    ];
+      const baseWidgets = [
+        {
+          id: 'expenses',
+          name: 'Κοινόχρηστα (σύνοψη μήνα)',
+          Component: CurrentMonthExpensesWidget,
+        },
+      ];
 
     if (hasAnnouncementsOrVotes) {
-      baseWidgets.unshift({
-        id: 'announcements-votes',
-        name: 'Ανακοινώσεις & Ψηφοφορίες',
-        Component: AnnouncementsVotesCarousel,
-      });
+        baseWidgets.unshift({
+          id: 'announcements-votes',
+          name: 'Σήμερα στο κτίριο',
+          Component: AnnouncementsVotesCarousel,
+        });
     }
 
     // Show heating chart when it has data/period, or during heating season.
