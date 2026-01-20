@@ -209,6 +209,15 @@ class AssemblyViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        assembly = serializer.instance
+        detail_serializer = AssemblyDetailSerializer(assembly, context=self.get_serializer_context())
+        headers = self.get_success_headers(detail_serializer.data)
+        return Response(detail_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
     @action(detail=True, methods=['post'], serializer_class=StartAssemblySerializer)
     def start(self, request, pk=None):
