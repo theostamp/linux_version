@@ -694,6 +694,45 @@ class AssemblyAttendee(models.Model):
         blank=True,
         verbose_name="Έγγραφο Εξουσιοδότησης"
     )
+
+    # Proxy assignment (who represents this attendee)
+    PROXY_TYPE_CHOICES = [
+        ('attendee', 'Άλλος Ιδιοκτήτης/Ένοικος'),
+        ('management', 'Γραφείο Διαχείρισης'),
+        ('external', 'Εξωτερικός Εκπρόσωπος'),
+    ]
+    proxy_to_attendee = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='proxy_given_by',
+        verbose_name="Εξουσιοδοτεί (Παρόντα)"
+    )
+    proxy_to_type = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        choices=PROXY_TYPE_CHOICES,
+        verbose_name="Τύπος Εκπροσώπου"
+    )
+    proxy_to_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Όνομα Εκπροσώπου"
+    )
+    proxy_to_email = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Email Εκπροσώπου"
+    )
+    proxy_assigned_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Ώρα Εξουσιοδότησης"
+    )
     
     # Pre-voting
     has_pre_voted = models.BooleanField(default=False, verbose_name="Έχει Pre-voted")

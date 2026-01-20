@@ -23,7 +23,7 @@ from .serializers import (
     AgendaItemSerializer, AgendaItemCreateSerializer,
     AssemblyAttendeeSerializer, AssemblyVoteSerializer,
     AssemblyMinutesTemplateSerializer,
-    CheckInSerializer, RSVPSerializer, CastVoteSerializer,
+    CheckInSerializer, RSVPSerializer, ProxyAssignmentSerializer, CastVoteSerializer,
     StartAssemblySerializer, EndAssemblySerializer, AdjournAssemblySerializer,
     EndAgendaItemSerializer, GenerateMinutesSerializer,
     CommunityPollSerializer, PollVoteSerializer
@@ -738,6 +738,105 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
             'message': 'RSVP καταγράφηκε',
             'rsvp_status': attendee.rsvp_status,
             'rsvp_at': attendee.rsvp_at
+        })
+
+    @action(detail=True, methods=['post'], serializer_class=ProxyAssignmentSerializer)
+    def proxy(self, request, pk=None):
+        """Εξουσιοδότηση εκπροσώπου"""
+        attendee = self.get_object()
+        serializer = ProxyAssignmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if serializer.validated_data.get('clear'):
+            attendee.proxy_to_attendee = None
+            attendee.proxy_to_type = ''
+            attendee.proxy_to_name = ''
+            attendee.proxy_to_email = ''
+            attendee.proxy_assigned_at = None
+            attendee.attendance_type = ''
+            attendee.is_present = False
+            attendee.save(update_fields=[
+                'proxy_to_attendee',
+                'proxy_to_type',
+                'proxy_to_name',
+                'proxy_to_email',
+                'proxy_assigned_at',
+                'attendance_type',
+                'is_present',
+            ])
+            return Response({
+                'message': 'Η εξουσιοδότηση αφαιρέθηκε',
+                'attendee': AssemblyAttendeeSerializer(attendee).data
+            })
+
+        proxy_type = serializer.validated_data.get('proxy_type')
+        proxy_attendee = None
+        proxy_name = serializer.validated_data.get('proxy_name', '').strip()
+        proxy_email = serializer.validated_data.get('proxy_email', '').strip()
+
+        if proxy_type == 'attendee':
+            proxy_attendee_id = serializer.validated_data.get('proxy_attendee_id')
+            if not proxy_attendee_id:
+                return Response(
+                    {'error': 'Απαιτείται proxy_attendee_id για εκπρόσωπο ιδιοκτήτη'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if str(proxy_attendee_id) == str(attendee.id):
+                return Response(
+                    {'error': 'Δεν μπορείτε να εξουσιοδοτήσετε τον εαυτό σας'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            proxy_attendee = AssemblyAttendee.objects.filter(
+                id=proxy_attendee_id,
+                assembly=attendee.assembly
+            ).first()
+            if not proxy_attendee:
+                return Response(
+                    {'error': 'Δεν βρέθηκε ο εκπρόσωπος στη συνέλευση'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            proxy_name = proxy_attendee.display_name
+            if proxy_attendee.user and proxy_attendee.user.email:
+                proxy_email = proxy_attendee.user.email
+        else:
+            if not proxy_name:
+                return Response(
+                    {'error': 'Απαιτείται όνομα εκπροσώπου'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        attendee.proxy_to_attendee = proxy_attendee
+        attendee.proxy_to_type = proxy_type
+        attendee.proxy_to_name = proxy_name
+        attendee.proxy_to_email = proxy_email
+        attendee.proxy_assigned_at = timezone.now()
+        attendee.attendance_type = 'proxy'
+        attendee.is_present = False
+        attendee.rsvp_status = 'not_attending'
+        attendee.rsvp_at = timezone.now()
+
+        update_fields = [
+            'proxy_to_attendee',
+            'proxy_to_type',
+            'proxy_to_name',
+            'proxy_to_email',
+            'proxy_assigned_at',
+            'attendance_type',
+            'is_present',
+            'rsvp_status',
+            'rsvp_at',
+        ]
+
+        notes = serializer.validated_data.get('notes', '').strip()
+        if notes:
+            attendee.rsvp_notes = notes
+            update_fields.append('rsvp_notes')
+
+        attendee.save(update_fields=update_fields)
+
+        return Response({
+            'message': 'Η εξουσιοδότηση καταγράφηκε',
+            'attendee': AssemblyAttendeeSerializer(attendee).data
         })
     
     @action(detail=True, methods=['post'], serializer_class=CastVoteSerializer)

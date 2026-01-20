@@ -1,26 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Video, MapPin, Vote, CheckCircle,
   Clock, Calendar, ArrowRight, Loader2, User,
-  Building2, AlertCircle
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useAttendeeRSVP } from '@/hooks/useAssemblies';
+import { useAttendeeRSVP, useAssignProxy } from '@/hooks/useAssemblies';
 import type { Assembly, AssemblyAttendee, RSVPStatus } from '@/lib/api';
 
 interface RSVPCardProps {
   assembly: Assembly;
   attendee: AssemblyAttendee | null;
   onPreVoteClick: () => void;
+  proxyCandidates?: AssemblyAttendee[];
+  managementContact?: { name: string; email?: string } | null;
+  initialChoice?: RSVPStatus | 'proxy' | null;
 }
 
+type RSVPChoice = RSVPStatus | 'proxy';
+
 type RSVPOption = {
-  id: RSVPStatus;
+  id: RSVPChoice;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
@@ -59,33 +64,114 @@ const rsvpOptions: RSVPOption[] = [
     bgColor: 'bg-amber-50',
     borderColor: 'border-amber-200 hover:border-amber-400',
   },
+  {
+    id: 'proxy',
+    title: 'Ορίζω εκπρόσωπο',
+    subtitle: 'Εξουσιοδοτώ άλλον ιδιοκτήτη ή τη διαχείριση',
+    icon: <User className="w-6 h-6" />,
+    color: 'text-slate-700',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-200 hover:border-slate-400',
+  },
 ];
 
-export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCardProps) {
-  const [selectedOption, setSelectedOption] = useState<RSVPStatus | null>(
-    attendee?.rsvp_status !== 'pending' ? attendee?.rsvp_status || null : null
+export default function RSVPCard({
+  assembly,
+  attendee,
+  onPreVoteClick,
+  proxyCandidates = [],
+  managementContact,
+  initialChoice,
+}: RSVPCardProps) {
+  const hasExistingResponse = Boolean(attendee?.proxy_to_type) ||
+    (attendee?.rsvp_status && attendee.rsvp_status !== 'pending');
+  const initialFromAttendee: RSVPChoice | null = hasExistingResponse
+    ? (attendee?.proxy_to_type ? 'proxy' : attendee?.rsvp_status || null)
+    : null;
+
+  const [selectedOption, setSelectedOption] = useState<RSVPChoice | null>(
+    initialFromAttendee ?? initialChoice ?? null
   );
   const [notes, setNotes] = useState(attendee?.rsvp_notes || '');
   const [showNotes, setShowNotes] = useState(false);
   const [step, setStep] = useState<'select' | 'confirm' | 'done'>(
-    attendee?.rsvp_status && attendee.rsvp_status !== 'pending' ? 'done' : 'select'
+    hasExistingResponse
+      ? 'done'
+      : initialChoice
+        ? 'confirm'
+        : 'select'
   );
+  const [proxyType, setProxyType] = useState<'attendee' | 'management' | null>(
+    attendee?.proxy_to_type === 'management' ? 'management' :
+    attendee?.proxy_to_type === 'attendee' ? 'attendee' :
+    null
+  );
+  const [selectedProxyId, setSelectedProxyId] = useState<string | null>(
+    attendee?.proxy_to_attendee || null
+  );
+  const [proxyError, setProxyError] = useState<string | null>(null);
 
   const rsvpMutation = useAttendeeRSVP();
+  const proxyMutation = useAssignProxy();
+  const isSubmitting = rsvpMutation.isPending || proxyMutation.isPending;
 
-  const handleOptionSelect = (optionId: RSVPStatus) => {
+  const availableProxyCandidates = proxyCandidates.filter((candidate) => candidate.id !== attendee?.id);
+  const selectedProxy = availableProxyCandidates.find((candidate) => candidate.id === selectedProxyId) || null;
+  const proxyDisplayName =
+    proxyType === 'attendee'
+      ? selectedProxy?.display_name
+      : proxyType === 'management'
+        ? managementContact?.name
+        : null;
+
+  useEffect(() => {
+    if (hasExistingResponse) return;
+    if (initialChoice) {
+      setSelectedOption(initialChoice);
+      setStep('confirm');
+    }
+  }, [hasExistingResponse, initialChoice]);
+
+  const handleOptionSelect = (optionId: RSVPChoice) => {
     setSelectedOption(optionId);
+    setProxyError(null);
     setStep('confirm');
   };
 
   const handleConfirm = async () => {
     if (!attendee || !selectedOption) return;
 
-    await rsvpMutation.mutateAsync({
-      id: attendee.id,
-      status: selectedOption,
-      notes
-    });
+    if (selectedOption === 'proxy') {
+      if (!proxyType) {
+        setProxyError('Επιλέξτε εκπρόσωπο για την εξουσιοδότηση.');
+        return;
+      }
+      if (proxyType === 'attendee' && !selectedProxyId) {
+        setProxyError('Επιλέξτε τον ιδιοκτήτη/ένοικο που θα σας εκπροσωπήσει.');
+        return;
+      }
+      if (proxyType === 'management' && !managementContact?.name) {
+        setProxyError('Δεν βρέθηκε διαθέσιμο γραφείο διαχείρισης.');
+        return;
+      }
+
+      await proxyMutation.mutateAsync({
+        id: attendee.id,
+        payload: {
+          proxy_type: proxyType,
+          proxy_attendee_id: proxyType === 'attendee' ? selectedProxyId : undefined,
+          proxy_name: proxyType === 'management' ? managementContact?.name : undefined,
+          proxy_email: proxyType === 'management' ? managementContact?.email : undefined,
+          notes,
+        },
+      });
+    } else {
+      await rsvpMutation.mutateAsync({
+        id: attendee.id,
+        status: selectedOption,
+        notes
+      });
+    }
 
     setStep('done');
 
@@ -240,6 +326,78 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
                 );
               })()}
 
+              {selectedOption === 'proxy' && (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Επιλέξτε ποιος/ποια θα σας εκπροσωπήσει στη συνέλευση:
+                  </p>
+
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setProxyType('attendee')}
+                      className={cn(
+                        'rounded-xl border-2 p-3 text-left transition',
+                        proxyType === 'attendee' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <div className="text-sm font-semibold text-gray-900">Άλλος ιδιοκτήτης/ένοικος</div>
+                      <div className="text-xs text-gray-500">Επιλέξτε από τη λίστα</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setProxyType('management')}
+                      className={cn(
+                        'rounded-xl border-2 p-3 text-left transition',
+                        proxyType === 'management' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <div className="text-sm font-semibold text-gray-900">Γραφείο διαχείρισης</div>
+                      <div className="text-xs text-gray-500">Ορισμός εκπροσώπου διαχείρισης</div>
+                    </button>
+                  </div>
+
+                  {proxyType === 'attendee' && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Επιλογή ιδιοκτήτη/ενοίκου</label>
+                      {availableProxyCandidates.length === 0 ? (
+                        <div className="text-sm text-gray-500">
+                          Δεν βρέθηκαν διαθέσιμοι εκπρόσωποι.
+                        </div>
+                      ) : (
+                        <select
+                          value={selectedProxyId ?? ''}
+                          onChange={(event) => setSelectedProxyId(event.target.value || null)}
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="">Επιλέξτε εκπρόσωπο</option>
+                          {availableProxyCandidates.map((candidate) => (
+                            <option key={candidate.id} value={candidate.id}>
+                              {candidate.apartment_number} · {candidate.display_name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+
+                  {proxyType === 'management' && (
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                      <div className="font-medium text-gray-900">Γραφείο Διαχείρισης</div>
+                      <div>{managementContact?.name || 'Διαχειριστής πολυκατοικίας'}</div>
+                      {managementContact?.email && (
+                        <div className="text-xs text-gray-500">{managementContact.email}</div>
+                      )}
+                    </div>
+                  )}
+
+                  {proxyError && (
+                    <div className="text-sm text-rose-600">{proxyError}</div>
+                  )}
+                </div>
+              )}
+
               {/* Optional notes */}
               <div>
                 <button
@@ -276,10 +434,10 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
                 </Button>
                 <Button
                   onClick={handleConfirm}
-                  disabled={rsvpMutation.isPending}
+                  disabled={isSubmitting}
                   className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
                 >
-                  {rsvpMutation.isPending ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Αποθήκευση...
@@ -313,6 +471,7 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
               <p className="text-gray-500 text-sm mb-4">
                 {selectedOption === 'attending' && 'Θα σας περιμένουμε στη συνέλευση.'}
                 {selectedOption === 'not_attending' && 'Ευχαριστούμε! Μπορείτε να ψηφίσετε ηλεκτρονικά.'}
+                {selectedOption === 'proxy' && 'Η εξουσιοδότηση καταγράφηκε επιτυχώς.'}
                 {selectedOption === 'maybe' && 'Θα σας στείλουμε υπενθύμιση.'}
               </p>
 
@@ -342,6 +501,11 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
                   <span className="font-medium">Τρέχουσα απάντηση:</span>{' '}
                   {attendee.rsvp_status_display}
+                  {selectedOption === 'proxy' && (
+                    <span className="block mt-1 text-gray-500">
+                      Εκπρόσωπος: {attendee.proxy_to_display || proxyDisplayName || '—'}
+                    </span>
+                  )}
                   {attendee.rsvp_notes && (
                     <span className="block mt-1 text-gray-500">"{attendee.rsvp_notes}"</span>
                   )}

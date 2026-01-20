@@ -190,6 +190,53 @@
             border-radius: 12px;
             margin-bottom: 24px;
         }
+
+        .rsvp-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .rsvp-buttons {
+            display: grid;
+            gap: 10px;
+        }
+
+        .rsvp-button {
+            display: block;
+            text-decoration: none;
+            color: #ffffff !important;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .rsvp-button.attending {
+            background: #10b981;
+        }
+
+        .rsvp-button.online {
+            background: #4f46e5;
+        }
+
+        .rsvp-button.maybe {
+            background: #f59e0b;
+        }
+
+        .rsvp-button.proxy {
+            background: #64748b;
+        }
+
+        .rsvp-hint {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
         
         .cta-section h3 {
             color: #6b21a8;
@@ -418,6 +465,31 @@
                 {% if assembly.description %}
                 <p style="color: #475569; font-size: 14px;">{{ assembly.description }}</p>
                 {% endif %}
+            </div>
+
+            <!-- RSVP Section -->
+            <div class="rsvp-section">
+                <h3 class="section-title" style="margin-bottom: 12px;">✅ Δήλωση συμμετοχής</h3>
+                <p style="color: #475569; font-size: 14px; margin-bottom: 14px; line-height: 1.6;">
+                    Επιλέξτε πώς θα συμμετέχετε στη συνέλευση. Θα σας ζητηθεί επιβεβαίωση μέσα στην εφαρμογή.
+                </p>
+                <div class="rsvp-buttons">
+                    <a href="{{ assembly_url }}?rsvp=attending" class="rsvp-button attending">
+                        Θα είμαι παρών/παρούσα
+                    </a>
+                    <a href="{{ assembly_url }}?rsvp=not_attending" class="rsvp-button online">
+                        Θα συμμετέχω ηλεκτρονικά
+                    </a>
+                    <a href="{{ assembly_url }}?rsvp=maybe" class="rsvp-button maybe">
+                        Δεν είμαι σίγουρος/η ακόμα
+                    </a>
+                    <a href="{{ assembly_url }}?rsvp=proxy" class="rsvp-button proxy">
+                        Ορίζω εκπρόσωπο
+                    </a>
+                </div>
+                <p class="rsvp-hint">
+                    Για εξουσιοδότηση εκπροσώπου θα επιλέξετε πρόσωπο μέσα στην εφαρμογή.
+                </p>
             </div>
             
             <!-- Agenda -->
@@ -657,4 +729,3 @@
     </div>
 </body>
 </html>
-

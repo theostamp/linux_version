@@ -187,6 +187,7 @@ class AssemblyAttendeeSerializer(serializers.ModelSerializer):
     attendance_type_display = serializers.CharField(source='get_attendance_type_display', read_only=True)
     has_completed_voting = serializers.BooleanField(read_only=True)
     pending_votes_count = serializers.IntegerField(read_only=True)
+    proxy_to_display = serializers.SerializerMethodField()
     
     class Meta:
         model = AssemblyAttendee
@@ -197,6 +198,8 @@ class AssemblyAttendeeSerializer(serializers.ModelSerializer):
             'attendance_type', 'attendance_type_display',
             'is_present', 'checked_in_at', 'checked_out_at',
             'is_proxy', 'proxy_from_apartment',
+            'proxy_to_attendee', 'proxy_to_type', 'proxy_to_name', 'proxy_to_email', 'proxy_assigned_at',
+            'proxy_to_display',
             'has_pre_voted', 'pre_voted_at',
             'has_completed_voting', 'pending_votes_count',
             'attendee_name', 'attendee_phone',
@@ -206,6 +209,11 @@ class AssemblyAttendeeSerializer(serializers.ModelSerializer):
             'id', 'mills', 'checked_in_at', 'checked_out_at',
             'rsvp_at', 'pre_voted_at', 'created_at', 'updated_at'
         ]
+
+    def get_proxy_to_display(self, obj):
+        if obj.proxy_to_attendee:
+            return obj.proxy_to_attendee.display_name
+        return obj.proxy_to_name or None
 
 
 class AssemblyListSerializer(serializers.ModelSerializer):
@@ -400,6 +408,16 @@ class RSVPSerializer(serializers.Serializer):
         choices=AssemblyAttendee.RSVP_STATUS_CHOICES
     )
     notes = serializers.CharField(required=False, allow_blank=True)
+
+
+class ProxyAssignmentSerializer(serializers.Serializer):
+    """Serializer για εξουσιοδότηση εκπροσώπου"""
+    proxy_type = serializers.ChoiceField(choices=AssemblyAttendee.PROXY_TYPE_CHOICES)
+    proxy_attendee_id = serializers.UUIDField(required=False, allow_null=True)
+    proxy_name = serializers.CharField(required=False, allow_blank=True)
+    proxy_email = serializers.EmailField(required=False, allow_blank=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
+    clear = serializers.BooleanField(required=False)
 
 
 class CastVoteSerializer(serializers.Serializer):

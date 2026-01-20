@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -20,7 +20,7 @@ import {
   useDeleteAssembly,
   useDownloadAssemblyMinutes
 } from '@/hooks/useAssemblies';
-import type { Assembly, AssemblyStatus } from '@/lib/api';
+import type { Assembly, AssemblyStatus, RSVPStatus } from '@/lib/api';
 
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
@@ -252,6 +252,7 @@ function AssemblyDetailContent() {
   const { selectedBuilding, buildingContext, isLoading: buildingLoading } = useBuilding();
   const [activeTab, setActiveTab] = useState<'overview' | 'vote'>('overview');
   const [isMinutesModalOpen, setIsMinutesModalOpen] = useState(false);
+  const searchParams = useSearchParams();
 
   const assemblyId = params.id as string;
 
@@ -265,6 +266,37 @@ function AssemblyDetailContent() {
 
   // Find current user's attendee record
   const myAttendee = assembly?.attendees.find(a => a.user === user?.id) || null;
+
+  const initialChoice = useMemo<RSVPStatus | 'proxy' | null>(() => {
+    const rawValue = searchParams?.get('rsvp');
+    if (!rawValue) return null;
+    const normalized = rawValue.toLowerCase();
+    if (normalized === 'proxy') return 'proxy';
+    if (normalized === 'attending' || normalized === 'not_attending' || normalized === 'maybe') {
+      return normalized as RSVPStatus;
+    }
+    return null;
+  }, [searchParams]);
+
+  const managementContact = useMemo(() => {
+    const managementName =
+      buildingContext?.management_office_name || selectedBuilding?.management_office_name;
+    if (managementName) {
+      return { name: managementName };
+    }
+    const internalManagerName =
+      buildingContext?.internal_manager_name ||
+      selectedBuilding?.internal_manager_display_name ||
+      selectedBuilding?.internal_manager?.full_name ||
+      '';
+    if (internalManagerName) {
+      return {
+        name: internalManagerName,
+        email: selectedBuilding?.internal_manager?.email,
+      };
+    }
+    return null;
+  }, [buildingContext, selectedBuilding]);
 
   if (!isAuthReady || isLoading || buildingLoading) {
     return (
@@ -509,6 +541,9 @@ function AssemblyDetailContent() {
                   assembly={assembly}
                   attendee={myAttendee}
                   onPreVoteClick={() => setActiveTab('vote')}
+                  proxyCandidates={assembly.attendees}
+                  managementContact={managementContact}
+                  initialChoice={initialChoice}
                 />
                 <QuorumMeter assembly={assembly} />
               </div>

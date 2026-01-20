@@ -6,6 +6,8 @@ Assembly Signals
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.conf import settings
+from django.template.loader import render_to_string
 from django.db import transaction
 from datetime import datetime, time, timedelta
 import logging
@@ -446,6 +448,9 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
             location = instance.location or "Θα ανακοινωθεί"
             title = instance.title
 
+            frontend_url = getattr(settings, "FRONTEND_URL", "https://app.newconcierge.gr").rstrip("/")
+            assembly_url = f"{frontend_url}/assemblies/{instance.id}"
+
             subject = f"Γενική Συνέλευση: {title}"
             message = (
                 f"Πρόσκληση σε Γενική Συνέλευση\n\n"
@@ -453,6 +458,15 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
                 f"Ημερομηνία: {date_str} {time_str}\n"
                 f"Τοποθεσία: {location}\n\n"
                 f"Παρακαλούμε για την παρουσία σας ή/και τη συμμετοχή μέσω ψηφοφορίας."
+            )
+            html_message = render_to_string(
+                "assemblies/emails/invitation.html",
+                {
+                    "assembly": instance,
+                    "building": instance.building,
+                    "assembly_url": assembly_url,
+                    "now": timezone.now(),
+                },
             )
 
             successful = 0
@@ -462,6 +476,7 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
                     recipients=recipients,
                     subject=subject,
                     message=message,
+                    html_message=html_message,
                     channels=[ChannelType.EMAIL, ChannelType.VIBER],
                 )
                 successful = sum(1 for r in results if r.any_success)

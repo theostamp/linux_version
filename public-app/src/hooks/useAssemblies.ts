@@ -30,6 +30,7 @@ import {
   attendeeCheckIn,
   attendeeCheckOut,
   attendeeRSVP,
+  attendeeAssignProxy,
   attendeeCastVote,
   type Assembly,
   type AssemblyListItem,
@@ -41,6 +42,7 @@ import {
   type RSVPStatus,
   type AttendanceType,
   type VoteChoice,
+  type ProxyAssignmentPayload,
   type VoteConsent,
 } from '@/lib/api';
 
@@ -477,6 +479,23 @@ export function useAttendeeRSVP() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Σφάλμα κατά την καταγραφή RSVP');
+    },
+  });
+}
+
+export function useAssignProxy() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ProxyAssignmentPayload }) =>
+      attendeeAssignProxy(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assembly-attendees'] });
+      queryClient.invalidateQueries({ queryKey: ['assembly'] });
+      toast.success('Η εξουσιοδότηση καταγράφηκε');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Σφάλμα κατά την εξουσιοδότηση');
     },
   });
 }

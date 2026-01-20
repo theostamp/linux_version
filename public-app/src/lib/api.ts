@@ -2768,6 +2768,12 @@ export type AssemblyAttendee = {
   checked_out_at: string | null;
   is_proxy: boolean;
   proxy_from_apartment: number | null;
+  proxy_to_attendee: string | null;
+  proxy_to_type: 'attendee' | 'management' | 'external' | '';
+  proxy_to_name: string;
+  proxy_to_email: string;
+  proxy_assigned_at: string | null;
+  proxy_to_display: string | null;
   has_pre_voted: boolean;
   pre_voted_at: string | null;
   attendee_name: string;
@@ -3111,6 +3117,22 @@ export async function attendeeRSVP(
   notes?: string
 ): Promise<{ message: string; rsvp_status: RSVPStatus; rsvp_at: string }> {
   return await apiPost(`/assembly-attendees/${attendeeId}/rsvp/`, { rsvp_status: status, notes });
+}
+
+export type ProxyAssignmentPayload = {
+  proxy_type: 'attendee' | 'management' | 'external';
+  proxy_attendee_id?: string | null;
+  proxy_name?: string;
+  proxy_email?: string;
+  notes?: string;
+  clear?: boolean;
+};
+
+export async function attendeeAssignProxy(
+  attendeeId: string,
+  payload: ProxyAssignmentPayload
+): Promise<{ message: string; attendee: AssemblyAttendee }> {
+  return await apiPost(`/assembly-attendees/${attendeeId}/proxy/`, payload);
 }
 
 export type VoteConsent = {
