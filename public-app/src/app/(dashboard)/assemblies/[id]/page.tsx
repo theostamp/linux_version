@@ -8,7 +8,8 @@ import {
   Users, Calendar, Clock, MapPin, Video, FileText,
   ArrowLeft, Play, CheckCircle, AlertCircle, Percent,
   Timer, Vote, Send, Building2, ChevronRight, Edit,
-  Trash2, XCircle, Loader2, Download, Printer, ClipboardList
+  Trash2, XCircle, Loader2, Download, Printer, ClipboardList,
+  HelpCircle
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -25,6 +26,7 @@ import type { Assembly, AssemblyStatus, RSVPStatus } from '@/lib/api';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils';
@@ -516,54 +518,97 @@ function AssemblyDetailContent() {
 
       {/* Tabs for RSVP/Voting */}
       {myAttendee && (
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Επισκόπηση
-            </TabsTrigger>
-            <TabsTrigger value="vote" className="flex items-center gap-2">
-              <Vote className="w-4 h-4" />
-              Ψηφοφορία
-              {showPreVoting && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-500 text-white rounded-full">
-                  Ενεργή
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        <>
+          <div className="flex justify-end mb-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Οδηγίες ψηφοφορίας
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <HelpCircle className="w-5 h-5 text-indigo-600" />
+                    Οδηγίες Ψηφοφορίας
+                  </DialogTitle>
+                  <DialogDescription>
+                    Σύντομος οδηγός για τη συμμετοχή και την υποβολή ψήφου στη συνέλευση.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-5 text-sm text-gray-700">
+                  <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-indigo-900">
+                    Επιλέξτε πρώτα πώς θα συμμετέχετε και μετά ψηφίστε όταν είναι διαθέσιμο το pre‑voting ή στη live συνέλευση.
+                  </div>
+                  <ol className="list-decimal list-inside space-y-2">
+                    <li>Στην καρτέλα <strong>Επισκόπηση</strong> δηλώνετε συμμετοχή (παρών/η, ηλεκτρονικά, ίσως, ή εκπρόσωπος).</li>
+                    <li>Για εξουσιοδότηση, επιλέξτε <strong>Ορίζω εκπρόσωπο</strong> και διαλέξτε ιδιοκτήτη/ένοικο ή τη διαχείριση.</li>
+                    <li>Αν το pre‑voting είναι ενεργό, στην καρτέλα <strong>Ψηφοφορία</strong> εμφανίζονται τα θέματα για άμεση ψήφο.</li>
+                    <li>Αν δεν είναι ενεργό, η ψηφοφορία γίνεται κατά τη διάρκεια της συνέλευσης (live).</li>
+                    <li>Πριν την υποβολή απαιτείται αποδοχή όρων. Οι ψήφοι υπολογίζονται με βάση τα χιλιοστά και μετρούν στην απαρτία.</li>
+                  </ol>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600">
+                    Tip: Μπορείτε να αλλάξετε την απάντησή σας από το κουμπί <strong>Αλλαγή απάντησης</strong>.
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-          <TabsContent value="overview" className="mt-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Left column */}
-              <div className="space-y-6">
-                <RSVPCard
-                  assembly={assembly}
-                  attendee={myAttendee}
-                  onPreVoteClick={() => setActiveTab('vote')}
-                  proxyCandidates={assembly.attendees}
-                  managementContact={managementContact}
-                  initialChoice={initialChoice}
-                />
-                <QuorumMeter assembly={assembly} />
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Επισκόπηση
+              </TabsTrigger>
+              <TabsTrigger value="vote" className="flex items-center gap-2">
+                <Vote className="w-4 h-4" />
+                Ψηφοφορία
+                {showPreVoting && (
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-500 text-white rounded-full">
+                    Ενεργή
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-6">
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Left column */}
+                <div className="space-y-6">
+                  <RSVPCard
+                    assembly={assembly}
+                    attendee={myAttendee}
+                    onPreVoteClick={() => setActiveTab('vote')}
+                    proxyCandidates={assembly.attendees}
+                    managementContact={managementContact}
+                    initialChoice={initialChoice}
+                  />
+                  <QuorumMeter assembly={assembly} />
+                </div>
+
+                {/* Right column */}
+                <div className="space-y-6">
+                  <AgendaOverview assembly={assembly} />
+                  <AttendeesPreview assembly={assembly} />
+                </div>
               </div>
+            </TabsContent>
 
-              {/* Right column */}
-              <div className="space-y-6">
-                <AgendaOverview assembly={assembly} />
-                <AttendeesPreview assembly={assembly} />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="vote" className="mt-6">
-            <PreVotingForm
-              assembly={assembly}
-              attendee={myAttendee}
-              onComplete={() => setActiveTab('overview')}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="vote" className="mt-6">
+              <PreVotingForm
+                assembly={assembly}
+                attendee={myAttendee}
+                onComplete={() => setActiveTab('overview')}
+              />
+            </TabsContent>
+          </Tabs>
+        </>
       )}
 
       {/* If user is not an attendee, show read-only view */}

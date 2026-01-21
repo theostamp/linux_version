@@ -16,6 +16,7 @@ import {
   ThumbsDown,
   Minus,
   Activity,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getScenePalette } from '@/components/kiosk/scenes/palette';
@@ -138,7 +139,18 @@ export default function LiveAssemblyScene({
   const totalItems = agendaItems.length;
   const totalBuildingMills = assembly?.total_building_mills || 1000;
   const voteRoster = currentItem?.vote_roster || [];
-  const rosterVotedCount = voteRoster.filter((v) => v.vote).length;
+  const isVotingItem = currentItem?.item_type === 'voting';
+  const isVotingOpen = isVotingItem && currentItem?.status === 'in_progress';
+  const votedEntries = voteRoster.filter((v) => v.vote);
+  const votedCount = votedEntries.length;
+  const rosterTotal = voteRoster.length;
+  const pendingCount = Math.max(0, rosterTotal - votedCount);
+  const rosterProgress = rosterTotal > 0 ? (votedCount / rosterTotal) * 100 : 0;
+  const voteSourceCounts = {
+    pre_vote: votedEntries.filter((v) => v.vote_source === 'pre_vote').length,
+    live: votedEntries.filter((v) => v.vote_source === 'live').length,
+    proxy: votedEntries.filter((v) => v.vote_source === 'proxy').length,
+  };
 
   const currentItemCountdown = useMemo(() => {
     const startedAt = currentItem?.started_at;
@@ -356,52 +368,97 @@ export default function LiveAssemblyScene({
 		                  </div>
 
 	                  {/* Voting Results */}
-		                  {currentItem.item_type === 'voting' && votingResults && (
-		                    <div className="mt-auto">
-		                      <div className="flex items-center justify-between mb-6">
-	                        <h3 className="text-lg lg:text-xl font-bold flex items-center gap-2">
-	                          <TrendingUp className="text-emerald-300 w-6 h-6" />
-	                          Αποτελέσματα Ψηφοφορίας
-	                        </h3>
-	                        <div className="text-sm text-white/70">
-	                          <span className="text-white font-bold">{totalVotedMills}</span> χιλ. ψήφισαν
-	                        </div>
-	                      </div>
+                  {isVotingItem && (
+                    <div className="mt-auto">
+                      {isVotingOpen ? (
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                          <div className="flex items-center gap-3 text-amber-200 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                              <Lock className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200/80">
+                                ΑΠΟΤΕΛΕΣΜΑΤΑ ΚΛΕΙΔΩΜΕΝΑ
+                              </div>
+                              <div className="text-base font-semibold text-white/90">
+                                Η ψηφοφορία είναι σε εξέλιξη
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-white/70">
+                            Τα αποτελέσματα θα εμφανιστούν μετά το κλείσιμο της ψηφοφορίας.
+                          </p>
+                          {rosterTotal > 0 && (
+                            <div className="mt-4">
+                              <div className="flex items-center justify-between text-xs text-white/60 mb-2">
+                                <span>Πρόοδος συμμετοχής</span>
+                                <span className="text-white/80 font-mono">
+                                  {votedCount}/{rosterTotal}
+                                </span>
+                              </div>
+                              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${rosterProgress}%` }}
+                                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                                  className="h-full rounded-full bg-amber-400"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : votingResults ? (
+                        <>
+                          <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+                              <TrendingUp className="text-emerald-300 w-6 h-6" />
+                              Αποτελέσματα Ψηφοφορίας
+                            </h3>
+                            <div className="text-sm text-white/70">
+                              <span className="text-white font-bold">{totalVotedMills}</span> χιλ. ψήφισαν
+                            </div>
+                          </div>
 
-	                      <div className="grid grid-cols-3 gap-3">
-	                        <VoteResultCard
-	                          label="ΥΠΕΡ"
-	                          icon={<ThumbsUp className="w-7 h-7" />}
-	                          mills={votingResults.approve.mills}
-	                          count={votingResults.approve.count}
-	                          percentage={(votingResults.approve.mills / totalBuildingMills) * 100}
-	                          color="emerald"
-	                          surfaceColor={palette.cardSurface}
-	                          accentBorder={palette.accentBorder}
-	                        />
-	                        <VoteResultCard
-	                          label="ΚΑΤΑ"
-	                          icon={<ThumbsDown className="w-7 h-7" />}
-	                          mills={votingResults.reject.mills}
-	                          count={votingResults.reject.count}
-	                          percentage={(votingResults.reject.mills / totalBuildingMills) * 100}
-	                          color="rose"
-	                          surfaceColor={palette.cardSurface}
-	                          accentBorder={palette.accentBorder}
-	                        />
-	                        <VoteResultCard
-	                          label="ΛΕΥΚΟ"
-	                          icon={<Minus className="w-7 h-7" />}
-	                          mills={votingResults.abstain.mills}
-	                          count={votingResults.abstain.count}
-	                          percentage={(votingResults.abstain.mills / totalBuildingMills) * 100}
-	                          color="slate"
-	                          surfaceColor={palette.cardSurface}
-	                          accentBorder={palette.accentBorder}
-	                        />
-	                      </div>
-	                    </div>
-	                  )}
+                          <div className="grid grid-cols-3 gap-3">
+                            <VoteResultCard
+                              label="ΥΠΕΡ"
+                              icon={<ThumbsUp className="w-7 h-7" />}
+                              mills={votingResults.approve.mills}
+                              count={votingResults.approve.count}
+                              percentage={(votingResults.approve.mills / totalBuildingMills) * 100}
+                              color="emerald"
+                              surfaceColor={palette.cardSurface}
+                              accentBorder={palette.accentBorder}
+                            />
+                            <VoteResultCard
+                              label="ΚΑΤΑ"
+                              icon={<ThumbsDown className="w-7 h-7" />}
+                              mills={votingResults.reject.mills}
+                              count={votingResults.reject.count}
+                              percentage={(votingResults.reject.mills / totalBuildingMills) * 100}
+                              color="rose"
+                              surfaceColor={palette.cardSurface}
+                              accentBorder={palette.accentBorder}
+                            />
+                            <VoteResultCard
+                              label="ΛΕΥΚΟ"
+                              icon={<Minus className="w-7 h-7" />}
+                              mills={votingResults.abstain.mills}
+                              count={votingResults.abstain.count}
+                              percentage={(votingResults.abstain.mills / totalBuildingMills) * 100}
+                              color="slate"
+                              surfaceColor={palette.cardSurface}
+                              accentBorder={palette.accentBorder}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70 text-sm">
+                          Αναμονή αποτελεσμάτων…
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Non-voting placeholder */}
 	                  {currentItem.item_type !== 'voting' && (
@@ -439,6 +496,17 @@ export default function LiveAssemblyScene({
 
           {/* Right: Vote roster (privacy: apartment only) */}
           <div className="flex-1 flex flex-col gap-2 min-w-0">
+            {isVotingItem && (
+              <ParticipationCard
+                votedCount={votedCount}
+                rosterTotal={rosterTotal}
+                pendingCount={pendingCount}
+                rosterProgress={rosterProgress}
+                sourceCounts={voteSourceCounts}
+                surfaceColor={palette.cardSurface}
+                accentBorder={palette.accentBorder}
+              />
+            )}
             <div
               className="flex-1 backdrop-blur-2xl border rounded-2xl p-4 overflow-hidden flex flex-col shadow-2xl"
               style={cardStyle}
@@ -448,30 +516,36 @@ export default function LiveAssemblyScene({
                   ΨΗΦΟΙ
                 </div>
                 <div className="font-mono text-sm text-white/80">
-                  {rosterVotedCount}/{voteRoster.length}
+                  {rosterTotal > 0 ? `${votedCount}/${rosterTotal}` : '—'}
                 </div>
               </div>
 
-              {currentItem?.item_type === 'voting' && voteRoster.length > 0 ? (
+              {isVotingItem ? (
+                voteRoster.length > 0 ? (
                 <div
                   ref={voteRosterScrollRef}
-                  className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10"
+                  className="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/20"
                 >
                   {voteRoster.map((entry) => (
                     <div
                       key={entry.attendee}
-                      className="flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-3 py-2"
+                      className="flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-2.5 py-1.5"
                     >
-                      <div className="text-sm font-semibold text-white/85">
+                      <div className="text-[12px] font-semibold text-white/85">
                         Διαμ. {entry.apartment_number}
                       </div>
-                      <VoteBadge vote={entry.vote} />
+                      <VoteBadge vote={entry.vote} locked={isVotingOpen} voted={!!entry.vote} />
                     </div>
                   ))}
                 </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-white/40 text-sm">
+                    Δεν υπάρχουν εγγεγραμμένοι ψηφοφόροι.
+                  </div>
+                )
               ) : (
                 <div className="flex-1 flex items-center justify-center text-white/40 text-sm">
-                  Αναμονή ψήφων…
+                  Χωρίς ενεργή ψηφοφορία.
                 </div>
               )}
 
@@ -486,17 +560,110 @@ export default function LiveAssemblyScene({
   );
 }
 
-function VoteBadge({ vote }: { vote: 'approve' | 'reject' | 'abstain' | null }) {
+function ParticipationCard({
+  votedCount,
+  rosterTotal,
+  pendingCount,
+  rosterProgress,
+  sourceCounts,
+  surfaceColor,
+  accentBorder,
+}: {
+  votedCount: number;
+  rosterTotal: number;
+  pendingCount: number;
+  rosterProgress: number;
+  sourceCounts: { pre_vote: number; live: number; proxy: number };
+  surfaceColor: string;
+  accentBorder: string;
+}) {
+  const hasRoster = rosterTotal > 0;
+
+  return (
+    <div
+      className="backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl"
+      style={{ backgroundColor: surfaceColor, borderColor: accentBorder }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-200/80">
+          ΣΥΜΜΕΤΟΧΗ
+        </div>
+        <div className="font-mono text-sm text-white/80">
+          {hasRoster ? `${votedCount}/${rosterTotal}` : '—'}
+        </div>
+      </div>
+
+      <div className="flex items-end justify-between gap-3">
+        <div className="text-3xl font-black text-white">
+          {hasRoster ? `${rosterProgress.toFixed(1)}%` : '—'}
+        </div>
+        <div className="text-xs text-white/60 text-right">
+          {hasRoster ? `Εκκρεμούν ${pendingCount}` : 'Δεν υπάρχουν εγγεγραμμένοι'}
+        </div>
+      </div>
+
+      <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${rosterProgress}%` }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="h-full rounded-full bg-indigo-400"
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <SourcePill label="Προ-ψ." count={sourceCounts.pre_vote} tone="blue" />
+        <SourcePill label="Live" count={sourceCounts.live} tone="emerald" />
+        <SourcePill label="Εξουσ." count={sourceCounts.proxy} tone="amber" />
+        <SourcePill label="Εκκρεμεί" count={pendingCount} tone="slate" />
+      </div>
+    </div>
+  );
+}
+
+function SourcePill({
+  label,
+  count,
+  tone,
+}: {
+  label: string;
+  count: number;
+  tone: 'blue' | 'emerald' | 'amber' | 'slate';
+}) {
+  const tones = {
+    blue: 'bg-blue-500/15 text-blue-200 border-blue-400/30',
+    emerald: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30',
+    amber: 'bg-amber-500/15 text-amber-200 border-amber-400/30',
+    slate: 'bg-white/10 text-white/70 border-white/20',
+  };
+
+  return (
+    <span className={cn('rounded-full border px-2.5 py-1 text-[10px] font-bold', tones[tone])}>
+      {label} {count}
+    </span>
+  );
+}
+
+function VoteBadge({
+  vote,
+  locked,
+  voted,
+}: {
+  vote: 'approve' | 'reject' | 'abstain' | null;
+  locked?: boolean;
+  voted?: boolean;
+}) {
   const config = {
     approve: { label: 'Υπέρ', className: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' },
     reject: { label: 'Κατά', className: 'bg-rose-500/20 text-rose-200 border-rose-400/30' },
     abstain: { label: 'Λευκό', className: 'bg-slate-500/20 text-slate-200 border-slate-400/30' },
     pending: { label: '—', className: 'bg-white/10 text-white/60 border-white/10' },
+    voted: { label: 'Ψήφισε', className: 'bg-indigo-500/20 text-indigo-200 border-indigo-400/30' },
   } as const;
 
-  const selected = vote ? config[vote] : config.pending;
+  const selected = locked ? (voted ? config.voted : config.pending) : (vote ? config[vote] : config.pending);
   return (
-    <span className={cn('rounded-full border px-3 py-1 text-xs font-bold', selected.className)}>
+    <span className={cn('rounded-full border px-2.5 py-0.5 text-[10px] font-bold', selected.className)}>
       {selected.label}
     </span>
   );

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import {
   Vote, CheckCircle, XCircle, MinusCircle,
-  Loader2, Search, Users, Mail, RefreshCw, X
+  Loader2, Search, Users, Mail, RefreshCw, X, ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ interface VotingControlPanelProps {
   isRefreshing?: boolean;
 }
 
-type VoteFilter = 'all' | 'voted' | 'pending' | 'pre_vote';
+type VoteFilter = 'all' | 'voted' | 'pending' | 'pre_vote' | 'proxy';
 
 const voteConfig = {
   approve: {
@@ -142,6 +142,7 @@ function AttendeeVoteCard({
   isPending: boolean;
 }) {
   const isPreVote = vote?.vote_source === 'pre_vote';
+  const isProxyVote = vote?.vote_source === 'proxy';
   const hasVoted = !!vote;
   const quorumContributionPercent =
     totalBuildingMills > 0 ? (attendee.mills * 100) / totalBuildingMills : 0;
@@ -166,6 +167,12 @@ function AttendeeVoteCard({
               <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] font-bold">
                 <Mail className="w-2.5 h-2.5 mr-1" />
                 ΕΠΙΣΤΟΛΙΚΗ
+              </Badge>
+            )}
+            {isProxyVote && (
+              <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] font-bold">
+                <ShieldCheck className="w-2.5 h-2.5 mr-1" />
+                ΕΞΟΥΣ.
               </Badge>
             )}
           </div>
@@ -252,6 +259,12 @@ export default function VotingControlPanel({
           return vote?.vote_source === 'pre_vote';
         });
         break;
+      case 'proxy':
+        result = result.filter(a => {
+          const vote = voteMap.get(a.id);
+          return vote?.vote_source === 'proxy';
+        });
+        break;
     }
 
     // Sort: Present first, then by apartment number
@@ -265,9 +278,10 @@ export default function VotingControlPanel({
   const stats = useMemo(() => {
     const votedCount = votes.length;
     const preVoteCount = votes.filter(v => v.vote_source === 'pre_vote').length;
+    const proxyVoteCount = votes.filter(v => v.vote_source === 'proxy').length;
     const pendingCount = attendees.filter(a => !voteMap.has(a.id)).length;
 
-    return { votedCount, preVoteCount, pendingCount };
+    return { votedCount, preVoteCount, proxyVoteCount, pendingCount };
   }, [attendees, votes, voteMap]);
 
   const handleVote = async (attendeeId: string, vote: VoteChoice) => {
@@ -330,7 +344,7 @@ export default function VotingControlPanel({
           </DialogHeader>
 
           {/* Stats Bar - Πολύ ευδιάκριτα */}
-          <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 grid grid-cols-3 gap-2 text-center">
+          <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div className="bg-white/80 rounded-xl p-2 shadow-sm">
               <div className="font-black text-2xl text-emerald-600">{stats.votedCount}</div>
               <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Ψήφισαν</div>
@@ -338,6 +352,10 @@ export default function VotingControlPanel({
             <div className="bg-white/80 rounded-xl p-2 shadow-sm">
               <div className="font-black text-2xl text-blue-600">{stats.preVoteCount}</div>
               <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Επιστολ.</div>
+            </div>
+            <div className="bg-white/80 rounded-xl p-2 shadow-sm">
+              <div className="font-black text-2xl text-amber-600">{stats.proxyVoteCount}</div>
+              <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Εξουσιοδ.</div>
             </div>
             <div className="bg-white/80 rounded-xl p-2 shadow-sm">
               <div className={cn(
@@ -363,12 +381,13 @@ export default function VotingControlPanel({
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-              {([
-                { value: 'pending', label: 'Εκκρεμείς', count: stats.pendingCount, highlight: true },
-                { value: 'all', label: 'Όλοι', count: attendees.length },
-                { value: 'voted', label: 'Ψήφισαν', count: stats.votedCount },
-                { value: 'pre_vote', label: 'Επιστολικές', count: stats.preVoteCount },
-              ] as const).map((f) => (
+                {([
+                  { value: 'pending', label: 'Εκκρεμείς', count: stats.pendingCount, highlight: true },
+                  { value: 'all', label: 'Όλοι', count: attendees.length },
+                  { value: 'voted', label: 'Ψήφισαν', count: stats.votedCount },
+                  { value: 'pre_vote', label: 'Επιστολικές', count: stats.preVoteCount },
+                  { value: 'proxy', label: 'Εξουσιοδ.', count: stats.proxyVoteCount },
+                ] as const).map((f) => (
                 <Button
                   key={f.value}
                   variant={filter === f.value ? 'default' : 'outline'}

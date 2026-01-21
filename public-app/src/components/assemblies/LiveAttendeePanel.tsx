@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, CheckCircle, XCircle, MinusCircle,
-  Loader2, Check, UserCheck, UserPlus,
-  Search, Vote, MoreVertical, ShieldCheck,
-  ChevronDown, ChevronUp
+  Users, CheckCircle, Check, UserCheck, UserPlus,
+  Search, Vote, ShieldCheck, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -40,6 +38,11 @@ export default function LiveAttendeePanel({
   const checkOutMutation = useAttendeeCheckOut();
   const castVoteMutation = useCastVote();
 
+  const voteList = Array.isArray(voteResults?.votes) ? voteResults.votes : [];
+  const votedCount = voteList.length;
+  const proxyVoteCount = voteList.filter((v: any) => v.vote_source === 'proxy').length;
+  const proxyAttendeesCount = attendees.filter(a => a.is_proxy).length;
+
   const filteredAttendees = attendees.filter(a =>
     a.apartment_number.toLowerCase().includes(search.toLowerCase()) ||
     a.display_name.toLowerCase().includes(search.toLowerCase())
@@ -49,6 +52,7 @@ export default function LiveAttendeePanel({
   const absentAttendees = attendees.filter(a => !a.is_present);
 
   const isVotingActive = currentItem?.item_type === 'voting' && currentItem?.status === 'in_progress';
+  const showStatsRow = isVotingActive || proxyAttendeesCount > 0;
 
   const handleToggleCheckIn = async (attendee: AssemblyAttendee) => {
     if (attendee.is_present) {
@@ -86,6 +90,24 @@ export default function LiveAttendeePanel({
             {presentAttendees.length} / {attendees.length}
           </div>
         </div>
+
+        {showStatsRow && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700">
+              Εξουσιοδοτήσεις {proxyAttendeesCount}
+            </div>
+            {isVotingActive && (
+              <>
+                <div className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                  Ψήφισαν {votedCount}
+                </div>
+                <div className="shrink-0 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-bold text-indigo-700">
+                  Ψήφοι εξουσιοδ. {proxyVoteCount}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -145,6 +167,23 @@ export default function LiveAttendeePanel({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleToggleCheckIn(attendee); }}
+                          disabled={checkInMutation.isPending || checkOutMutation.isPending}
+                          className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                            attendee.is_present
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              : "bg-gray-100 text-gray-500 hover:bg-gray-200",
+                            (checkInMutation.isPending || checkOutMutation.isPending) && "opacity-60 cursor-not-allowed"
+                          )}
+                          title={attendee.is_present ? "Σημείωση εξόδου" : "Check-in"}
+                        >
+                          {attendee.is_present ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                        </button>
+                      )}
                       {isVotingActive && attendee.is_present && (
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center",
@@ -229,6 +268,20 @@ export default function LiveAttendeePanel({
                             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-2 text-emerald-700">
                               <CheckCircle className="w-4 h-4" />
                               <span className="text-sm font-medium">Η ψήφος καταγράφηκε ({hasVoted.vote_display})</span>
+                              {hasVoted.vote_source && (
+                                <span
+                                  className={cn(
+                                    "ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                    hasVoted.vote_source === 'proxy' && "bg-amber-100 text-amber-700",
+                                    hasVoted.vote_source === 'pre_vote' && "bg-blue-100 text-blue-700",
+                                    hasVoted.vote_source === 'live' && "bg-emerald-100 text-emerald-700"
+                                  )}
+                                >
+                                  {hasVoted.vote_source === 'proxy' && 'Εξουσιοδ.'}
+                                  {hasVoted.vote_source === 'pre_vote' && 'Επιστολική'}
+                                  {hasVoted.vote_source === 'live' && 'Live'}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
