@@ -174,7 +174,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 function TestimonialCard({ testimonial, index }: { testimonial: typeof testimonials[0]; index: number }) {
   return (
     <AnimatedSection delay={index * 100}>
-      <div className="group h-full rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-6 shadow-card-soft transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
+      <div className="group flex h-full min-h-[320px] flex-col rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-6 shadow-card-soft transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10 sm:min-h-[340px]">
         <div className="mb-5 flex items-center gap-4">
           {testimonial.imageSrc ? (
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-gray-200/60 bg-[var(--bg-main-light)] sm:h-16 sm:w-16">
@@ -205,7 +205,9 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
           </div>
         </div>
 
-        <p className="text-sm leading-relaxed text-[var(--text-dark-secondary)] sm:text-base">"{testimonial.text}"</p>
+        <p className="text-sm leading-relaxed text-[var(--text-dark-secondary)] line-clamp-4 sm:line-clamp-5 sm:text-base">
+          "{testimonial.text}"
+        </p>
       </div>
     </AnimatedSection>
   );
@@ -820,7 +822,7 @@ export default function LandingPage() {
             </div>
           </AnimatedSection>
 
-          <div className="mx-auto w-full max-w-4xl">
+          <div className="mx-auto w-full max-w-6xl">
             <TestimonialCarousel items={testimonials} />
           </div>
         </div>
