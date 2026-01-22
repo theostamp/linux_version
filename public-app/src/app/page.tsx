@@ -666,13 +666,13 @@ export default function LandingPage() {
                     {item.step}
                   </div>
                   <div className="mb-4 pt-2">
-                    <div className="mb-3 flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-lg border border-accent-primary/20 bg-bg-app-main">
+                    <div className="mx-auto mb-3 flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-2xl border border-accent-primary/30 bg-gradient-to-br from-accent-primary/15 via-[var(--bg-main-light)] to-accent-secondary/10 shadow-sm">
                       <Image
                         src={item.imageSrc}
                         alt={item.placeholder}
-                        width={50}
-                        height={50}
-                        className="object-cover"
+                        width={72}
+                        height={72}
+                        className="h-full w-full object-cover"
                       />
                     </div>
                     <div className="text-lg font-semibold text-accent-primary">{item.title}</div>
