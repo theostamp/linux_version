@@ -30,6 +30,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { apiGetBlob } from '@/lib/api';
 import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils';
 
 import RSVPCard from '@/components/assemblies/RSVPCard';
@@ -330,6 +331,7 @@ function AssemblyDetailContent() {
   const { selectedBuilding, buildingContext, isLoading: buildingLoading } = useBuilding();
   const [activeTab, setActiveTab] = useState<'overview' | 'vote'>('overview');
   const [isMinutesModalOpen, setIsMinutesModalOpen] = useState(false);
+  const [isWorkingSheetDownloading, setIsWorkingSheetDownloading] = useState(false);
   const searchParams = useSearchParams();
 
   const assemblyId = params.id as string;
@@ -458,12 +460,28 @@ function AssemblyDetailContent() {
     router.push(`/assemblies/${assembly.id}/live`);
   };
 
-  const handleDownloadWorkingSheet = () => {
-    // We use a direct link because this is a public/GET endpoint for authenticated users
-    const url = `${process.env.NEXT_PUBLIC_CORE_API_URL}/api/assemblies/${assembly.id}/download_working_sheet/`;
-    // We should ideally use the api client to handle headers if needed,
-    // but for simplicity and immediate feedback, we open in new tab
-    window.open(url, '_blank');
+  const handleDownloadWorkingSheet = async () => {
+    if (isWorkingSheetDownloading) return;
+    setIsWorkingSheetDownloading(true);
+    try {
+      const blob = await apiGetBlob(`/assemblies/${assembly.id}/download_working_sheet/`);
+      const objectUrl = URL.createObjectURL(blob);
+      const extension = blob.type.includes('pdf') ? 'pdf' : 'bin';
+      const filename = `working_sheet_${assembly.scheduled_date}_${assembly.id}.${extension}`;
+
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error('Failed to download working sheet', error);
+      alert('Δεν ήταν δυνατή η λήψη του φύλλου εργασίας. Παρακαλούμε δοκιμάστε ξανά.');
+    } finally {
+      setIsWorkingSheetDownloading(false);
+    }
   };
 
   return (
@@ -506,11 +524,21 @@ function AssemblyDetailContent() {
               <Button
                 variant="outline"
                 onClick={handleDownloadWorkingSheet}
+                disabled={isWorkingSheetDownloading}
                 className="text-gray-600 border-gray-300 hover:bg-gray-50"
                 title="Εκτύπωση φύλλου εργασίας για χειρόγραφη συμπλήρωση"
               >
-                <Printer className="w-4 h-4 mr-2" />
-                Φύλλο Εργασίας
+                {isWorkingSheetDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Λήψη...
+                  </>
+                ) : (
+                  <>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Φύλλο Εργασίας
+                  </>
+                )}
               </Button>
 
               {assembly.status === 'draft' && (
