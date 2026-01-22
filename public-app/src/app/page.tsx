@@ -32,6 +32,16 @@ const faqs = [
     answer:
       "Με διαφάνεια στις αποφάσεις, ψηφοφορίες που καταγράφονται, κοινόχρηστα που βλέπουν όλοι. Λιγότερες παρεξηγήσεις, περισσότερη εμπιστοσύνη.",
   },
+  {
+    question: "Πόσο χρόνο μπορώ να γλιτώσω από τις δουλειές ρουτίνας;",
+    answer:
+      "Με βάση την εμπειρία μας, η εξοικονόμηση χρόνου μπορεί να φτάσει έως ~40% σε ρουτίνες όπως πέρασμα παραστατικών και έκδοση κοινοχρήστων. Είναι εκτίμηση και εξαρτάται από τον τρόπο που δουλεύει κάθε γραφείο.",
+  },
+  {
+    question: "Τι αλλάζει στην έκδοση των μηνιαίων κοινοχρήστων;",
+    answer:
+      "Δεν χρειάζεται να συλλέγεις χειροκίνητα δαπάνες, να εκτυπώνεις και να κάνεις διανομή πόρτα-πόρτα. Τα παραστατικά περνάνε με AI, τα κοινόχρηστα οργανώνονται κεντρικά και οι ένοικοι ενημερώνονται ψηφιακά ή από το Info Point.",
+  },
 ];
 
 const testimonials = [
@@ -70,6 +80,14 @@ const testimonials = [
     imageSrc: "/mar2.jpg",
     rating: 5,
     text: "Νιώθω ότι είμαι μέρος της πολυκατοικίας. Βλέπω τι αποφασίστηκε, ψηφίζω για θέματα που με αφορούν, ενημερώνομαι χωρίς να κυνηγάω τον διαχειριστή. Επιτέλους!",
+  },
+  {
+    name: "Αντώνης Σ.",
+    role: "Ιδιοκτήτης γραφείου διαχείρισης",
+    location: "Θεσσαλονίκη",
+    avatar: "ΑΣ",
+    rating: 5,
+    text: "Η μηνιαία έκδοση κοινοχρήστων ήταν μαραθώνιος με χαρτιά και διανομές. Με το AI περνάμε τα παραστατικά σε λεπτά και οι ένοικοι ενημερώνονται από το Info Point. Κερδίζουμε χρόνο κάθε μήνα.",
   },
 ];
 
@@ -264,6 +282,9 @@ export default function LandingPage() {
             <a href="#features" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
               Λειτουργίες
             </a>
+            <a href="#for-managers" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
+              Για γραφεία
+            </a>
             <a href="#pricing" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
               Τιμές
             </a>
@@ -305,6 +326,9 @@ export default function LandingPage() {
               </a>
               <a href="#features" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
                 Λειτουργίες
+              </a>
+              <a href="#for-managers" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
+                Για γραφεία
               </a>
               <a href="#pricing" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
                 Τιμές
@@ -362,7 +386,7 @@ export default function LandingPage() {
                 <div className="flex justify-start">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-on-dark">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-accent-secondary" />
-                    Με επίκεντρο τον ένοικο • Info Point
+                    Για γραφεία διαχείρισης • AI παραστατικά & Info Point
                   </span>
                 </div>
               </AnimatedSection>
@@ -377,9 +401,9 @@ export default function LandingPage() {
                       : undefined
                   }
                 >
-                  <span>Η πολυκατοικία σου γίνεται</span>
+                  <span>Λιγότερη ρουτίνα για το γραφείο διαχείρισης.</span>
                   <br />
-                  <span>κοινότητα.</span>
+                  <span>Καλύτερη εικόνα για κάθε πολυκατοικία.</span>
                 </h1>
                 {debugHeroTitle && debugHeroInfo && (
                   <div className="mt-4 inline-flex flex-col gap-1 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-xs text-on-dark">
@@ -398,20 +422,21 @@ export default function LandingPage() {
 
               <AnimatedSection delay={200}>
                 <p className="text-left text-base leading-relaxed text-on-dark-secondary sm:text-lg md:text-xl lg:text-2xl">
-                  Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
-                  συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
+                  Σήμερα ένα γραφείο διαχείρισης χάνει ώρες σε πέρασμα τιμολογίων, παραστατικών και τηλεφωνικές απορίες.
+                  Με το newconcierge.app όλα αυτοματοποιούνται: AI αναγνώριση και καταχώρηση παραστατικών, συγκεντρωτική εικόνα
+                  κοινοχρήστων ανά κτίριο και ένα Info Point που αναβαθμίζει την εικόνα του γραφείου και της πολυκατοικίας.
                 </p>
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
                 <ul className="grid gap-3 text-base text-on-dark-secondary sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                   {[
-                    "Ενημέρωση για όλους (info point στην είσοδο, email & κινητό)",
-                    "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
-                    "Ψηφοφορίες με καταγραφή και διαφάνεια",
-                    "Αιτήματα ενοίκων με υποστήριξη & ιεράρχηση",
-                    "Διαφάνεια σε κοινόχρηστα & οικονομικά",
-                    "Επικοινωνία χωρίς παρεξηγήσεις",
+                    "AI αναγνώριση & αυτόματη καταχώρηση τιμολογίων/παραστατικών",
+                    "Συγκεντρωτική εικόνα κοινοχρήστων ανά πολυκατοικία",
+                    "Μείωση τηλεφωνημάτων και αποριών για χρεώσεις",
+                    "Info Point kiosk που αναβαθμίζει την εικόνα του γραφείου",
+                    "Κεντρικό dashboard για όλα τα κτίρια",
+                    "Έως ~40% λιγότερος χρόνος σε ρουτίνες (εκτίμηση)",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime-300/20 text-xs text-lime-300">
@@ -482,7 +507,7 @@ export default function LandingPage() {
                 step: "1",
                 title: "Σημείο ενημέρωσης στην είσοδο",
                 description:
-                  "Αναλαμβάνουμε την τοποθέτηση του συστήματος ενημέρωσης και όλο τον απαραίτητο εξοπλισμό στην είσοδο της πολυκατοικίας. Ένα Info Point που ενημερώνει όλους τους ενοίκους – ακόμα κι αυτούς που δεν χρησιμοποιούν smartphones ή email.",
+                  "Αναλαμβάνουμε την τοποθέτηση του συστήματος ενημέρωσης και όλο τον εξοπλισμό στην είσοδο της πολυκατοικίας. Το Info Point ενημερώνει όλους και αναβαθμίζει την εικόνα του κτιρίου και του γραφείου διαχείρισης.",
                 placeholder: "Οθόνη ενημέρωσης σε είσοδο πολυκατοικίας",
                 imageSrc: "/ic1.jpg",
               },
@@ -490,7 +515,7 @@ export default function LandingPage() {
                 step: "2",
                 title: "Εύκολη διαχείριση",
                 description:
-                  "Ο διαχειριστής χρησιμοποιεί ένα απλό περιβάλλον για ανακοινώσεις, κοινόχρηστα και ψηφοφορίες. Η πολυκατοικία ενημερώνεται αυτόματα.",
+                  "Ο διαχειριστής δουλεύει από ένα καθαρό dashboard και περνάει παραστατικά με AI σε λίγα δευτερόλεπτα. Κοινόχρηστα, ανακοινώσεις και αποφάσεις ενημερώνονται αυτόματα.",
                 placeholder: "Screenshot από dashboard διαχειριστή",
                 imageSrc: "/ic2.jpg",
               },
@@ -498,7 +523,7 @@ export default function LandingPage() {
                 step: "3",
                 title: "Κάθε ένοικος συμμετέχει",
                 description:
-                  "Στην οθόνη ή στο κινητό τους – κάθε ένοικος μένει ενήμερος και μπορεί να συμμετέχει στις αποφάσεις. Μια πολυκατοικία με διαφάνεια.",
+                  "Στην οθόνη ή στο κινητό τους – οι ένοικοι ενημερώνονται άμεσα και οι απορίες μειώνονται δραστικά. Η διαφάνεια βελτιώνει τη συνεργασία.",
                 placeholder: "Ένοικοι ενημερωμένοι παντού",
                 imageSrc: "/ic3.jpg",
               },
@@ -534,37 +559,37 @@ export default function LandingPage() {
           <div className="flex-1 space-y-6">
             <AnimatedSection>
               <span className="inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
-                Η φιλοσοφία μας
+                Εικόνα & εμπιστοσύνη
               </span>
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <h2 className="text-2xl font-bold text-accent-primary sm:text-3xl lg:text-4xl">
-                Με επίκεντρο τον ένοικο
+                Info Point που αναβαθμίζει την πολυκατοικία
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
               <p className="text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
-                Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Είναι ένα εργαλείο που ενώνει την πολυκατοικία.
-                Ένα σημείο ενημέρωσης στην είσοδο και μια πλατφόρμα που δίνει φωνή σε κάθε ένοικο.
+                Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Το Info Point είναι η «βιτρίνα» της διαχείρισης:
+                δείχνει οργάνωση, μειώνει τα τηλεφωνήματα και δίνει στους ενοίκους ξεκάθαρη εικόνα.
               </p>
             </AnimatedSection>
 
             <div className="space-y-4">
               {[
                 {
-                  title: "Κάθε ένοικος μετράει",
+                  title: "Επαγγελματική εικόνα",
                   description:
-                    "Όλοι βλέπουν τις ανακοινώσεις, τα κοινόχρηστα, τις αποφάσεις. Κανείς δεν μένει απ' έξω – ούτε αυτοί που δεν έχουν smartphone.",
+                    "Η είσοδος δείχνει ότι η πολυκατοικία έχει σύγχρονη διαχείριση. Το γραφείο αποκτά κύρος και συνέπεια.",
                 },
                 {
-                  title: "Ομαλή συνεργασία",
+                  title: "Λιγότερα τηλεφωνήματα",
                   description:
-                    "Οι ψηφοφορίες γίνονται με διαφάνεια, τα αποτελέσματα είναι ξεκάθαρα. Λιγότερες εντάσεις στις συνελεύσεις, περισσότερη εμπιστοσύνη.",
+                    "Οι ανακοινώσεις και τα κοινόχρηστα εμφανίζονται στην οθόνη και στο κινητό. Οι απορίες μειώνονται δραστικά.",
                 },
                 {
-                  title: "Πολυκατοικία με ταυτότητα",
+                  title: "Ενημέρωση χωρίς χαρτιά",
                   description:
-                    "Η πολυκατοικία αποκτά χαρακτήρα. Μια είσοδος που δείχνει σεβασμό στους ενοίκους, οργάνωση και σύγχρονη διαχείριση.",
+                    "Ό,τι ανεβάζεις ενημερώνει αυτόματα όλους τους ενοίκους. Τέλος στα χαρτάκια και τις άτυπες ενημερώσεις.",
                 },
               ].map((item, index) => (
                 <AnimatedSection key={item.title} delay={300 + index * 100}>
@@ -603,11 +628,11 @@ export default function LandingPage() {
                 Λειτουργίες
               </span>
               <h2 className="text-2xl font-bold text-on-dark-title sm:text-3xl lg:text-4xl">
-                Εργαλεία για μια δυνατή κοινότητα
+                Εργαλεία που κόβουν τη ρουτίνα
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-relaxed text-on-dark-secondary sm:text-lg">
-                Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να
-                ενισχύουν τη συνεργασία και την επικοινωνία μεταξύ ενοίκων.
+                Ένα σύστημα για γραφεία διαχείρισης που ενοποιεί παραστατικά, κοινόχρηστα και επικοινωνία
+                ώστε να δουλεύεις λιγότερο και να δείχνεις περισσότερο επαγγελματισμό.
               </p>
             </div>
           </AnimatedSection>
@@ -615,34 +640,34 @@ export default function LandingPage() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: "Ενημέρωση για όλους",
+                title: "AI παραστατικά σε δευτερόλεπτα",
                 description:
-                  "Ανακοινώσεις, εργασίες, ενημερώσεις. Εμφανίζονται στην οθόνη της εισόδου και στο κινητό κάθε ενοίκου. Κανείς δεν μένει απληροφόρητος.",
+                  "Ανεβάζεις τιμολόγια και παραστατικά και το AI τα αναγνωρίζει και τα καταχωρεί αυτόματα. Τέλος το χειροκίνητο πέρασμα.",
               },
               {
-                title: "Διαφάνεια στα οικονομικά",
+                title: "Συγκεντρωτική εικόνα κοινοχρήστων",
                 description:
-                  "Κάθε ένοικος βλέπει τα κοινόχρηστά του, την ιστορία, την κατάσταση πληρωμών. Λιγότερες απορίες, περισσότερη εμπιστοσύνη.",
+                  "Όλα τα κτίρια σε ένα dashboard, με καθαρή εικόνα ανά πολυκατοικία και πλήρες ιστορικό.",
+              },
+              {
+                title: "Info Point kiosk στην είσοδο",
+                description:
+                  "Φυσικό σημείο ενημέρωσης που αναβαθμίζει την εικόνα της πολυκατοικίας και μειώνει τα τηλεφωνήματα.",
+              },
+              {
+                title: "Διαφάνεια που μειώνει εντάσεις",
+                description:
+                  "Κοινόχρηστα, αποφάσεις και ανακοινώσεις είναι ξεκάθαρα για όλους. Λιγότερες παρεξηγήσεις, περισσότερη εμπιστοσύνη.",
               },
               {
                 title: "Αιτήματα με προτεραιότητα",
                 description:
-                  "Οι ένοικοι δημιουργούν ελεύθερα αιτήματα και οι υπόλοιποι τα υποστηρίζουν ή τα επιβεβαιώνουν. Έτσι η διαχείριση ιεραρχεί σωστά τις ανάγκες.",
+                  "Οι ένοικοι δηλώνουν αιτήματα και το γραφείο τα ιεραρχεί άμεσα με βάση τη σοβαρότητα και τη συχνότητα.",
               },
               {
-                title: "Δημοκρατικές αποφάσεις",
+                title: "Κεντρικός έλεγχος πολλών πολυκατοικιών",
                 description:
-                  "Ψηφοφορίες με διαφάνεια. Κάθε διαμέρισμα έχει ψήφο, τα αποτελέσματα καταγράφονται, οι αποφάσεις είναι ξεκάθαρες για όλους.",
-              },
-              {
-                title: "Επικοινωνία χωρίς εντάσεις",
-                description:
-                  "Σχόλια, ειδοποιήσεις, ενημερώσεις. Η πολυκατοικία επικοινωνεί ομαλά, χωρίς παρεξηγήσεις και χωρίς ατέλειωτα τηλέφωνα.",
-              },
-              {
-                title: "Έτοιμοι για το μέλλον",
-                description:
-                  "Η πλατφόρμα υποστηρίζει ενσωμάτωση με μετρητές ενέργειας, αισθητήρες και άλλες τεχνολογίες. Η πολυκατοικία εξελίσσεται.",
+                  "Πολλαπλά κτίρια, ένα σύστημα. Η ομάδα σου βλέπει τα πάντα χωρίς να αλλάζει εργαλεία.",
               },
             ].map((feature, index) => (
               <AnimatedSection key={feature.title} delay={index * 100}>
@@ -906,24 +931,40 @@ export default function LandingPage() {
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <h2 className="text-2xl font-bold text-accent-primary sm:text-3xl lg:text-4xl">
-                Για γραφεία διαχείρισης: λιγότερα τηλέφωνα, περισσότερη οργάνωση
+                Για γραφεία διαχείρισης: κόψτε τη ρουτίνα, κερδίστε χρόνο
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
               <p className="text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
-                Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα, τα email
-                και οι απορίες των ενοίκων. Με το newconcierge.app και τα Info Points, κάθε
-                πολυκατοικία ενημερώνεται αυτόματα – κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
+                Σήμερα, για να εκδοθεί το φύλλο μηνιαίων κοινοχρήστων, συλλέγεις δαπάνες χειροκίνητα,
+                εκτυπώνεις και κάνεις διανομή πόρτα-πόρτα. Το newconcierge.app αυτοματοποιεί την καθημερινότητα
+                με AI, κρατάει τα παραστατικά οργανωμένα και ενημερώνει ψηφιακά τους ενοίκους, ενώ το Info Point
+                αναβαθμίζει την εικόνα κάθε κτιρίου.
               </p>
+            </AnimatedSection>
+
+            <AnimatedSection delay={250}>
+              <div className="rounded-2xl border border-accent-primary/30 bg-accent-primary/5 p-4 shadow-card-soft">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded-full bg-accent-primary px-3 py-1 text-xs font-semibold text-white">
+                    Εκτίμηση εξοικονόμησης
+                  </span>
+                  <p className="text-sm text-[var(--text-dark-secondary)] sm:text-base">
+                    Έως ~40% λιγότερος χρόνος σε δουλειές ρουτίνας (πέρασμα παραστατικών, έκδοση κοινοχρήστων).
+                  </p>
+                </div>
+              </div>
             </AnimatedSection>
 
             <AnimatedSection delay={300}>
               <ul className="space-y-3 text-sm text-[var(--text-dark-secondary)] sm:text-base">
                 {[
-                  "Κεντρικό dashboard για όλες τις πολυκατοικίες του γραφείου",
-                  "Αιτήματα με υποστήριξη και προτεραιότητες σε μία οθόνη",
-                  "Λιγότερες παρεξηγήσεις για κοινόχρηστα και αποφάσεις",
-                  "Δυνατότητα για custom αναφορές & στατιστικά ανά κτίριο",
+                  "AI αναγνώριση & αυτόματη καταχώρηση τιμολογίων/παραστατικών",
+                  "Έως ~40% λιγότερος χρόνος σε δουλειές ρουτίνας (εκτίμηση)",
+                  "Συγκεντρωτική εικόνα κοινοχρήστων και ιστορικού ανά κτίριο",
+                  "Info Point kiosk που αναβαθμίζει το brand του γραφείου",
+                  "Μείωση τηλεφωνημάτων χάρη σε διαφανή ενημέρωση",
+                  "Κεντρικό dashboard για πολλαπλές πολυκατοικίες",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-primary/15 text-xs text-accent-primary">
@@ -1103,6 +1144,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm text-text-secondary">
                 <li><a href="#how-it-works" className="transition-colors hover:text-accent-primary">Πώς λειτουργεί</a></li>
                 <li><a href="#features" className="transition-colors hover:text-accent-primary">Λειτουργίες</a></li>
+                <li><a href="#for-managers" className="transition-colors hover:text-accent-primary">Για γραφεία</a></li>
                 <li><a href="#pricing" className="transition-colors hover:text-accent-primary">Τιμές</a></li>
                 <li><a href="#testimonials" className="transition-colors hover:text-accent-primary">Κριτικές</a></li>
               </ul>
