@@ -482,12 +482,12 @@ export default function LandingPage() {
 
         <div className="relative">
           {/* Hero image */}
-          <div className="relative z-0 h-[100svh] w-full overflow-hidden">
+          <div className="relative z-0 h-[80svh] w-full overflow-hidden bg-[var(--bg-dark-main)] sm:h-[100svh]">
             <Image
               src="/entrance.webp"
               alt="Είσοδος πολυκατοικίας"
               fill
-              className="object-cover"
+              className="object-contain object-center sm:object-cover"
               sizes="100vw"
               priority
             />
@@ -496,7 +496,7 @@ export default function LandingPage() {
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(31,77,122,0.28) 0%, rgba(31,77,122,0.5) 50%, rgba(31,77,122,0.34) 100%)",
+                  "linear-gradient(180deg, rgba(31,77,122,0.08) 0%, rgba(31,77,122,0.16) 50%, rgba(31,77,122,0.12) 100%)",
               }}
             />
           </div>
