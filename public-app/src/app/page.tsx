@@ -525,9 +525,9 @@ export default function LandingPage() {
                       : undefined
                   }
                 >
-                  <span>Λιγότερη ρουτίνα για το γραφείο διαχείρισης.</span>
+                  <span>Σύγχρονη διαχείριση πολυκατοικιών.</span>
                   <br />
-                  <span>Καλύτερη εικόνα για κάθε πολυκατοικία.</span>
+                  <span>Ζωντανή ενημέρωση, καθαρή εικόνα.</span>
                 </h1>
                 {debugHeroTitle && debugHeroInfo && (
                   <div className="mt-4 inline-flex flex-col gap-1 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-xs text-on-dark">
