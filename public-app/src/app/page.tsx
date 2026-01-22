@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Check, Home, Monitor } from "lucide-react";
+import { Building, ChevronDown, ChevronLeft, ChevronRight, Menu, X, MessageCircle, Phone, Star, Check, Home, Monitor } from "lucide-react";
 import { PricingCalculator } from "@/components/pricing";
 
 const faqs = [
@@ -208,6 +208,128 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
         <p className="text-sm leading-relaxed text-[var(--text-dark-secondary)] sm:text-base">"{testimonial.text}"</p>
       </div>
     </AnimatedSection>
+  );
+}
+
+function TestimonialCarousel({ items }: { items: typeof testimonials }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [perView, setPerView] = useState(1);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updatePerView = () => {
+      const width = window.innerWidth;
+      if (width >= 1024) {
+        setPerView(3);
+      } else if (width >= 640) {
+        setPerView(2);
+      } else {
+        setPerView(1);
+      }
+    };
+    updatePerView();
+    window.addEventListener("resize", updatePerView);
+    return () => window.removeEventListener("resize", updatePerView);
+  }, []);
+
+  const slides = React.useMemo(() => {
+    const result: typeof testimonials[] = [];
+    for (let i = 0; i < items.length; i += perView) {
+      result.push(items.slice(i, i + perView));
+    }
+    return result;
+  }, [items, perView]);
+
+  const totalSlides = slides.length;
+
+  useEffect(() => {
+    if (currentIndex >= totalSlides) {
+      setCurrentIndex(0);
+    }
+  }, [currentIndex, totalSlides]);
+
+  useEffect(() => {
+    if (isPaused || totalSlides <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % totalSlides);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [isPaused, totalSlides]);
+
+  const goTo = (index: number) => {
+    setCurrentIndex((index + totalSlides) % totalSlides);
+  };
+
+  const handlePrev = () => goTo(currentIndex - 1);
+  const handleNext = () => goTo(currentIndex + 1);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      <div className="overflow-hidden">
+        <div
+          className="flex transition-transform duration-700 ease-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {slides.map((group, slideIndex) => (
+            <div key={`slide-${slideIndex}`} className="w-full shrink-0 px-1 sm:px-2">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {group.map((testimonial, index) => (
+                  <TestimonialCard
+                    key={`${testimonial.name}-${slideIndex}-${index}`}
+                    testimonial={testimonial}
+                    index={slideIndex * perView + index}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {totalSlides > 1 && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={handlePrev}
+            aria-label="Προηγούμενη μαρτυρία"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-accent-primary shadow-card-soft transition-all hover:border-accent-primary/40 hover:shadow-lg"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            {slides.map((_, index) => {
+              const isActive = index === currentIndex;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => goTo(index)}
+                  aria-label={`Μετάβαση στη σελίδα ${index + 1}`}
+                  className={`h-2.5 rounded-full transition-all ${
+                    isActive ? "w-6 bg-accent-primary" : "w-2.5 bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleNext}
+            aria-label="Επόμενη μαρτυρία"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-accent-primary shadow-card-soft transition-all hover:border-accent-primary/40 hover:shadow-lg"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -698,10 +820,8 @@ export default function LandingPage() {
             </div>
           </AnimatedSection>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {testimonials.map((testimonial, index) => (
-              <TestimonialCard key={testimonial.name} testimonial={testimonial} index={index} />
-            ))}
+          <div className="mx-auto w-full max-w-4xl">
+            <TestimonialCarousel items={testimonials} />
           </div>
         </div>
       </section>
