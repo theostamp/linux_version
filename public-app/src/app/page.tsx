@@ -486,10 +486,18 @@ export default function LandingPage() {
           {/* Hero image */}
           <div className="relative z-0 h-[80svh] w-full overflow-hidden bg-[var(--bg-dark-main)] sm:h-[100svh]">
             <Image
+              src="/newconcierge_mobile.webp"
+              alt="Είσοδος πολυκατοικίας - mobile"
+              fill
+              className="object-contain object-center sm:hidden"
+              sizes="100vw"
+              priority
+            />
+            <Image
               src="/entrance.webp"
               alt="Είσοδος πολυκατοικίας"
               fill
-              className="object-contain object-center sm:object-cover"
+              className="hidden object-cover sm:block"
               sizes="100vw"
               priority
             />
