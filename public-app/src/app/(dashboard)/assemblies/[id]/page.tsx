@@ -9,7 +9,7 @@ import {
   ArrowLeft, Play, CheckCircle, AlertCircle, Percent,
   Timer, Vote, Send, Building2, ChevronRight, Edit,
   Trash2, XCircle, Loader2, Download, Printer, ClipboardList,
-  HelpCircle
+  HelpCircle, Search
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -27,6 +27,7 @@ import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils';
@@ -172,6 +173,20 @@ function AgendaOverview({ assembly }: { assembly: Assembly }) {
 function AttendeesPreview({ assembly }: { assembly: Assembly }) {
   const { attendees, stats } = assembly;
   const displayAttendees = attendees.slice(0, 5);
+  const [search, setSearch] = useState('');
+  const filteredAttendees = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return attendees;
+    return attendees.filter((attendee) => {
+      const haystack = [
+        attendee.apartment_number,
+        attendee.display_name,
+        attendee.rsvp_status_display,
+        attendee.proxy_to_display || ''
+      ].join(' ').toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [attendees, search]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-300 overflow-hidden">
@@ -237,10 +252,71 @@ function AttendeesPreview({ assembly }: { assembly: Assembly }) {
 
       {attendees.length > 5 && (
         <div className="px-5 py-3 border-t border-gray-100">
-          <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-            Δείτε όλους ({attendees.length})
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                Δείτε όλους ({attendees.length})
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden">
+              <DialogHeader className="p-5 border-b border-gray-200">
+                <DialogTitle>Όλοι οι συμμετέχοντες</DialogTitle>
+                <DialogDescription>
+                  Συνολικά {attendees.length} συμμετοχές · {stats.total_apartments_invited} κλήσεις
+                </DialogDescription>
+              </DialogHeader>
+              <div className="p-5 space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Αναζήτηση διαμερίσματος ή ονόματος..."
+                    className="pl-9"
+                  />
+                </div>
+
+                <div className="max-h-[55vh] overflow-y-auto divide-y divide-gray-100 border border-gray-100 rounded-lg">
+                  {filteredAttendees.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-gray-500">
+                      Δεν βρέθηκαν αποτελέσματα.
+                    </div>
+                  ) : (
+                    filteredAttendees.map((attendee) => (
+                      <div key={attendee.id} className="px-4 py-3 flex items-center gap-3">
+                        <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">
+                          {attendee.apartment_number}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {attendee.display_name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Διαμ. {attendee.apartment_number}
+                          </div>
+                          {attendee.proxy_to_display && (
+                            <div className="text-[11px] text-amber-600">
+                              Εκπρόσωπος: {attendee.proxy_to_display}
+                            </div>
+                          )}
+                        </div>
+                        <span className={cn(
+                          'text-xs px-2 py-0.5 rounded-full',
+                          attendee.rsvp_status === 'attending' ? 'bg-emerald-100 text-emerald-700' :
+                          attendee.rsvp_status === 'not_attending' ? 'bg-gray-100 text-gray-600' :
+                          attendee.rsvp_status === 'maybe' ? 'bg-amber-100 text-amber-700' :
+                          'bg-gray-100 text-gray-500'
+                        )}>
+                          {attendee.rsvp_status_display}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>
