@@ -49,6 +49,7 @@ interface QueueItem {
 }
 
 const FILE_ACCEPT = 'image/jpeg,image/jpg,image/png,image/webp,application/pdf';
+const AMOUNT_MATCH_TOLERANCE = 0.01;
 
 const QUEUE_STATUS_LABELS: Record<QueueStatus, string> = {
   queued: 'Σε ουρά',
@@ -162,6 +163,34 @@ const createQueueItem = (file: File): QueueItem => {
     shouldArchive: true,
     createdAt: Date.now(),
   };
+};
+
+const normalizeAmount = (value: number) => Math.round(value * 100) / 100;
+
+const getExpenseMatchesByAmount = (amount: number | null, expenses: Expense[]) => {
+  if (!amount || !expenses.length) {
+    return { match: null as Expense | null, matches: [] as Expense[] };
+  }
+
+  const normalizedAmount = normalizeAmount(amount);
+  const matchesByRemaining = expenses.filter((expense) => {
+    if (typeof expense.remaining_amount !== 'number') return false;
+    return Math.abs(normalizeAmount(expense.remaining_amount) - normalizedAmount) <= AMOUNT_MATCH_TOLERANCE;
+  });
+
+  const matchesByTotal = expenses.filter((expense) => {
+    return Math.abs(normalizeAmount(expense.amount) - normalizedAmount) <= AMOUNT_MATCH_TOLERANCE;
+  });
+
+  const uniqueMatches = new Map<number, Expense>();
+  [...matchesByRemaining, ...matchesByTotal].forEach((expense) => {
+    uniqueMatches.set(expense.id, expense);
+  });
+
+  const matches = Array.from(uniqueMatches.values());
+  const match = matches.length === 1 ? matches[0] : null;
+
+  return { match, matches };
 };
 
 const buildFormDataFromScan = (scannedData: ScannedInvoiceData): ScannedInvoiceData => {
@@ -364,6 +393,17 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({
   );
 
   const activeFormData = activeItem?.formData ?? EMPTY_FORM_DATA;
+  const selectedExpense = useMemo(
+    () => availableExpenses.find((expense) => expense.id === activeFormData.linked_expense_id) ?? null,
+    [availableExpenses, activeFormData.linked_expense_id]
+  );
+
+  const paymentReceiptMatch = useMemo(() => {
+    if (activeFormData.financial_intent !== 'payment_receipt') {
+      return { match: null as Expense | null, matches: [] as Expense[] };
+    }
+    return getExpenseMatchesByAmount(activeFormData.amount ?? null, availableExpenses);
+  }, [activeFormData.amount, activeFormData.financial_intent, availableExpenses]);
 
   const handleInputChange = (field: keyof ScannedInvoiceData, value: string | number | null) => {
     if (!activeItem) return;
@@ -381,6 +421,19 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({
       )
     );
   };
+
+  useEffect(() => {
+    if (!activeItem) return;
+    if (activeFormData.financial_intent !== 'payment_receipt') return;
+    if (activeFormData.linked_expense_id) return;
+    if (!paymentReceiptMatch.match) return;
+    handleInputChange('linked_expense_id', paymentReceiptMatch.match.id);
+  }, [
+    activeItem,
+    activeFormData.financial_intent,
+    activeFormData.linked_expense_id,
+    paymentReceiptMatch.match,
+  ]);
 
   const handleArchiveToggle = (checked: boolean) => {
     if (!activeItem) return;
@@ -908,6 +961,31 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({
                                 )}
                               </SelectContent>
                             </Select>
+                            {isLoadingExpenses ? (
+                              <p className="text-xs text-muted-foreground">
+                                Αναζήτηση αντιστοίχισης με βάση το ποσό...
+                              </p>
+                            ) : selectedExpense ? (
+                              <p className="text-xs text-emerald-600">
+                                Ταυτίστηκε με: {selectedExpense.title} · {formatCurrency(selectedExpense.amount)}
+                              </p>
+                            ) : activeFormData.amount ? (
+                              paymentReceiptMatch.matches.length === 0 ? (
+                                <p className="text-xs text-amber-600">
+                                  Δεν βρέθηκε αντίστοιχη δαπάνη με ποσό {formatCurrency(activeFormData.amount)}.
+                                  Θα σας ζητηθεί επιβεβαίωση για να συνεχίσετε χωρίς αντιστοίχιση.
+                                </p>
+                              ) : (
+                                <p className="text-xs text-amber-600">
+                                  Βρέθηκαν {paymentReceiptMatch.matches.length} πιθανές δαπάνες με το ίδιο ποσό.
+                                  Επιλέξτε τη σωστή για να συνεχίσετε.
+                                </p>
+                              )
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                Συμπλήρωσε ποσό για να γίνει αυτόματη αντιστοίχιση.
+                              </p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
@@ -980,16 +1058,16 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({
                       </div>
 
                       <div className="flex space-x-3 pt-4">
-                        <Button
-                          onClick={handleSave}
-                          className="flex-1"
-                          disabled={
-                            !activeFormData.amount ||
-                            !activeFormData.date ||
-                            (activeFormData.financial_intent === 'payment_receipt' &&
-                              (!activeFormData.linked_expense_id || !activeFormData.payment_method))
-                          }
-                        >
+                      <Button
+                        onClick={handleSave}
+                        className="flex-1"
+                        disabled={
+                          !activeFormData.amount ||
+                          !activeFormData.date ||
+                          (activeFormData.financial_intent === 'payment_receipt' &&
+                            !activeFormData.payment_method)
+                        }
+                      >
                           {activeFormData.financial_intent === 'payment_receipt'
                             ? 'Αποθήκευση Απόδειξης Πληρωμής'
                             : 'Αποθήκευση Δαπάνης'}

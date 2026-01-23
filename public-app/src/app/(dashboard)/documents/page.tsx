@@ -14,6 +14,7 @@ import { ScannedInvoiceData, ExpenseFormData } from '@/types/financial';
 import { useExpenses as useExpensesQuery } from '@/hooks/useExpensesQuery';
 import { toast } from 'sonner';
 import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
+import { formatCurrency } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ type PendingSave = {
 };
 
 const AUTO_BUILDING_CONFIDENCE = 0.85;
+const AMOUNT_MATCH_TOLERANCE = 0.01;
 
 function parseApiErrorBody(error: any): any | null {
   const body = error?.response?.body;
@@ -70,6 +72,7 @@ function DocumentsContent() {
   const [isSaving, setIsSaving] = useState(false);
   const pendingSaveResolveRef = useRef<((value: boolean) => void) | null>(null);
   const duplicateDetectedRef = useRef(false);
+  const unmatchedDetectedRef = useRef(false);
   const suppressDialogResolveRef = useRef(false);
 
   // Building confirmation dialog (when we can't confidently detect a building)
@@ -82,7 +85,35 @@ function DocumentsContent() {
   const [pendingDuplicate, setPendingDuplicate] = useState<{ buildingId: number; save: PendingSave } | null>(null);
   const [duplicateInfo, setDuplicateInfo] = useState<{ reason?: string; existing_ids?: number[] } | null>(null);
 
+  // Unmatched payment receipt confirmation
+  const [unmatchedDialogOpen, setUnmatchedDialogOpen] = useState(false);
+  const [pendingUnmatched, setPendingUnmatched] = useState<{ buildingId: number; save: PendingSave } | null>(null);
+  const [unmatchedAmount, setUnmatchedAmount] = useState<number | null>(null);
+
   const hasMultipleBuildings = useMemo(() => (buildings?.length ?? 0) > 1, [buildings]);
+
+  const findMatchingExpenseByAmount = (amount: number | null, buildingId: number | null) => {
+    if (!amount || !buildingId) return null;
+    const normalizedAmount = Math.round(amount * 100) / 100;
+    const candidates = (availableExpenses ?? []).filter((expense) => expense.building === buildingId);
+
+    const matchByRemaining = candidates.filter((expense) => {
+      if (typeof expense.remaining_amount !== 'number') return false;
+      const remaining = Math.round(expense.remaining_amount * 100) / 100;
+      return Math.abs(remaining - normalizedAmount) <= AMOUNT_MATCH_TOLERANCE;
+    });
+
+    if (matchByRemaining.length === 1) return matchByRemaining[0];
+
+    const matchByTotal = candidates.filter((expense) => {
+      const expenseAmount = Math.round(expense.amount * 100) / 100;
+      return Math.abs(expenseAmount - normalizedAmount) <= AMOUNT_MATCH_TOLERANCE;
+    });
+
+    if (matchByTotal.length === 1) return matchByTotal[0];
+
+    return null;
+  };
 
   const buildExpenseFormData = (expenseData: ExpenseFormData) => {
     const formData = new FormData();
@@ -135,11 +166,11 @@ function DocumentsContent() {
   const performSave = async (
     buildingId: number,
     save: PendingSave,
-    options?: { allowDuplicate?: boolean }
+    options?: { allowDuplicate?: boolean; allowUnmatchedPayment?: boolean }
   ): Promise<boolean> => {
     if (isSaving) return false;
 
-    const { scannedData, file, shouldArchive } = save;
+    let { scannedData, file, shouldArchive } = save;
 
     if (!buildingId) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
@@ -155,10 +186,22 @@ function DocumentsContent() {
 
     try {
       const intent = scannedData.financial_intent === 'payment_receipt' ? 'payment_receipt' : 'expense';
+      const allowUnmatchedPayment = Boolean(options?.allowUnmatchedPayment);
 
       if (intent === 'payment_receipt') {
         if (!scannedData.linked_expense_id) {
-          toast.error('Επιλέξτε τη δαπάνη που εξοφλείται.');
+          const matchedExpense = findMatchingExpenseByAmount(scannedData.amount ?? null, buildingId);
+          if (matchedExpense) {
+            scannedData = { ...scannedData, linked_expense_id: matchedExpense.id };
+          }
+        }
+
+        if (!scannedData.linked_expense_id && !allowUnmatchedPayment) {
+          unmatchedDetectedRef.current = true;
+          setPendingUnmatched({ buildingId, save: { ...save, scannedData } });
+          setUnmatchedAmount(scannedData.amount ?? null);
+          setUnmatchedDialogOpen(true);
+          toast.info('Δεν βρέθηκε αντίστοιχο παραστατικό δαπάνης με το ίδιο ποσό.');
           return false;
         }
         if (!scannedData.payment_method) {
@@ -190,7 +233,7 @@ function DocumentsContent() {
               reason: parsed?.reason,
               existing_ids: parsed?.existing_ids,
             });
-            setPendingDuplicate({ buildingId, save });
+            setPendingDuplicate({ buildingId, save: { ...save, scannedData } });
             setDuplicateDialogOpen(true);
             toast.warning('Βρέθηκε πιθανό διπλό παραστατικό. Επιβεβαιώστε για να συνεχίσετε.');
             return false;
@@ -201,6 +244,14 @@ function DocumentsContent() {
       }
 
       if (intent === 'payment_receipt') {
+        if (!scannedData.linked_expense_id && allowUnmatchedPayment) {
+          if (archivedDoc?.id) {
+            toast.success('Το παραστατικό αποθηκεύτηκε στο ηλεκτρονικό αρχείο');
+          }
+          toast.warning('Η απόδειξη πληρωμής καταχωρήθηκε χωρίς αντιστοίχιση με δαπάνη.');
+          return true;
+        }
+
         const paymentForm = new FormData();
         paymentForm.append('building_id', buildingId.toString());
         paymentForm.append('expense', String(scannedData.linked_expense_id));
@@ -327,9 +378,10 @@ function DocumentsContent() {
     }
 
     duplicateDetectedRef.current = false;
+    unmatchedDetectedRef.current = false;
     const saved = await performSave(targetBuildingId, save, { allowDuplicate: false });
     if (saved) return true;
-    if (duplicateDetectedRef.current) {
+    if (duplicateDetectedRef.current || unmatchedDetectedRef.current) {
       return await new Promise<boolean>((resolve) => {
         pendingSaveResolveRef.current = resolve;
       });
@@ -357,8 +409,9 @@ function DocumentsContent() {
     setPendingSave(null);
 
     duplicateDetectedRef.current = false;
+    unmatchedDetectedRef.current = false;
     const saved = await performSave(chosenId, save, { allowDuplicate: false });
-    if (duplicateDetectedRef.current) {
+    if (duplicateDetectedRef.current || unmatchedDetectedRef.current) {
       return;
     }
     if (pendingSaveResolveRef.current) {
@@ -374,7 +427,29 @@ function DocumentsContent() {
     setDuplicateDialogOpen(false);
     setPendingDuplicate(null);
     duplicateDetectedRef.current = false;
+    unmatchedDetectedRef.current = false;
     const saved = await performSave(ctx.buildingId, ctx.save, { allowDuplicate: true });
+    if (duplicateDetectedRef.current || unmatchedDetectedRef.current) {
+      return;
+    }
+    if (pendingSaveResolveRef.current) {
+      pendingSaveResolveRef.current(saved);
+      pendingSaveResolveRef.current = null;
+    }
+  };
+
+  const handleConfirmUnmatchedContinue = async () => {
+    const ctx = pendingUnmatched;
+    if (!ctx) return;
+    suppressDialogResolveRef.current = true;
+    setUnmatchedDialogOpen(false);
+    setPendingUnmatched(null);
+    duplicateDetectedRef.current = false;
+    unmatchedDetectedRef.current = false;
+    const saved = await performSave(ctx.buildingId, ctx.save, { allowDuplicate: false, allowUnmatchedPayment: true });
+    if (duplicateDetectedRef.current || unmatchedDetectedRef.current) {
+      return;
+    }
     if (pendingSaveResolveRef.current) {
       pendingSaveResolveRef.current(saved);
       pendingSaveResolveRef.current = null;
@@ -487,6 +562,57 @@ function DocumentsContent() {
                 </>
               ) : (
                 'Συνέχεια'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unmatched payment receipt confirmation */}
+      <AlertDialog
+        open={unmatchedDialogOpen}
+        onOpenChange={(open) => {
+          setUnmatchedDialogOpen(open);
+          if (!open && suppressDialogResolveRef.current) {
+            suppressDialogResolveRef.current = false;
+            return;
+          }
+          if (!open && pendingSaveResolveRef.current) {
+            pendingSaveResolveRef.current(false);
+            pendingSaveResolveRef.current = null;
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Δεν βρέθηκε αντιστοίχιση</AlertDialogTitle>
+            <AlertDialogDescription>
+              Δεν εντοπίστηκε αντίστοιχο παραστατικό δαπάνης (χρεωτικό ή πιστωτικό) για
+              το ποσό {unmatchedAmount !== null ? formatCurrency(unmatchedAmount) : '—'}.
+              Θέλετε να συνεχίσετε χωρίς αντιστοίχιση;
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isSaving}
+              onClick={() => {
+                setPendingUnmatched(null);
+                if (pendingSaveResolveRef.current) {
+                  pendingSaveResolveRef.current(false);
+                  pendingSaveResolveRef.current = null;
+                }
+              }}
+            >
+              Ακύρωση
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmUnmatchedContinue} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Αποθήκευση...
+                </>
+              ) : (
+                'Συνέχεια χωρίς αντιστοίχιση'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
