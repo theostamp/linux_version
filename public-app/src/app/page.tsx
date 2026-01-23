@@ -523,7 +523,7 @@ export default function LandingPage() {
                 </div>
               </AnimatedSection>
               <AnimatedSection delay={125}>
-                <p className="text-left text-sm font-medium text-accent-secondary sm:text-base">
+                <p className="text-center text-base font-semibold text-lime-300 sm:text-lg">
                   Κοινόχρηστα, πληρωμές, συνελεύσεις, διαχείριση — όλα σε ένα σημείο.
                 </p>
               </AnimatedSection>
