@@ -50,6 +50,12 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute=0, hour=9, day_of_week='mon'),
         'args': (50.0, 20),
     },
+    # Follow-up call TODOs for unpaid debt reminders (daily at 09:30)
+    'create-debt-followup-call-todos': {
+        'task': 'notifications.tasks.create_debt_followup_call_todos',
+        'schedule': crontab(minute=30, hour=9),
+        'args': (),
+    },
     # Retry failed notification recipients (email) every 30 minutes
     'retry-failed-notification-recipients': {
         'task': 'notifications.tasks.retry_failed_notification_recipients',

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, Sparkles, X, Wrench, AlertTriangle } from 'lucide-react';
+import { Send, Bot, X, Wrench, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -140,14 +141,22 @@ export const AIAssistantChat = () => {
   return (
     <>
       {/* Floating Action Button */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full shadow-lg text-white hover:shadow-xl transition-all"
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
-      </motion.button>
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2">
+        {!isOpen && (
+          <div className="rounded-full bg-white/95 text-slate-700 text-xs px-3 py-1 shadow-sm border border-slate-200 dark:bg-slate-900/95 dark:text-slate-100 dark:border-slate-700">
+            Θέλεις βοήθεια;
+          </div>
+        )}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-4 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full shadow-lg text-white hover:shadow-xl transition-all"
+          aria-label={isOpen ? 'Κλείσιμο βοηθού' : 'Άνοιγμα βοηθού'}
+        >
+          {isOpen ? <X className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
+        </motion.button>
+      </div>
 
       {/* Chat Window */}
       <AnimatePresence>
@@ -159,14 +168,23 @@ export const AIAssistantChat = () => {
             className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[600px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-full">
-                <Bot className="w-5 h-5" />
+            <div className="p-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-full">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">Βοηθός</h3>
+                  <p className="text-xs text-white/80">Άμεση υποστήριξη & εκκρεμότητες</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-sm">AI Concierge</h3>
-                <p className="text-xs text-white/80">Always here to help</p>
-              </div>
+              <Link
+                href="/calendar?view=kanban"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white/90 hover:bg-white/25 transition"
+              >
+                <ListTodo className="h-3.5 w-3.5" />
+                Εκκρεμότητες
+              </Link>
             </div>
 
             {/* Messages Area */}

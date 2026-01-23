@@ -1,4 +1,4 @@
-"""
+κοιτα """
 Celery tasks for notifications system.
 """
 import logging
@@ -722,6 +722,188 @@ def retry_failed_notification_recipients(
     summary = (
         f"Retry failed recipients: tenants={tenants_processed}, "
         f"retried={total_retried}, sent={total_sent}, failed={total_failed}"
+    )
+    logger.info(summary)
+    return summary
+
+
+@shared_task
+def create_debt_followup_call_todos(
+    days_after_reminder: int = 7,
+    weekly_cooldown_days: int = 7,
+    min_debt_amount: float = 0.01,
+):
+    """
+    Δημιουργεί TODO για τηλεφωνική όχληση όταν:
+    - υπάρχει υπενθύμιση οφειλών ≥ days_after_reminder ημερών
+    - δεν υπάρχει ΚΑΜΙΑ πληρωμή μετά την υπενθύμιση (οποιαδήποτε κίνηση)
+    - δεν έχει δημιουργηθεί TODO για το ίδιο διαμέρισμα την τελευταία εβδομάδα
+    """
+    from decimal import Decimal
+    from django.contrib.auth import get_user_model
+    from buildings.models import Building
+    from financial.models import Payment
+    from notifications.models import NotificationRecipient
+    from todo_management.models import TodoCategory, TodoItem
+
+    TenantModel = get_tenant_model()
+    now = timezone.now()
+    reminder_cutoff = now - timedelta(days=days_after_reminder)
+    todo_cooldown_since = now - timedelta(days=weekly_cooldown_days)
+
+    subject_keyword = "Υπενθύμιση Οφειλών"
+    title_prefix = "Τηλεφωνική όχληση οφειλής"
+
+    tenants_processed = 0
+    buildings_processed = 0
+    todos_created = 0
+    todos_skipped = 0
+
+    for tenant in TenantModel.objects.exclude(schema_name='public'):
+        try:
+            with schema_context(tenant.schema_name):
+                tenants_processed += 1
+
+                User = get_user_model()
+                system_user = (
+                    User.objects.filter(is_superuser=True).first()
+                    or User.objects.filter(is_staff=True).first()
+                    or User.objects.first()
+                )
+                if not system_user:
+                    logger.warning(
+                        "No system user in schema %s - skipping follow-up todos",
+                        tenant.schema_name,
+                    )
+                    continue
+
+                for building in Building.objects.all():
+                    buildings_processed += 1
+
+                    category, _ = TodoCategory.objects.get_or_create(
+                        building=building,
+                        name="Οφειλές - Τηλεφωνική Όχληση",
+                        defaults={
+                            "icon": "phone",
+                            "color": "orange",
+                            "description": "Τηλεφωνικές οχλήσεις μετά από υπενθύμιση οφειλών",
+                            "is_active": True,
+                        },
+                    )
+
+                    recipients = (
+                        NotificationRecipient.objects.select_related("notification", "apartment")
+                        .filter(
+                            apartment__building=building,
+                            notification__subject__icontains=subject_keyword,
+                            status__in=["sent", "delivered", "failed", "bounced"],
+                            created_at__lte=reminder_cutoff,
+                        )
+                        .order_by("apartment_id", "-created_at")
+                    )
+
+                    latest_by_apartment = {}
+                    for recipient in recipients:
+                        if recipient.apartment_id in latest_by_apartment:
+                            continue
+                        effective_sent_at = recipient.sent_at or recipient.created_at
+                        if effective_sent_at > reminder_cutoff:
+                            continue
+                        latest_by_apartment[recipient.apartment_id] = (recipient, effective_sent_at)
+
+                    for recipient, effective_sent_at in latest_by_apartment.values():
+                        apartment = recipient.apartment
+
+                        balance_value = getattr(apartment, "current_balance", None)
+                        if balance_value is not None:
+                            try:
+                                if abs(Decimal(str(balance_value))) < Decimal(str(min_debt_amount)):
+                                    todos_skipped += 1
+                                    continue
+                            except Exception:
+                                pass
+
+                        # Οποιαδήποτε κίνηση = οποιαδήποτε πληρωμή μετά την υπενθύμιση
+                        if Payment.objects.filter(
+                            apartment=apartment,
+                            created_at__gt=effective_sent_at,
+                        ).exists():
+                            todos_skipped += 1
+                            continue
+
+                        if TodoItem.objects.filter(
+                            building=building,
+                            apartment=apartment,
+                            title__icontains=title_prefix,
+                            status__in=["pending", "in_progress"],
+                        ).exists():
+                            todos_skipped += 1
+                            continue
+
+                        if TodoItem.objects.filter(
+                            building=building,
+                            apartment=apartment,
+                            title__icontains=title_prefix,
+                            created_at__gte=todo_cooldown_since,
+                        ).exists():
+                            todos_skipped += 1
+                            continue
+
+                        phone_primary = apartment.occupant_phone or ""
+                        phone_secondary = apartment.occupant_phone2 or ""
+                        email = apartment.occupant_email or ""
+
+                        balance_str = ""
+                        if balance_value is not None:
+                            try:
+                                balance_str = f"{abs(Decimal(str(balance_value))):.2f}€"
+                            except Exception:
+                                balance_str = ""
+
+                        status_label = recipient.get_status_display()
+                        failure_note = ""
+                        if recipient.status in ["failed", "bounced"]:
+                            failure_note = " (αποστολή email απέτυχε)"
+
+                        description_lines = [
+                            f"Υπενθύμιση οφειλών: {effective_sent_at.strftime('%d/%m/%Y')} "
+                            f"(status: {status_label}){failure_note}.",
+                            f"Δεν καταγράφηκε πληρωμή εντός {days_after_reminder} ημερών.",
+                        ]
+                        if balance_str:
+                            description_lines.append(f"Τρέχον υπόλοιπο: {balance_str}")
+                        description_lines.append(f"Τηλέφωνο: {phone_primary or '—'}")
+                        if phone_secondary:
+                            description_lines.append(f"Τηλέφωνο 2: {phone_secondary}")
+                        if email:
+                            description_lines.append(f"Email: {email}")
+
+                        TodoItem.objects.create(
+                            title=f"{title_prefix} - Διαμ. {apartment.number}",
+                            description="\n".join(description_lines),
+                            category=category,
+                            building=building,
+                            apartment=apartment,
+                            priority="high",
+                            status="pending",
+                            due_date=now,
+                            created_by=system_user,
+                            assigned_to=building.internal_manager or None,
+                            tags=["debt_followup", "call"],
+                        )
+                        todos_created += 1
+
+        except Exception as e:
+            logger.exception(
+                "Follow-up call TODOs failed for tenant %s: %s",
+                tenant.schema_name,
+                e,
+            )
+            continue
+
+    summary = (
+        f"Follow-up call TODOs: tenants={tenants_processed}, "
+        f"buildings={buildings_processed}, created={todos_created}, skipped={todos_skipped}"
     )
     logger.info(summary)
     return summary

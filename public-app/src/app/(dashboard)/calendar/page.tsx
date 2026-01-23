@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Calendar, ListTodo, LayoutGrid, RefreshCw, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -26,9 +27,20 @@ const tabs: Tab[] = [
 ];
 
 export default function CalendarPage() {
-  const [activeTab, setActiveTab] = useState<TabValue>('calendar');
+  const searchParams = useSearchParams();
+  const viewParam = searchParams.get('view') as TabValue | null;
+  const initialTab: TabValue = viewParam && ['calendar', 'list', 'kanban'].includes(viewParam)
+    ? viewParam
+    : 'calendar';
+  const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
   const { selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { pendingCount, refetch, isLoading } = useTodos();
+
+  useEffect(() => {
+    if (viewParam && viewParam !== activeTab && ['calendar', 'list', 'kanban'].includes(viewParam)) {
+      setActiveTab(viewParam);
+    }
+  }, [viewParam, activeTab]);
 
   const handleRefresh = () => {
     refetch();
