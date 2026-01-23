@@ -503,11 +503,7 @@ export default function LandingPage() {
             />
             {/* Gradient overlay for better text readability */}
             <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(31,77,122,0.08) 0%, rgba(31,77,122,0.16) 50%, rgba(31,77,122,0.12) 100%)",
-              }}
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(31,77,122,0.08)_0%,rgba(31,77,122,0.16)_50%,rgba(31,77,122,0.12)_100%)] sm:bg-[linear-gradient(180deg,rgba(31,77,122,0.28)_0%,rgba(31,77,122,0.5)_50%,rgba(31,77,122,0.34)_100%)]"
             />
           </div>
 
