@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
@@ -68,6 +68,9 @@ function DocumentsContent() {
   );
 
   const [isSaving, setIsSaving] = useState(false);
+  const pendingSaveResolveRef = useRef<((value: boolean) => void) | null>(null);
+  const duplicateDetectedRef = useRef(false);
+  const suppressDialogResolveRef = useRef(false);
 
   // Building confirmation dialog (when we can't confidently detect a building)
   const [buildingDialogOpen, setBuildingDialogOpen] = useState(false);
@@ -133,18 +136,18 @@ function DocumentsContent() {
     buildingId: number,
     save: PendingSave,
     options?: { allowDuplicate?: boolean }
-  ) => {
-    if (isSaving) return;
+  ): Promise<boolean> => {
+    if (isSaving) return false;
 
     const { scannedData, file, shouldArchive } = save;
 
     if (!buildingId) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
-      return;
+      return false;
     }
     if (!scannedData.amount || !scannedData.date) {
       toast.error('Παρακαλώ συμπληρώστε το ποσό και την ημερομηνία');
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -156,11 +159,11 @@ function DocumentsContent() {
       if (intent === 'payment_receipt') {
         if (!scannedData.linked_expense_id) {
           toast.error('Επιλέξτε τη δαπάνη που εξοφλείται.');
-          return;
+          return false;
         }
         if (!scannedData.payment_method) {
           toast.error('Επιλέξτε τρόπο πληρωμής.');
-          return;
+          return false;
         }
       }
 
@@ -182,6 +185,7 @@ function DocumentsContent() {
           const statusCode = archiveError?.status ?? archiveError?.response?.status;
 
           if (statusCode === 409 && parsed?.code === 'PROBABLE_DUPLICATE') {
+            duplicateDetectedRef.current = true;
             setDuplicateInfo({
               reason: parsed?.reason,
               existing_ids: parsed?.existing_ids,
@@ -189,7 +193,7 @@ function DocumentsContent() {
             setPendingDuplicate({ buildingId, save });
             setDuplicateDialogOpen(true);
             toast.warning('Βρέθηκε πιθανό διπλό παραστατικό. Επιβεβαιώστε για να συνεχίσετε.');
-            return;
+            return false;
           }
 
           throw archiveError;
@@ -229,7 +233,7 @@ function DocumentsContent() {
 
         toast.success('Η απόδειξη πληρωμής καταχωρήθηκε επιτυχώς!');
         router.push(`/financial?building=${buildingId}`);
-        return;
+        return true;
       }
 
       const expenseData: ExpenseFormData = {
@@ -259,6 +263,7 @@ function DocumentsContent() {
 
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς!');
       router.push(`/financial?building=${buildingId}`);
+      return true;
     } catch (error: any) {
       console.error('Error creating expense:', error);
       const parsed = parseApiErrorBody(error);
@@ -267,13 +272,18 @@ function DocumentsContent() {
         (typeof parsed?.detail === 'string' && parsed.detail) ||
         (typeof parsed?.message === 'string' && parsed.message);
       toast.error(friendlyMessage || error?.message || 'Σφάλμα κατά τη δημιουργία της δαπάνης');
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleSave = async (scannedData: ScannedInvoiceData, file: File | null, shouldArchive: boolean) => {
-    if (isSaving) return;
+  const handleSave = async (
+    scannedData: ScannedInvoiceData,
+    file: File | null,
+    shouldArchive: boolean
+  ): Promise<boolean> => {
+    if (isSaving) return false;
 
     const save: PendingSave = { scannedData, file, shouldArchive };
 
@@ -306,15 +316,25 @@ function DocumentsContent() {
       setBuildingChoiceId(selectedBuilding?.id ?? buildings?.[0]?.id ?? null);
       setBuildingDialogOpen(true);
       toast.info('Δεν αναγνωρίστηκε με βεβαιότητα το κτίριο. Επιβεβαιώστε πριν την καταχώρηση.');
-      return;
+      return await new Promise<boolean>((resolve) => {
+        pendingSaveResolveRef.current = resolve;
+      });
     }
 
     if (!targetBuildingId) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
-      return;
+      return false;
     }
 
-    await performSave(targetBuildingId, save, { allowDuplicate: false });
+    duplicateDetectedRef.current = false;
+    const saved = await performSave(targetBuildingId, save, { allowDuplicate: false });
+    if (saved) return true;
+    if (duplicateDetectedRef.current) {
+      return await new Promise<boolean>((resolve) => {
+        pendingSaveResolveRef.current = resolve;
+      });
+    }
+    return false;
   };
 
   const handleConfirmBuilding = async () => {
@@ -332,18 +352,33 @@ function DocumentsContent() {
       setSelectedBuilding(matched);
     }
 
+    suppressDialogResolveRef.current = true;
     setBuildingDialogOpen(false);
     setPendingSave(null);
 
-    await performSave(chosenId, save, { allowDuplicate: false });
+    duplicateDetectedRef.current = false;
+    const saved = await performSave(chosenId, save, { allowDuplicate: false });
+    if (duplicateDetectedRef.current) {
+      return;
+    }
+    if (pendingSaveResolveRef.current) {
+      pendingSaveResolveRef.current(saved);
+      pendingSaveResolveRef.current = null;
+    }
   };
 
   const handleConfirmDuplicateContinue = async () => {
     const ctx = pendingDuplicate;
     if (!ctx) return;
+    suppressDialogResolveRef.current = true;
     setDuplicateDialogOpen(false);
     setPendingDuplicate(null);
-    await performSave(ctx.buildingId, ctx.save, { allowDuplicate: true });
+    duplicateDetectedRef.current = false;
+    const saved = await performSave(ctx.buildingId, ctx.save, { allowDuplicate: true });
+    if (pendingSaveResolveRef.current) {
+      pendingSaveResolveRef.current(saved);
+      pendingSaveResolveRef.current = null;
+    }
   };
 
   return (
@@ -371,11 +406,11 @@ function DocumentsContent() {
         </CardHeader>
         <CardContent>
           <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-            <li>Ανέβασε εικόνα ή PDF παραστατικού (JPG, PNG, WebP, PDF)</li>
-            <li>Η εφαρμογή αναλύει το παραστατικό και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
+            <li>Ανέβασε ένα ή περισσότερα αρχεία (εικόνα ή PDF) για να δημιουργηθεί ουρά αναγνώρισης</li>
+            <li>Η εφαρμογή αναλύει κάθε παραστατικό και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
             <li>Επίλεξε αν πρόκειται για δαπάνη ή απόδειξη πληρωμής</li>
-            <li>Ελέγξε και επεξεργάσου τα αποτελέσματα</li>
-            <li>Αποθήκευσε το παραστατικό με ένα κλικ</li>
+            <li>Δες τη μικρογραφία του ενεργού αρχείου και επιβεβαίωσε τα στοιχεία</li>
+            <li>Αποθήκευσε το παραστατικό με ένα κλικ και προχώρα στο επόμενο</li>
           </ul>
         </CardContent>
       </Card>
@@ -392,6 +427,14 @@ function DocumentsContent() {
         open={buildingDialogOpen}
         onOpenChange={(open) => {
           setBuildingDialogOpen(open);
+          if (!open && suppressDialogResolveRef.current) {
+            suppressDialogResolveRef.current = false;
+            return;
+          }
+          if (!open && pendingSaveResolveRef.current) {
+            pendingSaveResolveRef.current(false);
+            pendingSaveResolveRef.current = null;
+          }
         }}
       >
         <AlertDialogContent>
@@ -425,6 +468,10 @@ function DocumentsContent() {
               disabled={isSaving}
               onClick={() => {
                 setPendingSave(null);
+                if (pendingSaveResolveRef.current) {
+                  pendingSaveResolveRef.current(false);
+                  pendingSaveResolveRef.current = null;
+                }
               }}
             >
               Ακύρωση
@@ -451,6 +498,14 @@ function DocumentsContent() {
         open={duplicateDialogOpen}
         onOpenChange={(open) => {
           setDuplicateDialogOpen(open);
+          if (!open && suppressDialogResolveRef.current) {
+            suppressDialogResolveRef.current = false;
+            return;
+          }
+          if (!open && pendingSaveResolveRef.current) {
+            pendingSaveResolveRef.current(false);
+            pendingSaveResolveRef.current = null;
+          }
         }}
       >
         <AlertDialogContent>
@@ -471,6 +526,10 @@ function DocumentsContent() {
               onClick={() => {
                 setDuplicateInfo(null);
                 setPendingDuplicate(null);
+                if (pendingSaveResolveRef.current) {
+                  pendingSaveResolveRef.current(false);
+                  pendingSaveResolveRef.current = null;
+                }
               }}
             >
               Ακύρωση
