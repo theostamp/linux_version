@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Play, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Play, Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import AppProviders from "@/components/AppProviders";
 import GoogleMapsScript from "@/components/GoogleMapsScript";
@@ -23,6 +23,11 @@ const play = Play({
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
   subsets: ["latin"],
 });
 
@@ -65,7 +70,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${play.variable} ${inter.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${play.variable} ${inter.variable} ${interTight.variable} antialiased`}
       >
         <GoogleMapsScript apiKey={googleMapsApiKey} />
         <ReactQueryProvider>

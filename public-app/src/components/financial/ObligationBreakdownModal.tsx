@@ -372,11 +372,6 @@ export function ObligationBreakdownModal({
                                 }`}>
                                   📅 {apt.debt_message}
                                 </span>
-                                {apt.debt_creation_type === 'estimated' && (
-                                  <span className="text-orange-500 text-xs">
-                                    (εκτίμηση)
-                                  </span>
-                                )}
                               </div>
                             )}
                           </div>

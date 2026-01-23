@@ -35,7 +35,7 @@ const faqs = [
   {
     question: "Πόσο χρόνο μπορώ να γλιτώσω από τις επαναλαμβανόμενες εργασίες;",
     answer:
-      "Με βάση την εμπειρία μας, η εξοικονόμηση χρόνου μπορεί να φτάσει έως ~40% σε επαναλαμβανόμενες εργασίες όπως πέρασμα παραστατικών και έκδοση κοινοχρήστων. Είναι εκτίμηση και εξαρτάται από τον τρόπο που δουλεύει κάθε γραφείο.",
+      "Η εξοικονόμηση χρόνου μπορεί να φτάσει έως ~40% σε επαναλαμβανόμενες εργασίες όπως πέρασμα παραστατικών και έκδοση κοινοχρήστων, ανάλογα με τον τρόπο που δουλεύει κάθε γραφείο.",
   },
   {
     question: "Τι αλλάζει στην έκδοση των μηνιαίων κοινοχρήστων;",
@@ -569,7 +569,7 @@ export default function LandingPage() {
                     "Μείωση τηλεφωνημάτων και αποριών για χρεώσεις",
                     "Info Point kiosk που αναβαθμίζει την εικόνα του γραφείου",
                     "Κεντρικό dashboard για όλα τα κτίρια",
-                    "Έως ~40% λιγότερος χρόνος σε επαναλαμβανόμενες εργασίες (εκτίμηση)",
+                    "Έως ~40% λιγότερος χρόνος σε επαναλαμβανόμενες εργασίες",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime-300/20 text-xs text-lime-300">
@@ -1078,7 +1078,7 @@ export default function LandingPage() {
               <div className="rounded-2xl border border-accent-primary/30 bg-accent-primary/5 p-4 shadow-card-soft">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-accent-primary px-3 py-1 text-xs font-semibold text-white">
-                    Εκτίμηση εξοικονόμησης
+                    Εξοικονόμηση χρόνου
                   </span>
                   <p className="text-sm text-[var(--text-dark-secondary)] sm:text-base">
                     Έως ~40% λιγότερος χρόνος σε επαναλαμβανόμενες εργασίες (πέρασμα παραστατικών, έκδοση κοινοχρήστων).
@@ -1091,7 +1091,7 @@ export default function LandingPage() {
               <ul className="space-y-3 text-sm text-[var(--text-dark-secondary)] sm:text-base">
                 {[
                   "Αυτόματη καταχώρηση τιμολογίων/παραστατικών",
-                  "Έως ~40% λιγότερος χρόνος σε επαναλαμβανόμενες εργασίες (εκτίμηση)",
+                  "Έως ~40% λιγότερος χρόνος σε επαναλαμβανόμενες εργασίες",
                   "Συγκεντρωτική εικόνα κοινοχρήστων και ιστορικού ανά κτίριο",
                   "Info Point kiosk που αναβαθμίζει το brand του γραφείου",
                   "Μείωση τηλεφωνημάτων χάρη σε διαφανή ενημέρωση",

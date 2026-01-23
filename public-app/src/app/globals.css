@@ -25,7 +25,8 @@ html {
   --heading-color: var(--text-primary);
   --page-title-color: var(--color-accent-secondary);
   --page-title-color-dark: var(--text-on-dark-title);
-  --page-title-font: var(--font-play);
+  --font-title-condensed: var(--font-inter-tight), var(--font-play), var(--font-inter);
+  --page-title-font: var(--font-title-condensed);
 
   /* Secondary - Soft navy */
   --secondary: 217 25% 90%;            /* Soft gray-blue */

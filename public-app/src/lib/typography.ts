@@ -11,7 +11,7 @@
 
 // 🎯 Core Typography Scale
 export const typography = {
-  // Headings - Main content hierarchy (Play)
+  // Headings - Main content hierarchy (Condensed)
   pageTitle: 'page-title',
   pageTitleSm: 'page-title-sm',
   pageTitleLg: 'page-title-lg',
@@ -29,12 +29,12 @@ export const typography = {
   featureCardTitle: 'text-lg font-semibold text-emerald-300', // For dark backgrounds
 
   // Section headers
-  sectionHeader: 'text-2xl font-semibold tracking-tight text-foreground font-[var(--font-play)]',
+  sectionHeader: 'text-2xl font-semibold tracking-tight text-foreground font-[var(--font-title-condensed)]',
   sectionHeaderDark: 'text-2xl font-semibold tracking-tight text-emerald-300', // For dark backgrounds
-  subsectionHeader: 'text-xl font-semibold text-foreground font-[var(--font-play)]',
-  cardTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
-  modalTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
-  smallHeader: 'text-base font-medium text-foreground font-[var(--font-play)]',
+  subsectionHeader: 'text-xl font-semibold text-foreground font-[var(--font-title-condensed)]',
+  cardTitle: 'text-lg font-semibold text-foreground font-[var(--font-title-condensed)]',
+  modalTitle: 'text-lg font-semibold text-foreground font-[var(--font-title-condensed)]',
+  smallHeader: 'text-base font-medium text-foreground font-[var(--font-title-condensed)]',
 
   // Body Text
   bodyLarge: 'text-lg text-muted-foreground leading-relaxed',
