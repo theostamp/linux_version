@@ -1,4 +1,4 @@
-κοιτα """
+"""
 Celery tasks for notifications system.
 """
 import logging
