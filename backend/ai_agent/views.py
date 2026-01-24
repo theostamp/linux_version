@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from .services import AIService
 from maintenance.models import MaintenanceTicket  # Corrected from MaintenanceRequest
 from django.utils.translation import gettext as _
+from users.models import CustomUser
 
 class AIChatView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -13,11 +14,27 @@ class AIChatView(views.APIView):
         Handle chat messages to the AI Agent.
         Analyzes intent and performs actions if necessary.
         """
+        allowed_roles = {
+            CustomUser.SystemRole.OFFICE_MANAGER,
+            CustomUser.SystemRole.OFFICE_STAFF,
+            CustomUser.SystemRole.ADMIN,
+        }
+        if not (
+            request.user.is_superuser
+            or request.user.is_staff
+            or (request.user.role in allowed_roles)
+        ):
+            return Response(
+                {'error': _('Ο βοηθός είναι διαθέσιμος μόνο για το γραφείο διαχείρισης.')},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         user_message = request.data.get('message', '')
         if not user_message:
             return Response({'error': 'Message is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         ai_service = AIService()
+
 
         # 1. Check for Maintenance Intent
         maintenance_analysis = ai_service.analyze_maintenance_intent(user_message)
@@ -36,8 +53,9 @@ class AIChatView(views.APIView):
             })
 
         # 2. General Conversation
+        user_role = request.user.role or ('superuser' if request.user.is_superuser else 'staff' if request.user.is_staff else 'resident')
         context = {
-            'user_role': 'manager' if request.user.is_staff else 'resident',
+            'user_role': user_role,
             'building_name': request.tenant.name if hasattr(request, 'tenant') else 'Unknown'
         }
 

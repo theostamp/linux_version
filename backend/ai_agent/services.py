@@ -25,7 +25,7 @@ class AIService:
             return
 
         genai.configure(api_key=api_key)
-        model_name = os.getenv('GOOGLE_GEMINI_MODEL') or 'gemini-pro'
+        model_name = os.getenv('GOOGLE_GEMINI_MODEL') or 'gemini-2.5-flash'
         self.model = genai.GenerativeModel(model_name)
         logger.info(f"Gemini AI model initialized successfully: {model_name}")
 
@@ -38,8 +38,7 @@ class AIService:
             context (dict): Optional context about the user/building/situation
         """
         if not self.model:
-            # User-facing message (Greek), but keep it actionable for ops as well.
-            return "Η υπηρεσία AI δεν είναι διαθέσιμη αυτή τη στιγμή (λείπει ρύθμιση API key στο backend)."
+            return self._fallback_response(prompt, reason="missing_api_key")
 
         try:
             # Build system instruction based on context
@@ -49,8 +48,8 @@ class AIService:
             response = self.model.generate_content(full_prompt)
             return response.text
         except Exception as e:
-            logger.error(f"Error generating AI response: {str(e)}")
-            return "I apologize, but I'm having trouble processing your request right now."
+            logger.exception("Error generating AI response")
+            return self._fallback_response(prompt, reason="generation_failed")
 
     def analyze_maintenance_intent(self, text):
         """
@@ -97,3 +96,32 @@ class AIService:
 
         return base_instruction
 
+    def _fallback_response(self, prompt, reason: str | None = None):
+        """
+        Return a helpful Greek fallback response when AI is unavailable.
+        """
+        text = (prompt or "").lower()
+
+        if "τι μπορει" in text or "τι μπορεί" in text or "help" in text:
+            return (
+                "Μπορώ να βοηθήσω με εκκρεμότητες, υπενθυμίσεις οφειλών, "
+                "αιτήματα συντήρησης και βασικές ερωτήσεις για το κτίριο."
+            )
+
+        if "εκκρεμ" in text or "εργασ" in text or "todo" in text:
+            return "Μπορώ να οργανώσω τις εκκρεμότητες σου. Πάτησε «Εκκρεμότητες» για να δεις το Kanban."
+
+        if "οφειλ" in text or "πληρω" in text:
+            return (
+                "Μπορώ να σε βοηθήσω με υπενθυμίσεις οφειλών και παρακολούθηση πληρωμών. "
+                "Πες μου ποιο κτίριο αφορά."
+            )
+
+        if "βλαβ" in text or "σταζει" in text or "στάζει" in text:
+            return "Μπορώ να ανοίξω αίτημα συντήρησης. Θέλεις να το καταχωρήσω;"
+
+        base = "Προσωρινά δεν έχω πρόσβαση στην AI απάντηση."
+        if reason == "missing_api_key":
+            base = "Η υπηρεσία AI δεν είναι διαθέσιμη αυτή τη στιγμή."
+
+        return f"{base} Μπορώ όμως να βοηθήσω με εκκρεμότητες, οφειλές και αιτήματα συντήρησης."

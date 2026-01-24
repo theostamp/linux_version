@@ -12,6 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { api } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { toast } from 'sonner';
 
 interface Message {
@@ -41,6 +42,11 @@ export const AIAssistantChat = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const canUseAssistant = hasOfficeAdminAccess(user);
+
+  if (!canUseAssistant) {
+    return null;
+  }
 
   // Auto-scroll to bottom
   useEffect(() => {
