@@ -56,16 +56,22 @@ class AIChatView(views.APIView):
                 for todo in items[:limit]:
                     apt = f" (Διαμ. {todo.apartment.number})" if todo.apartment else ""
                     assignee = f" • Ανάθεση: {todo.assigned_to.first_name or todo.assigned_to.email}" if todo.assigned_to else ""
-                    lines.append(f"- {todo.title}{apt}{assignee}")
+                    lines.append(f"• {todo.title}{apt}{assignee}")
                 return "\n".join(lines)
 
             parts = []
             if due_today.exists():
-                parts.append(f"Εκκρεμότητες σήμερα: {due_today.count()}\n{_format_items(due_today)}")
+                parts.append(
+                    f"Εκκρεμότητες σήμερα ({due_today.count()}):\n{_format_items(due_today)}"
+                )
             if overdue.exists():
-                parts.append(f"Ληξιπρόθεσμες: {overdue.count()}\n{_format_items(overdue)}")
+                parts.append(
+                    f"Ληξιπρόθεσμες ({overdue.count()}):\n{_format_items(overdue)}"
+                )
             if no_due.exists():
-                parts.append(f"Χωρίς προθεσμία: {no_due.count()}\n{_format_items(no_due)}")
+                parts.append(
+                    f"Χωρίς προθεσμία ({no_due.count()}):\n{_format_items(no_due)}"
+                )
 
             return "\n\n".join(parts) if parts else "Δεν υπάρχουν εκκρεμότητες για σήμερα."
 

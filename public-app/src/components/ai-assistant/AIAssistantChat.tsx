@@ -251,7 +251,7 @@ export const AIAssistantChat = () => {
 
                     <div className={`flex flex-col gap-2 max-w-[80%]`}>
                         <div
-                        className={`p-3 rounded-2xl text-sm ${
+                        className={`p-3 rounded-2xl text-sm whitespace-pre-line ${
                             msg.role === 'user'
                             ? 'bg-violet-600 text-white rounded-tr-none'
                             : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-none shadow-sm'
