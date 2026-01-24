@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, X, Wrench, ListTodo } from 'lucide-react';
@@ -43,12 +43,18 @@ export const AIAssistantChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canUseAssistant = hasOfficeAdminAccess(user);
-  const quickPrompts = [
-    'Ποιες εκκρεμότητες έχουμε σήμερα;',
-    'Δείξε μου τις ληξιπρόθεσμες εργασίες.',
-    'Έχουμε εκκρεμότητες χωρίς προθεσμία;',
-    'Θέλω να δηλώσω μια βλάβη.',
-  ];
+  const buildingName = selectedBuilding?.name?.trim();
+  const quickPrompts = useMemo(() => {
+    const suffix = buildingName ? ` στο κτίριο ${buildingName}` : '';
+    return [
+      `Ποιες εκκρεμότητες έχουμε σήμερα${suffix};`,
+      `Δείξε μου τις ληξιπρόθεσμες εργασίες${suffix}.`,
+      `Έχουμε εκκρεμότητες χωρίς προθεσμία${suffix};`,
+      buildingName
+        ? `Θέλω να δηλώσω μια βλάβη στο κτίριο ${buildingName}.`
+        : 'Θέλω να δηλώσω μια βλάβη.',
+    ];
+  }, [buildingName]);
 
   if (!canUseAssistant) {
     return null;
@@ -186,7 +192,7 @@ export const AIAssistantChat = () => {
             initial={{ opacity: 0, y: 100, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[600px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-6 z-50 w-[440px] max-w-[calc(100vw-3rem)] h-[680px] max-h-[calc(100vh-8rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex items-center justify-between gap-3">
