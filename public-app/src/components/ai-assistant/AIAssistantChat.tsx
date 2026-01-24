@@ -43,6 +43,12 @@ export const AIAssistantChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canUseAssistant = hasOfficeAdminAccess(user);
+  const quickPrompts = [
+    'Ποιες εκκρεμότητες έχουμε σήμερα;',
+    'Δείξε μου τις ληξιπρόθεσμες εργασίες.',
+    'Έχουμε εκκρεμότητες χωρίς προθεσμία;',
+    'Θέλω να δηλώσω μια βλάβη.',
+  ];
 
   if (!canUseAssistant) {
     return null;
@@ -55,13 +61,14 @@ export const AIAssistantChat = () => {
     }
   }, [messages, isTyping]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (overrideMessage?: string) => {
+    const messageToSend = (overrideMessage ?? input).trim();
+    if (!messageToSend) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input
+      content: messageToSend
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -69,7 +76,10 @@ export const AIAssistantChat = () => {
     setIsTyping(true);
 
     try {
-      const response = await api.post('/ai/chat/', { message: userMsg.content });
+      const response = await api.post('/ai/chat/', {
+        message: userMsg.content,
+        building_id: selectedBuilding?.id ?? null,
+      });
 
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -90,6 +100,11 @@ export const AIAssistantChat = () => {
     } finally {
       setIsTyping(false);
     }
+  };
+
+  const handleQuickPrompt = (prompt: string) => {
+    if (isTyping) return;
+    handleSend(prompt);
   };
 
   const handleCreateTicket = async (proposal: any) => {
@@ -196,6 +211,19 @@ export const AIAssistantChat = () => {
             {/* Messages Area */}
             <ScrollArea className="flex-1 p-4 bg-slate-50 dark:bg-slate-950">
               <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {quickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => handleQuickPrompt(prompt)}
+                      className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-100 dark:hover:bg-slate-800"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+
                 {messages.map((msg) => (
                   <motion.div
                     key={msg.id}
