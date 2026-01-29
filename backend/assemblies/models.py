@@ -17,6 +17,7 @@ from django.db.models import Q
 from datetime import timedelta
 from decimal import Decimal
 import uuid
+import hashlib
 
 User = get_user_model()
 
@@ -906,6 +907,13 @@ class AssemblyVote(models.Model):
     
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     voted_at = models.DateTimeField(auto_now_add=True, verbose_name="Ώρα Ψήφου")
+    last_event = models.ForeignKey(
+        'AssemblyVoteEvent',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+'
+    )
 
     class Meta:
         app_label = 'assemblies'
@@ -916,6 +924,88 @@ class AssemblyVote(models.Model):
 
     def __str__(self):
         return f"{self.attendee} - {self.get_vote_display()} ({self.mills} χιλιοστά)"
+
+
+class AssemblyVoteEvent(models.Model):
+    """
+    Append-only ιστορικό υποβολών για last-vote-wins σε συνέλευση.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    assembly_vote = models.ForeignKey(
+        AssemblyVote,
+        on_delete=models.CASCADE,
+        related_name='events'
+    )
+    agenda_item = models.ForeignKey(
+        AgendaItem,
+        on_delete=models.CASCADE,
+        related_name='vote_events'
+    )
+    attendee = models.ForeignKey(
+        AssemblyAttendee,
+        on_delete=models.CASCADE,
+        related_name='vote_events'
+    )
+    vote = models.CharField(max_length=10, choices=AssemblyVote.VOTE_CHOICES)
+    mills = models.PositiveIntegerField()
+    vote_source = models.CharField(max_length=10, choices=AssemblyVote.VOTE_SOURCE_CHOICES, default='live')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    receipt_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    previous_event = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='next_events'
+    )
+    prev_hash = models.CharField(max_length=64, blank=True)
+    event_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    actor_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assembly_vote_actor_events'
+    )
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+
+    class Meta:
+        app_label = 'assemblies'
+        verbose_name = "Ιστορικό Ψήφου Συνέλευσης"
+        verbose_name_plural = "Ιστορικό Ψήφων Συνέλευσης"
+        ordering = ['-submitted_at']
+
+    def _compute_hash(self, prev_hash: str) -> str:
+        parts = [
+            str(self.id),
+            str(self.agenda_item_id or ''),
+            str(self.assembly_vote_id or ''),
+            str(self.attendee_id or ''),
+            str(self.actor_user_id or ''),
+            str(self.vote),
+            str(self.mills),
+            str(self.vote_source),
+            self.submitted_at.isoformat() if self.submitted_at else '',
+            str(self.receipt_id),
+            prev_hash or '',
+        ]
+        payload = '|'.join(parts)
+        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.event_hash:
+            prev_hash = self.previous_event.event_hash if self.previous_event else ''
+            digest = self._compute_hash(prev_hash)
+            updates = []
+            if self.prev_hash != prev_hash:
+                self.prev_hash = prev_hash
+                updates.append('prev_hash')
+            if self.event_hash != digest:
+                self.event_hash = digest
+                updates.append('event_hash')
+            if updates:
+                super().save(update_fields=updates)
 
 
 class AssemblyMinutesTemplate(models.Model):

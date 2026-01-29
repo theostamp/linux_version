@@ -5,14 +5,26 @@ import { apiGet, type LinkedVoteSubmission } from '@/lib/api';
 
 export type MyVote =
   | { linked: true; submissions: LinkedVoteSubmission[] }
-  | { linked: false; id: number; choice: string }
+  | {
+      linked: false;
+      id: number;
+      choice: string;
+      receipt_id?: string | null;
+      last_submitted_at?: string | null;
+      vote_source?: string | null;
+    }
   | null;
 
 interface LegacyMyVote {
   id: number;
   vote: number;
   choice: string;
-  created_at: string;
+  created_at?: string;
+  submitted_at?: string;
+  updated_at?: string;
+  last_submitted_at?: string;
+  receipt_id?: string;
+  vote_source?: string;
 }
 
 export function useMyVote(voteId?: number, buildingId?: number | null) {
@@ -43,7 +55,14 @@ export function useMyVote(voteId?: number, buildingId?: number | null) {
         const record = data as Partial<LegacyMyVote> & { choice?: unknown };
         if (!record.id) return null;
         if (record.choice === null || record.choice === undefined) return null;
-        return { linked: false, id: record.id, choice: String(record.choice) };
+        return {
+          linked: false,
+          id: record.id,
+          choice: String(record.choice),
+          receipt_id: record.receipt_id ?? null,
+          last_submitted_at: record.last_submitted_at || record.updated_at || record.submitted_at || record.created_at || null,
+          vote_source: record.vote_source ?? null,
+        };
       } catch (error: unknown) {
         const err = error as { response?: { status?: number } };
         if (err?.response?.status === 404) return null;

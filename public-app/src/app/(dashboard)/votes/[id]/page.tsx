@@ -11,11 +11,11 @@ import VoteResultsDisplay from '@/components/votes/VoteResultsDisplay';
 import ParticipationMeter from '@/components/votes/ParticipationMeter';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Clock, Calendar, Building2, User, AlertCircle, CheckCircle2, Zap } from 'lucide-react';
+import { ArrowLeft, Trash2, Clock, Calendar, Building2, User, AlertCircle, CheckCircle2, Zap, ShieldCheck, ClipboardCheck, Link as LinkIcon, QrCode, Copy } from 'lucide-react';
 import { deleteVote, type Vote } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,16 @@ export default function VoteDetailPage() {
   const { buildings, selectedBuilding, currentBuilding, isLoading: buildingsLoading } = useBuilding();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDownloadingEvidence, setIsDownloadingEvidence] = useState(false);
+  const [verifyInfo, setVerifyInfo] = useState<{
+    url: string;
+    type: 'vote' | 'assembly';
+    targetId: string;
+    results_hash: string;
+    audit_root_hash: string;
+  } | null>(null);
+  const [verifyQr, setVerifyQr] = useState<string | null>(null);
+  const [isVerifyLoading, setIsVerifyLoading] = useState(false);
 
   const buildingId =
     selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
@@ -58,6 +68,133 @@ export default function VoteDetailPage() {
       console.error('Error deleting vote:', err);
       toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');
       setIsDeleting(false);
+    }
+  };
+
+  const handleDownloadEvidence = async () => {
+    if (!vote) return;
+    setIsDownloadingEvidence(true);
+    try {
+      const params = new URLSearchParams();
+      if (typeof buildingId === 'number') {
+        params.set('building', String(buildingId));
+      }
+      const query = params.toString();
+      const contextUrl = query
+        ? `/api/votes/${vote.id}/context/?${query}`
+        : `/api/votes/${vote.id}/context/`;
+
+      const resp = await fetch(contextUrl);
+      if (resp.ok) {
+        const ctx = await resp.json();
+        if (ctx?.linked && ctx?.assembly?.id) {
+          const assemblyUrl = `/api/assemblies/${ctx.assembly.id}/evidence_package/`;
+          window.location.href = assemblyUrl;
+          return;
+        }
+      }
+    } catch {
+      // fall through to vote evidence
+    } finally {
+      setTimeout(() => setIsDownloadingEvidence(false), 800);
+    }
+
+    const params = new URLSearchParams();
+    if (typeof buildingId === 'number') {
+      params.set('building', String(buildingId));
+    }
+    const query = params.toString();
+    const url = query
+      ? `/api/votes/${vote.id}/evidence-package/?${query}`
+      : `/api/votes/${vote.id}/evidence-package/`;
+    window.location.href = url;
+  };
+
+  useEffect(() => {
+    if (!canDelete || !vote) return;
+
+    const buildParams = () => {
+      const params = new URLSearchParams();
+      if (typeof buildingId === 'number') {
+        params.set('building', String(buildingId));
+      }
+      return params.toString();
+    };
+
+    const resolveAndFetch = async () => {
+      setIsVerifyLoading(true);
+      try {
+        const query = buildParams();
+        const contextUrl = query
+          ? `/api/votes/${vote.id}/context/?${query}`
+          : `/api/votes/${vote.id}/context/`;
+        let targetType: 'vote' | 'assembly' = 'vote';
+        let targetId = String(vote.id);
+
+        const ctxResp = await fetch(contextUrl);
+        if (ctxResp.ok) {
+          const ctx = await ctxResp.json();
+          if (ctx?.linked && ctx?.assembly?.id) {
+            targetType = 'assembly';
+            targetId = String(ctx.assembly.id);
+          }
+        }
+
+        const verifyUrl = query
+          ? `/api/${targetType === 'assembly' ? 'assemblies' : 'votes'}/${targetId}/verify/?${query}`
+          : `/api/${targetType === 'assembly' ? 'assemblies' : 'votes'}/${targetId}/verify/`;
+        const verifyResp = await fetch(verifyUrl);
+        if (!verifyResp.ok) return;
+        const verify = await verifyResp.json();
+        const baseUrl = window.location.origin.replace(/\/$/, '');
+        const publicUrl = `${baseUrl}/verify-evidence?type=${targetType}&id=${targetId}&results_hash=${verify.results_hash}&audit_root_hash=${verify.audit_root_hash}`;
+        setVerifyInfo({
+          url: publicUrl,
+          type: targetType,
+          targetId,
+          results_hash: verify.results_hash,
+          audit_root_hash: verify.audit_root_hash,
+        });
+      } catch {
+        // ignore
+      } finally {
+        setIsVerifyLoading(false);
+      }
+    };
+
+    resolveAndFetch();
+  }, [canDelete, vote, buildingId]);
+
+  useEffect(() => {
+    if (!verifyInfo?.url) {
+      setVerifyQr(null);
+      return;
+    }
+    let cancelled = false;
+    const buildQr = async () => {
+      try {
+        const QRCode = (await import('qrcode')).default;
+        const dataUrl = await QRCode.toDataURL(verifyInfo.url, { margin: 1, width: 180 });
+        if (!cancelled) {
+          setVerifyQr(dataUrl);
+        }
+      } catch {
+        // ignore QR errors
+      }
+    };
+    buildQr();
+    return () => {
+      cancelled = true;
+    };
+  }, [verifyInfo?.url]);
+
+  const handleCopyVerify = async () => {
+    if (!verifyInfo?.url) return;
+    try {
+      await navigator.clipboard.writeText(verifyInfo.url);
+      toast.success('Αντιγράφηκε το link επαλήθευσης');
+    } catch {
+      toast.error('Αποτυχία αντιγραφής');
     }
   };
 
@@ -189,6 +326,7 @@ export default function VoteDetailPage() {
   const statusInfo = getStatusInfo();
   const linkedSubmissions = myVote?.linked ? myVote.submissions : undefined;
   const linkedVotedCount = linkedSubmissions ? linkedSubmissions.filter((s) => s.choice).length : 0;
+  const canChangeVote = statusInfo.canVote;
 
   const statusColors = {
     green: {
@@ -305,14 +443,24 @@ export default function VoteDetailPage() {
 
           {/* Delete button */}
           {canDelete && (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 hover:bg-red-500/50 transition-colors disabled:opacity-50"
-              title="Διαγραφή ψηφοφορίας"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <button
+                onClick={handleDownloadEvidence}
+                disabled={isDownloadingEvidence}
+                className="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 transition-colors text-xs font-medium"
+                title="Λήψη αποδεικτικών"
+              >
+                {isDownloadingEvidence ? 'Λήψη...' : 'Αποδεικτικά (ZIP)'}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="p-2 rounded-lg bg-white/10 hover:bg-red-500/50 transition-colors disabled:opacity-50"
+                title="Διαγραφή ψηφοφορίας"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
           )}
         </div>
       </motion.div>
@@ -333,6 +481,97 @@ export default function VoteDetailPage() {
           {statusInfo.message}
         </span>
       </motion.div>
+
+      {/* Process guide */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="grid gap-3 md:grid-cols-3"
+      >
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-4">
+          <div className="flex items-center gap-2 text-indigo-900 font-semibold mb-1">
+            <ClipboardCheck className="w-4 h-4" />
+            Βήμα 1: Επιλέγετε
+          </div>
+          <p className="text-sm text-indigo-800">
+            Διαλέξτε την απάντησή σας (ανά διαμέρισμα όπου ισχύει).
+          </p>
+        </div>
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
+          <div className="flex items-center gap-2 text-emerald-900 font-semibold mb-1">
+            <ShieldCheck className="w-4 h-4" />
+            Βήμα 2: Υποβάλλετε
+          </div>
+          <p className="text-sm text-emerald-800">
+            Η υποβολή σας καταγράφεται με αποδεικτικό και χρονοσφραγίδα.
+          </p>
+        </div>
+        <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-4">
+          <div className="flex items-center gap-2 text-amber-900 font-semibold mb-1">
+            <Clock className="w-4 h-4" />
+            Βήμα 3: Μπορείτε να αλλάξετε
+          </div>
+          <p className="text-sm text-amber-800">
+            Η τελευταία ψήφος ισχύει έως τη λήξη της ψηφοφορίας.
+          </p>
+        </div>
+      </motion.div>
+
+      {canDelete && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28 }}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-slate-900 font-semibold">
+                <QrCode className="h-5 w-5" />
+                Επαλήθευση πρακτικού
+              </div>
+              <p className="text-sm text-slate-600">
+                Χρησιμοποιήστε το link ή το QR για να επαληθεύσετε τα hashes.
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  {verifyInfo?.url || 'Δημιουργία συνδέσμου...'}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyVerify}
+                  disabled={!verifyInfo?.url}
+                  className="gap-1"
+                >
+                  <Copy className="h-4 w-4" />
+                  Αντιγραφή
+                </Button>
+              </div>
+              {verifyInfo?.url && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                  <LinkIcon className="h-3 w-3" />
+                  {verifyInfo.url}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-center">
+              {verifyQr ? (
+                <img
+                  src={verifyQr}
+                  alt="QR verification"
+                  className="h-36 w-36 rounded-xl border border-slate-200 bg-white p-2"
+                />
+              ) : (
+                <div className="flex h-36 w-36 items-center justify-center rounded-xl border border-dashed border-slate-300 text-xs text-slate-500">
+                  {isVerifyLoading ? 'Δημιουργία QR...' : 'QR μη διαθέσιμο'}
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -372,9 +611,27 @@ export default function VoteDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-emerald-700">
-                      Ψηφίσατε: <span className="font-bold text-lg">{myVote?.choice}</span>
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-emerald-700">
+                        Ψηφίσατε: <span className="font-bold text-lg">{myVote?.choice}</span>
+                      </p>
+                      {'receipt_id' in (myVote || {}) && (myVote?.receipt_id || myVote?.last_submitted_at) && (
+                        <div className="text-xs text-emerald-800/80">
+                          {myVote?.receipt_id && (
+                            <span className="mr-2">Receipt: <span className="font-semibold">{myVote.receipt_id}</span></span>
+                          )}
+                          {myVote?.last_submitted_at && (
+                            <span>Χρόνος: <span className="font-semibold">{formatDateTime(myVote.last_submitted_at)}</span></span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {canChangeVote && (
+                    <div className="mt-3 rounded-lg border border-emerald-200 bg-white/70 p-3 text-sm text-emerald-700">
+                      Μπορείτε να αλλάξετε την ψήφο σας μέχρι τη λήξη.
+                    </div>
                   )}
                 </div>
               </div>
@@ -394,6 +651,7 @@ export default function VoteDetailPage() {
                   isActive={statusInfo.canVote}
                   buildingId={buildingId}
                   submissions={linkedSubmissions}
+                  defaultChoice={!myVote?.linked ? myVote?.choice : null}
                   onSubmitted={async () => {
                     await refetchMyVote();
                     await refetchResults();
@@ -408,6 +666,27 @@ export default function VoteDetailPage() {
                 </div>
               </div>
             )
+          )}
+
+          {hasVoted && statusInfo.canVote && voteWithExtras.choices && (
+            <div className="mt-4 bg-white border border-emerald-200 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-emerald-800 mb-2">Αλλαγή ψήφου</h3>
+              <p className="text-sm text-emerald-700 mb-4">
+                Αν αλλάξετε γνώμη, υποβάλετε νέα επιλογή. Η τελευταία ψήφος είναι αυτή που θα μετρήσει.
+              </p>
+              <VoteSubmitForm
+                voteId={vote.id}
+                choices={voteWithExtras.choices}
+                isActive={statusInfo.canVote}
+                buildingId={buildingId}
+                submissions={linkedSubmissions}
+                defaultChoice={!myVote?.linked ? myVote?.choice : null}
+                onSubmitted={async () => {
+                  await refetchMyVote();
+                  await refetchResults();
+                }}
+              />
+            </div>
           )}
         </motion.div>
 

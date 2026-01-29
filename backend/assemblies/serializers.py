@@ -73,12 +73,13 @@ class AssemblyVoteSerializer(serializers.ModelSerializer):
     attendee_name = serializers.CharField(source='attendee.display_name', read_only=True)
     apartment_number = serializers.CharField(source='attendee.apartment.number', read_only=True)
     vote_display = serializers.CharField(source='get_vote_display', read_only=True)
+    receipt_id = serializers.UUIDField(source='last_event.receipt_id', read_only=True, allow_null=True)
     
     class Meta:
         model = AssemblyVote
         fields = [
             'id', 'agenda_item', 'attendee', 'attendee_name', 'apartment_number',
-            'vote', 'vote_display', 'mills', 'vote_source', 'voted_at', 'notes'
+            'vote', 'vote_display', 'mills', 'vote_source', 'voted_at', 'notes', 'receipt_id'
         ]
         read_only_fields = ['id', 'voted_at']
 

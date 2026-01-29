@@ -1444,6 +1444,7 @@ export type LinkedVoteSubmission = {
   choice: string | null;
   vote_source: string | null;
   submitted_at: string | null;
+  receipt_id?: string | null;
 };
 
 export type MyVoteResponse =

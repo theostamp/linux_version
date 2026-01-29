@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 
 from .models import (
     Assembly, AgendaItem, AgendaItemAttachment,
-    AssemblyAttendee, AssemblyVote, AssemblyMinutesTemplate,
+    AssemblyAttendee, AssemblyVote, AssemblyVoteEvent, AssemblyMinutesTemplate,
     CommunityPoll, PollOption, PollVote
 )
 from .serializers import (
@@ -35,6 +35,8 @@ from channels.layers import get_channel_layer
 from django.db import connection
 from django.template.loader import render_to_string
 from django.http import HttpResponse
+from django.conf import settings
+from core.evidence import stable_json_bytes, sha256_hex_bytes, build_audit_root_hash, build_zip_bytes
 
 import logging
 logger = logging.getLogger(__name__)
@@ -174,7 +176,7 @@ class AssemblyViewSet(viewsets.ModelViewSet):
         - Διαχειριστικές ενέργειες: Managers/Internal Managers
         - Προβολή: Όλοι όσοι έχουν πρόσβαση στο κτίριο
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'start', 'end', 'adjourn', 'send_invitation', 'generate_minutes', 'approve_minutes']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'start', 'end', 'adjourn', 'send_invitation', 'generate_minutes', 'approve_minutes', 'evidence_package']:
             return [IsAuthenticated(), CanCreateAssembly()]
         return [IsAuthenticated(), CanAccessBuilding()]
     
@@ -458,6 +460,212 @@ class AssemblyViewSet(viewsets.ModelViewSet):
                 {'error': f'Σφάλμα κατά τη δημιουργία PDF: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['get'])
+    def evidence_package(self, request, pk=None):
+        """Evidence package (zip) για συνέλευση"""
+        assembly = self.get_object()
+        generated_at = timezone.now().isoformat()
+
+        voting_items = assembly.agenda_items.filter(item_type='voting').order_by('order')
+        items_payload = []
+        for item in voting_items:
+            items_payload.append({
+                "id": str(item.id),
+                "order": item.order,
+                "title": item.title,
+                "description": item.description,
+                "allows_pre_voting": item.allows_pre_voting,
+                "results": item.get_voting_results(),
+            })
+
+        results_payload = {
+            "generated_at": generated_at,
+            "assembly": {
+                "id": str(assembly.id),
+                "title": assembly.title,
+                "building_id": assembly.building_id,
+                "building_name": assembly.building.name if assembly.building else None,
+                "scheduled_date": str(assembly.scheduled_date),
+                "scheduled_time": str(assembly.scheduled_time),
+                "status": assembly.status,
+                "is_pre_voting_active": assembly.is_pre_voting_active,
+            },
+            "quorum": {
+                "total_building_mills": assembly.total_building_mills,
+                "required_quorum_percentage": float(assembly.required_quorum_percentage),
+                "required_quorum_mills": assembly.required_quorum_mills,
+                "achieved_quorum_mills": assembly.achieved_quorum_mills,
+                "quorum_achieved": assembly.quorum_achieved,
+            },
+            "agenda_items": items_payload,
+        }
+
+        results_bytes = stable_json_bytes(results_payload)
+        results_hash = sha256_hex_bytes(results_bytes)
+
+        events_qs = (
+            AssemblyVoteEvent.objects.filter(agenda_item__assembly=assembly)
+            .select_related('previous_event')
+            .order_by('submitted_at', 'id')
+        )
+        events = []
+        computed_hashes = {}
+        for ev in events_qs:
+            prev_hash = ev.prev_hash or ''
+            if not prev_hash and ev.previous_event_id:
+                prev_hash = (
+                    computed_hashes.get(ev.previous_event_id)
+                    or (ev.previous_event.event_hash if ev.previous_event else '')
+                    or ''
+                )
+            event_hash = ev.event_hash or ev._compute_hash(prev_hash)
+            computed_hashes[ev.id] = event_hash
+            events.append({
+                "id": str(ev.id),
+                "agenda_item_id": str(ev.agenda_item_id),
+                "assembly_vote_id": str(ev.assembly_vote_id),
+                "attendee_id": str(ev.attendee_id),
+                "actor_user_id": ev.actor_user_id,
+                "vote": ev.vote,
+                "mills": ev.mills,
+                "vote_source": ev.vote_source,
+                "submitted_at": ev.submitted_at.isoformat() if ev.submitted_at else None,
+                "receipt_id": str(ev.receipt_id),
+                "previous_event_id": str(ev.previous_event_id) if ev.previous_event_id else None,
+                "prev_hash": ev.prev_hash or prev_hash,
+                "event_hash": ev.event_hash or event_hash,
+            })
+
+        audit_root_hash = build_audit_root_hash([e["event_hash"] for e in events])
+        audit_lines = [stable_json_bytes(e).decode("utf-8") for e in events]
+        audit_bytes = ("\n".join(audit_lines)).encode("utf-8")
+
+        minutes_text = (assembly.minutes_text or '').strip()
+        if not minutes_text:
+            minutes_text = AssemblyMinutesService(assembly).generate()
+
+        base_url = (getattr(settings, 'FRONTEND_URL', '') or '').rstrip('/')
+        verify_url = ''
+        if base_url:
+            verify_url = (
+                f"{base_url}/verify-evidence?type=assembly&id={assembly.id}"
+                f"&results_hash={results_hash}&audit_root_hash={audit_root_hash}"
+            )
+            minutes_text = (
+                minutes_text
+                + "\n\n## Verify\n"
+                + f"Verify URL: {verify_url}\n"
+            )
+
+        files = [
+            ("results.json", results_bytes),
+            ("audit.jsonl", audit_bytes),
+            ("results_hash.txt", results_hash.encode("utf-8")),
+            ("audit_root_hash.txt", audit_root_hash.encode("utf-8")),
+            ("praktiko.md", minutes_text.encode("utf-8")),
+            ("verify_url.txt", verify_url.encode("utf-8")) if verify_url else None,
+            ("manifest.json", stable_json_bytes({
+                "generated_at": generated_at,
+                "results_hash": results_hash,
+                "audit_root_hash": audit_root_hash,
+                "events_count": len(events),
+                "verify_url": verify_url or None,
+            })),
+        ]
+        files = [f for f in files if f is not None]
+
+        try:
+            pdf_bytes = AssemblyMinutesService.render_markdown_to_pdf(minutes_text)
+            files.append(("praktiko.pdf", pdf_bytes))
+        except Exception:
+            pass
+
+        zip_bytes = build_zip_bytes(files)
+        response = HttpResponse(zip_bytes, content_type="application/zip")
+        filename = f"assembly_evidence_{assembly.id}.zip"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=True, methods=['get'])
+    def verify(self, request, pk=None):
+        """Υπολογίζει hashes για επαλήθευση πρακτικού συνέλευσης"""
+        assembly = self.get_object()
+        generated_at = timezone.now().isoformat()
+
+        voting_items = assembly.agenda_items.filter(item_type='voting').order_by('order')
+        items_payload = []
+        for item in voting_items:
+            items_payload.append({
+                "id": str(item.id),
+                "order": item.order,
+                "title": item.title,
+                "description": item.description,
+                "allows_pre_voting": item.allows_pre_voting,
+                "results": item.get_voting_results(),
+            })
+
+        results_payload = {
+            "generated_at": generated_at,
+            "assembly": {
+                "id": str(assembly.id),
+                "title": assembly.title,
+                "building_id": assembly.building_id,
+                "building_name": assembly.building.name if assembly.building else None,
+                "scheduled_date": str(assembly.scheduled_date),
+                "scheduled_time": str(assembly.scheduled_time),
+                "status": assembly.status,
+                "is_pre_voting_active": assembly.is_pre_voting_active,
+            },
+            "quorum": {
+                "total_building_mills": assembly.total_building_mills,
+                "required_quorum_percentage": float(assembly.required_quorum_percentage),
+                "required_quorum_mills": assembly.required_quorum_mills,
+                "achieved_quorum_mills": assembly.achieved_quorum_mills,
+                "quorum_achieved": assembly.quorum_achieved,
+            },
+            "agenda_items": items_payload,
+        }
+
+        results_bytes = stable_json_bytes(results_payload)
+        results_hash = sha256_hex_bytes(results_bytes)
+
+        events_qs = (
+            AssemblyVoteEvent.objects.filter(agenda_item__assembly=assembly)
+            .select_related('previous_event')
+            .order_by('submitted_at', 'id')
+        )
+        computed_hashes = {}
+        event_hashes = []
+        for ev in events_qs:
+            prev_hash = ev.prev_hash or ''
+            if not prev_hash and ev.previous_event_id:
+                prev_hash = (
+                    computed_hashes.get(ev.previous_event_id)
+                    or (ev.previous_event.event_hash if ev.previous_event else '')
+                    or ''
+                )
+            event_hash = ev.event_hash or ev._compute_hash(prev_hash)
+            computed_hashes[ev.id] = event_hash
+            event_hashes.append(event_hash)
+
+        audit_root_hash = build_audit_root_hash(event_hashes)
+        base_url = (getattr(settings, 'FRONTEND_URL', '') or '').rstrip('/')
+        verify_url = ''
+        if base_url:
+            verify_url = (
+                f"{base_url}/verify-evidence?type=assembly&id={assembly.id}"
+                f"&results_hash={results_hash}&audit_root_hash={audit_root_hash}"
+            )
+
+        return Response({
+            "generated_at": generated_at,
+            "assembly_id": str(assembly.id),
+            "results_hash": results_hash,
+            "audit_root_hash": audit_root_hash,
+            "events_count": len(event_hashes),
+            "verify_url": verify_url or None,
+        })
 
     @action(detail=True, methods=['get'])
     def live_status(self, request, pk=None):
@@ -910,14 +1118,65 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
         ).first()
         
         if existing_vote:
-            # Αν η συνέλευση είναι live ΚΑΙ ο χρήστης είναι διαχειριστής, επιτρέπεται η αλλαγή
+            # Επιτρέπεται αλλαγή:
+            # - σε pre-voting (last-vote-wins)
+            # - σε live από διαχειριστή ή από τον ίδιο χρήστη
+            if assembly.is_pre_voting_active:
+                old_vote = existing_vote.vote
+                existing_vote.vote = serializer.validated_data['vote']
+                existing_vote.vote_source = 'pre_vote'
+                existing_vote.voted_by = user if is_manager and attendee.user != user else None
+                existing_vote.notes = serializer.validated_data.get('notes', '') or f"Αλλαγή από {old_vote} στο pre-voting"
+                existing_vote.voted_at = timezone.now()
+                existing_vote.save(update_fields=['vote', 'vote_source', 'voted_by', 'notes', 'voted_at'])
+
+                prev_event = existing_vote.last_event
+                event = AssemblyVoteEvent.objects.create(
+                    assembly_vote=existing_vote,
+                    agenda_item=agenda_item,
+                    attendee=attendee,
+                    vote=existing_vote.vote,
+                    mills=existing_vote.mills,
+                    vote_source=existing_vote.vote_source,
+                    previous_event=prev_event,
+                    actor_user=user,
+                    notes=existing_vote.notes or '',
+                )
+                existing_vote.last_event = event
+                existing_vote.save(update_fields=['last_event'])
+
+                return Response({
+                    'message': 'Η ψήφος ενημερώθηκε (pre-voting)',
+                    'vote': AssemblyVoteSerializer(existing_vote).data,
+                    'updated': True,
+                    'previous_vote': old_vote,
+                    'receipt_id': str(event.receipt_id),
+                })
+
+            # Live αλλαγή μόνο από διαχειριστή
             if assembly.status == 'in_progress' and is_manager:
                 old_vote = existing_vote.vote
                 existing_vote.vote = serializer.validated_data['vote']
                 existing_vote.vote_source = 'live'  # Override σε live αφού άλλαξε κατά τη συνέλευση
                 existing_vote.voted_by = user  # Ποιος έκανε την αλλαγή
                 existing_vote.notes = serializer.validated_data.get('notes', '') or f"Αλλαγή από {old_vote} κατά τη συνέλευση"
-                existing_vote.save()
+                existing_vote.voted_at = timezone.now()
+                existing_vote.save(update_fields=['vote', 'vote_source', 'voted_by', 'notes', 'voted_at'])
+
+                prev_event = existing_vote.last_event
+                event = AssemblyVoteEvent.objects.create(
+                    assembly_vote=existing_vote,
+                    agenda_item=agenda_item,
+                    attendee=attendee,
+                    vote=existing_vote.vote,
+                    mills=existing_vote.mills,
+                    vote_source=existing_vote.vote_source,
+                    previous_event=prev_event,
+                    actor_user=user,
+                    notes=existing_vote.notes or '',
+                )
+                existing_vote.last_event = event
+                existing_vote.save(update_fields=['last_event'])
                 
                 logger.info(f"Manager {user.id} changed vote for attendee {attendee.id} from {old_vote} to {existing_vote.vote}")
                 
@@ -932,7 +1191,48 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
                     'message': 'Η ψήφος ενημερώθηκε',
                     'vote': AssemblyVoteSerializer(existing_vote).data,
                     'updated': True,
-                    'previous_vote': old_vote
+                    'previous_vote': old_vote,
+                    'receipt_id': str(event.receipt_id),
+                })
+
+            # Live αλλαγή από τον ίδιο χρήστη (self-service)
+            if assembly.status == 'in_progress' and attendee.user_id == user.id:
+                old_vote = existing_vote.vote
+                existing_vote.vote = serializer.validated_data['vote']
+                existing_vote.vote_source = 'live'
+                existing_vote.voted_by = None
+                existing_vote.notes = serializer.validated_data.get('notes', '') or f"Αλλαγή από {old_vote} κατά τη συνέλευση"
+                existing_vote.voted_at = timezone.now()
+                existing_vote.save(update_fields=['vote', 'vote_source', 'voted_by', 'notes', 'voted_at'])
+
+                prev_event = existing_vote.last_event
+                event = AssemblyVoteEvent.objects.create(
+                    assembly_vote=existing_vote,
+                    agenda_item=agenda_item,
+                    attendee=attendee,
+                    vote=existing_vote.vote,
+                    mills=existing_vote.mills,
+                    vote_source=existing_vote.vote_source,
+                    previous_event=prev_event,
+                    actor_user=user,
+                    notes=existing_vote.notes or '',
+                )
+                existing_vote.last_event = event
+                existing_vote.save(update_fields=['last_event'])
+
+                # Broadcast updated results
+                results = agenda_item.get_voting_results()
+                broadcast_assembly_event(assembly.id, 'vote_update', {
+                    'agenda_item_id': str(agenda_item.id),
+                    'results': results
+                })
+
+                return Response({
+                    'message': 'Η ψήφος ενημερώθηκε',
+                    'vote': AssemblyVoteSerializer(existing_vote).data,
+                    'updated': True,
+                    'previous_vote': old_vote,
+                    'receipt_id': str(event.receipt_id),
                 })
             else:
                 return Response(
@@ -950,6 +1250,19 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
             voted_by=user if is_manager and attendee.user != user else None,
             notes=serializer.validated_data.get('notes', '')
         )
+
+        event = AssemblyVoteEvent.objects.create(
+            assembly_vote=vote,
+            agenda_item=agenda_item,
+            attendee=attendee,
+            vote=vote.vote,
+            mills=vote.mills,
+            vote_source=vote.vote_source,
+            actor_user=user,
+            notes=vote.notes or '',
+        )
+        vote.last_event = event
+        vote.save(update_fields=['last_event'])
         
         # Update pre-voting status
         if vote_source == 'pre_vote':
@@ -968,7 +1281,8 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
         return Response({
             'message': 'Η ψήφος καταγράφηκε',
             'vote': AssemblyVoteSerializer(vote).data,
-            'created': True
+            'created': True,
+            'receipt_id': str(event.receipt_id),
         })
 
 
@@ -1273,13 +1587,36 @@ class EmailVoteView(APIView):
                 except AgendaItem.DoesNotExist:
                     continue
                 
-                # Check if already voted
-                if AssemblyVote.objects.filter(
+                existing_vote = AssemblyVote.objects.filter(
                     attendee=attendee,
                     agenda_item=agenda_item
-                ).exists():
+                ).first()
+
+                if existing_vote:
+                    old_vote = existing_vote.vote
+                    existing_vote.vote = vote_choice
+                    existing_vote.vote_source = 'pre_vote'
+                    existing_vote.notes = f'Αλλαγή από {old_vote} μέσω email link'
+                    existing_vote.voted_at = timezone.now()
+                    existing_vote.save(update_fields=['vote', 'vote_source', 'notes', 'voted_at'])
+
+                    prev_event = existing_vote.last_event
+                    event = AssemblyVoteEvent.objects.create(
+                        assembly_vote=existing_vote,
+                        agenda_item=agenda_item,
+                        attendee=attendee,
+                        vote=existing_vote.vote,
+                        mills=existing_vote.mills,
+                        vote_source=existing_vote.vote_source,
+                        previous_event=prev_event,
+                        actor_user=attendee.user if attendee.user_id else None,
+                        notes=existing_vote.notes or '',
+                    )
+                    existing_vote.last_event = event
+                    existing_vote.save(update_fields=['last_event'])
+                    created_votes.append(existing_vote)
                     continue
-                
+
                 # Create vote
                 vote = AssemblyVote.objects.create(
                     agenda_item=agenda_item,
@@ -1289,6 +1626,18 @@ class EmailVoteView(APIView):
                     vote_source='pre_vote',
                     notes=f'Ψήφος μέσω email link'
                 )
+                event = AssemblyVoteEvent.objects.create(
+                    assembly_vote=vote,
+                    agenda_item=agenda_item,
+                    attendee=attendee,
+                    vote=vote.vote,
+                    mills=vote.mills,
+                    vote_source=vote.vote_source,
+                    actor_user=attendee.user if attendee.user_id else None,
+                    notes=vote.notes or '',
+                )
+                vote.last_event = event
+                vote.save(update_fields=['last_event'])
                 created_votes.append(vote)
             
             # Mark attendee as pre-voted

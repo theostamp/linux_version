@@ -3,13 +3,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response  
 from django.utils import timezone
 from django.db.models import Q, Sum
-from django.http import Http404
+from django.http import Http404, HttpResponse
+from django.conf import settings
 import logging
 
-from .models import Vote, VoteSubmission
+from .models import Vote, VoteSubmission, VoteSubmissionEvent
 from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer
 from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin, IsOfficeManagerOrInternalManager
 from core.utils import filter_queryset_by_user_and_building
+from core.evidence import stable_json_bytes, sha256_hex_bytes, build_audit_root_hash, build_zip_bytes
+from assemblies.services import AssemblyMinutesService
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ class VoteViewSet(viewsets.ModelViewSet):
     serializer_class = VoteSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'my_submission', 'results', 'vote', 'submit']:
+        if self.action in ['list', 'retrieve', 'my_submission', 'results', 'vote', 'submit', 'verify']:
             return [permissions.IsAuthenticated()]
         # create, update, destroy: επιτρέπεται σε office managers και internal managers
         return [permissions.IsAuthenticated(), IsOfficeManagerOrInternalManager()]
@@ -155,7 +158,7 @@ class VoteViewSet(viewsets.ModelViewSet):
         agenda_item = self._get_linked_agenda_item(vote)
         if agenda_item:
             # Linked vote: treat AssemblyVote as source of truth (per apartment).
-            from assemblies.models import AssemblyAttendee, AssemblyVote
+            from assemblies.models import AssemblyAttendee, AssemblyVote, AssemblyVoteEvent
             from apartments.models import Apartment
 
             apartment_id = request.data.get('apartment_id')
@@ -235,14 +238,64 @@ class VoteViewSet(viewsets.ModelViewSet):
                 attendee.user = request.user
                 attendee.save(update_fields=['user'])
 
-            # Prevent duplicate vote per apartment (manager changes handled via assembly endpoints)
-            if AssemblyVote.objects.filter(agenda_item=agenda_item, attendee=attendee).exists():
-                return Response(
-                    {"error": "Έχει ήδη καταχωρηθεί ψήφος για αυτό το διαμέρισμα."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
             mills_value = getattr(apartment, 'participation_mills', 0) or attendee.mills or 0
+            existing_vote = AssemblyVote.objects.filter(
+                agenda_item=agenda_item, attendee=attendee
+            ).first()
+
+            if existing_vote:
+                allow_update = False
+                if vote_source == 'pre_vote':
+                    allow_update = True
+                elif assembly.status == 'in_progress' and (is_manager or attendee.user_id == request.user.id):
+                    allow_update = True
+
+                if not allow_update:
+                    return Response(
+                        {"error": "Έχει ήδη καταχωρηθεί ψήφος για αυτό το διαμέρισμα."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                old_vote = existing_vote.vote
+                existing_vote.vote = mapped_vote
+                existing_vote.vote_source = vote_source
+                existing_vote.mills = mills_value
+                existing_vote.voted_by = request.user if is_manager and attendee.user_id != request.user.id else None
+                existing_vote.notes = f"Αλλαγή από {old_vote} μέσω Ψηφοφοριών"
+                existing_vote.voted_at = timezone.now()
+                existing_vote.save(update_fields=['vote', 'vote_source', 'mills', 'voted_by', 'notes', 'voted_at'])
+
+                prev_event = existing_vote.last_event
+                event = AssemblyVoteEvent.objects.create(
+                    assembly_vote=existing_vote,
+                    agenda_item=agenda_item,
+                    attendee=attendee,
+                    vote=existing_vote.vote,
+                    mills=existing_vote.mills,
+                    vote_source=existing_vote.vote_source,
+                    previous_event=prev_event,
+                    actor_user=request.user,
+                    notes=existing_vote.notes or '',
+                )
+                existing_vote.last_event = event
+                existing_vote.save(update_fields=['last_event'])
+
+                return Response(
+                    {
+                        "ok": True,
+                        "vote": vote.id,
+                        "choice": choice,
+                        "apartment_id": apartment.id,
+                        "apartment_number": apartment.number,
+                        "mills": mills_value,
+                        "vote_source": vote_source,
+                        "submitted_at": existing_vote.voted_at,
+                        "updated": True,
+                        "previous_vote": old_vote,
+                        "receipt_id": str(event.receipt_id),
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
             av = AssemblyVote.objects.create(
                 agenda_item=agenda_item,
@@ -253,6 +306,19 @@ class VoteViewSet(viewsets.ModelViewSet):
                 voted_by=request.user if is_manager and attendee.user_id != request.user.id else None,
                 notes='Ψήφος μέσω Ψηφοφοριών',
             )
+
+            event = AssemblyVoteEvent.objects.create(
+                assembly_vote=av,
+                agenda_item=agenda_item,
+                attendee=attendee,
+                vote=av.vote,
+                mills=av.mills,
+                vote_source=av.vote_source,
+                actor_user=request.user,
+                notes=av.notes or '',
+            )
+            av.last_event = event
+            av.save(update_fields=['last_event'])
 
             if vote_source == 'pre_vote':
                 attendee.has_pre_voted = True
@@ -270,18 +336,12 @@ class VoteViewSet(viewsets.ModelViewSet):
                     "mills": mills_value,
                     "vote_source": vote_source,
                     "submitted_at": av.voted_at,
+                    "receipt_id": str(event.receipt_id),
                 },
                 status=status.HTTP_201_CREATED,
             )
 
-        # Standalone vote (legacy): keep existing VoteSubmission behavior
-        # Check for existing submission (additional safeguard)
-        if VoteSubmission.objects.filter(vote=vote, user=request.user).exists():
-            return Response(
-                {"error": "Έχετε ήδη ψηφίσει σε αυτή τη ψηφοφορία."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+        # Standalone vote: last-vote-wins (update allowed within window)
         serializer = VoteSubmissionSerializer(
             data=request.data,
             context={'request': request, 'vote': vote}
@@ -290,8 +350,49 @@ class VoteViewSet(viewsets.ModelViewSet):
 
         logger.info(f"User {request.user.id} voting with {mills} total mills")
 
-        serializer.save(vote=vote, user=request.user, mills=mills)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        submission = VoteSubmission.objects.filter(vote=vote, user=request.user).first()
+        created = False
+        now = timezone.now()
+        requested_source = serializer.validated_data.get('vote_source')
+        if submission:
+            submission.choice = serializer.validated_data['choice']
+            submission.mills = mills
+            if requested_source:
+                submission.vote_source = requested_source
+            submission.last_submitted_at = now
+            submission.save(update_fields=['choice', 'mills', 'vote_source', 'last_submitted_at', 'updated_at'])
+        else:
+            submission = VoteSubmission.objects.create(
+                vote=vote,
+                user=request.user,
+                choice=serializer.validated_data['choice'],
+                vote_source=requested_source or 'app',
+                mills=mills,
+                last_submitted_at=now,
+            )
+            created = True
+
+        prev_event = submission.last_event
+        event = VoteSubmissionEvent.objects.create(
+            vote_submission=submission,
+            vote=vote,
+            user=request.user,
+            actor_user=request.user,
+            choice=submission.choice,
+            mills=submission.mills,
+            vote_source=submission.vote_source,
+            previous_event=prev_event,
+        )
+        submission.last_event = event
+        submission.save(update_fields=['last_event'])
+
+        response_payload = VoteSubmissionSerializer(submission).data
+        response_payload['updated'] = not created
+        response_payload['receipt_id'] = str(event.receipt_id)
+        return Response(
+            response_payload,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'], url_path='submit')
     def submit(self, request, pk=None):
@@ -335,7 +436,7 @@ class VoteViewSet(viewsets.ModelViewSet):
             votes = AssemblyVote.objects.filter(
                 agenda_item=agenda_item,
                 attendee_id__in=list(attendee_by_apartment.values()),
-            ).select_related('attendee', 'attendee__apartment')
+            ).select_related('attendee', 'attendee__apartment', 'last_event')
 
             vote_map = {v.attendee.apartment_id: v for v in votes}
             reverse_mapping = {'approve': 'ΝΑΙ', 'reject': 'ΟΧΙ', 'abstain': 'ΛΕΥΚΟ'}
@@ -351,6 +452,7 @@ class VoteViewSet(viewsets.ModelViewSet):
                         "choice": reverse_mapping.get(getattr(v, 'vote', None)) if v else None,
                         "vote_source": getattr(v, 'vote_source', None) if v else None,
                         "submitted_at": getattr(v, 'voted_at', None) if v else None,
+                        "receipt_id": str(getattr(getattr(v, 'last_event', None), 'receipt_id', None)) if v and getattr(v, 'last_event', None) else None,
                     }
                 )
 
@@ -430,6 +532,214 @@ class VoteViewSet(viewsets.ModelViewSet):
                 {"error": "Αποτυχία φόρτωσης αποτελεσμάτων"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['get'], url_path='evidence-package')
+    def evidence_package(self, request, pk=None):
+        """Evidence package (zip) για standalone ψηφοφορία"""
+        try:
+            vote = self.get_object()
+        except Http404:
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        results = vote.get_results()
+        generated_at = timezone.now().isoformat()
+
+        results_payload = {
+            "generated_at": generated_at,
+            "vote": {
+                "id": vote.id,
+                "title": vote.title,
+                "description": vote.description,
+                "building_id": vote.building_id,
+                "building_name": vote.building.name if vote.building else None,
+                "start_date": str(vote.start_date) if vote.start_date else None,
+                "end_date": str(vote.end_date) if vote.end_date else None,
+                "is_active": vote.is_active,
+                "is_urgent": vote.is_urgent,
+                "min_participation": vote.min_participation,
+            },
+            "results": results,
+        }
+
+        results_bytes = stable_json_bytes(results_payload)
+        results_hash = sha256_hex_bytes(results_bytes)
+
+        events_qs = (
+            VoteSubmissionEvent.objects.filter(vote=vote)
+            .select_related('previous_event')
+            .order_by('submitted_at', 'id')
+        )
+        events = []
+        computed_hashes = {}
+        for ev in events_qs:
+            prev_hash = ev.prev_hash or ''
+            if not prev_hash and ev.previous_event_id:
+                prev_hash = (
+                    computed_hashes.get(ev.previous_event_id)
+                    or (ev.previous_event.event_hash if ev.previous_event else '')
+                    or ''
+                )
+            event_hash = ev.event_hash or ev._compute_hash(prev_hash)
+            computed_hashes[ev.id] = event_hash
+            events.append({
+                "id": str(ev.id),
+                "vote_id": ev.vote_id,
+                "vote_submission_id": ev.vote_submission_id,
+                "user_id": ev.user_id,
+                "actor_user_id": ev.actor_user_id,
+                "choice": ev.choice,
+                "mills": ev.mills,
+                "vote_source": ev.vote_source,
+                "submitted_at": ev.submitted_at.isoformat() if ev.submitted_at else None,
+                "receipt_id": str(ev.receipt_id),
+                "previous_event_id": str(ev.previous_event_id) if ev.previous_event_id else None,
+                "prev_hash": ev.prev_hash or prev_hash,
+                "event_hash": ev.event_hash or event_hash,
+            })
+
+        audit_root_hash = build_audit_root_hash([e["event_hash"] for e in events])
+        audit_lines = [stable_json_bytes(e).decode("utf-8") for e in events]
+        audit_bytes = ("\n".join(audit_lines)).encode("utf-8")
+
+        base_url = (getattr(settings, 'FRONTEND_URL', '') or '').rstrip('/')
+        verify_url = ''
+        if base_url:
+            verify_url = (
+                f"{base_url}/verify-evidence?type=vote&id={vote.id}"
+                f"&results_hash={results_hash}&audit_root_hash={audit_root_hash}"
+            )
+
+        summary_lines = [
+            "# Vote Summary",
+            f"Title: {vote.title}",
+            f"Building: {vote.building.name if vote.building else 'All buildings'}",
+            f"Start Date: {vote.start_date}",
+            f"End Date: {vote.end_date}",
+            f"Generated At: {generated_at}",
+        ]
+        if verify_url:
+            summary_lines.extend([
+                "",
+                "## Verify",
+                f"Verify URL: {verify_url}",
+            ])
+        summary_lines.extend([
+            "",
+            "## Results",
+            f"Total Votes: {results.get('total')}",
+            f"Total Mills Voted: {results.get('total_mills_voted')}",
+            f"Participation %: {results.get('participation_percentage')}",
+            "",
+            "### By Choice",
+            f"- YES: {results.get('ΝΑΙ')} (mills: {results.get('mills', {}).get('ΝΑΙ', 0)})",
+            f"- NO: {results.get('ΟΧΙ')} (mills: {results.get('mills', {}).get('ΟΧΙ', 0)})",
+            f"- ABSTAIN: {results.get('ΛΕΥΚΟ')} (mills: {results.get('mills', {}).get('ΛΕΥΚΟ', 0)})",
+        ])
+        summary_md = "\n".join(str(line) for line in summary_lines)
+        summary_bytes = summary_md.encode("utf-8")
+
+        files = [
+            ("results.json", results_bytes),
+            ("audit.jsonl", audit_bytes),
+            ("results_hash.txt", results_hash.encode("utf-8")),
+            ("audit_root_hash.txt", audit_root_hash.encode("utf-8")),
+            ("praktiko.md", summary_bytes),
+            ("verify_url.txt", verify_url.encode("utf-8")) if verify_url else None,
+            ("manifest.json", stable_json_bytes({
+                "generated_at": generated_at,
+                "results_hash": results_hash,
+                "audit_root_hash": audit_root_hash,
+                "events_count": len(events),
+                "verify_url": verify_url or None,
+            })),
+        ]
+        files = [f for f in files if f is not None]
+
+        try:
+            pdf_bytes = AssemblyMinutesService.render_markdown_to_pdf(summary_md)
+            files.append(("praktiko.pdf", pdf_bytes))
+        except Exception:
+            # If PDF generation fails, keep the markdown only.
+            pass
+
+        zip_bytes = build_zip_bytes(files)
+        response = HttpResponse(zip_bytes, content_type="application/zip")
+        filename = f"vote_evidence_{vote.id}.zip"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=True, methods=['get'], url_path='verify')
+    def verify(self, request, pk=None):
+        """Υπολογίζει hashes για επαλήθευση πρακτικού"""
+        try:
+            vote = self.get_object()
+        except Http404:
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        results = vote.get_results()
+        generated_at = timezone.now().isoformat()
+        results_payload = {
+            "generated_at": generated_at,
+            "vote": {
+                "id": vote.id,
+                "title": vote.title,
+                "description": vote.description,
+                "building_id": vote.building_id,
+                "building_name": vote.building.name if vote.building else None,
+                "start_date": str(vote.start_date) if vote.start_date else None,
+                "end_date": str(vote.end_date) if vote.end_date else None,
+                "is_active": vote.is_active,
+                "is_urgent": vote.is_urgent,
+                "min_participation": vote.min_participation,
+            },
+            "results": results,
+        }
+
+        results_bytes = stable_json_bytes(results_payload)
+        results_hash = sha256_hex_bytes(results_bytes)
+
+        events_qs = (
+            VoteSubmissionEvent.objects.filter(vote=vote)
+            .select_related('previous_event')
+            .order_by('submitted_at', 'id')
+        )
+        computed_hashes = {}
+        event_hashes = []
+        for ev in events_qs:
+            prev_hash = ev.prev_hash or ''
+            if not prev_hash and ev.previous_event_id:
+                prev_hash = (
+                    computed_hashes.get(ev.previous_event_id)
+                    or (ev.previous_event.event_hash if ev.previous_event else '')
+                    or ''
+                )
+            event_hash = ev.event_hash or ev._compute_hash(prev_hash)
+            computed_hashes[ev.id] = event_hash
+            event_hashes.append(event_hash)
+
+        audit_root_hash = build_audit_root_hash(event_hashes)
+        base_url = (getattr(settings, 'FRONTEND_URL', '') or '').rstrip('/')
+        verify_url = ''
+        if base_url:
+            verify_url = (
+                f"{base_url}/verify-evidence?type=vote&id={vote.id}"
+                f"&results_hash={results_hash}&audit_root_hash={audit_root_hash}"
+            )
+
+        return Response({
+            "generated_at": generated_at,
+            "vote_id": vote.id,
+            "results_hash": results_hash,
+            "audit_root_hash": audit_root_hash,
+            "events_count": len(event_hashes),
+            "verify_url": verify_url or None,
+        })
 
     @action(detail=False, methods=['get'], url_path='active')
     def active(self, request):

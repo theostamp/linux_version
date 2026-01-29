@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from buildings.models import Building
+import uuid
+import hashlib
 
 class Vote(models.Model):
     title = models.CharField(max_length=255)
@@ -371,6 +373,14 @@ class VoteSubmission(models.Model):
     )
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_submitted_at = models.DateTimeField(null=True, blank=True)
+    last_event = models.ForeignKey(
+        'VoteSubmissionEvent',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+'
+    )
 
     class Meta:
         unique_together = ('vote', 'user')
@@ -389,3 +399,84 @@ class VoteSubmission(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class VoteSubmissionEvent(models.Model):
+    """
+    Append-only ιστορικό υποβολών για last-vote-wins.
+    Κρατάει receipt και chain για audit.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    vote_submission = models.ForeignKey(
+        VoteSubmission,
+        on_delete=models.CASCADE,
+        related_name='events'
+    )
+    vote = models.ForeignKey(
+        Vote,
+        on_delete=models.CASCADE,
+        related_name='submission_events'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='vote_submission_events'
+    )
+    actor_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vote_submission_actor_events'
+    )
+    choice = models.CharField(max_length=50, choices=VoteSubmission.CHOICES)
+    mills = models.PositiveIntegerField(default=0)
+    vote_source = models.CharField(max_length=20, choices=VoteSubmission.SOURCE_CHOICES, default='app')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    receipt_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    previous_event = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='next_events'
+    )
+    prev_hash = models.CharField(max_length=64, blank=True)
+    event_hash = models.CharField(max_length=64, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = "Ιστορικό Υποβολής Ψήφου"
+        verbose_name_plural = "Ιστορικό Υποβολών Ψήφων"
+
+    def _compute_hash(self, prev_hash: str) -> str:
+        parts = [
+            str(self.id),
+            str(self.vote_id or ''),
+            str(self.vote_submission_id or ''),
+            str(self.user_id or ''),
+            str(self.actor_user_id or ''),
+            str(self.choice),
+            str(self.mills),
+            str(self.vote_source),
+            self.submitted_at.isoformat() if self.submitted_at else '',
+            str(self.receipt_id),
+            prev_hash or '',
+        ]
+        payload = '|'.join(parts)
+        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.event_hash:
+            prev_hash = self.previous_event.event_hash if self.previous_event else ''
+            digest = self._compute_hash(prev_hash)
+            updates = []
+            if self.prev_hash != prev_hash:
+                self.prev_hash = prev_hash
+                updates.append('prev_hash')
+            if self.event_hash != digest:
+                self.event_hash = digest
+                updates.append('event_hash')
+            if updates:
+                super().save(update_fields=updates)

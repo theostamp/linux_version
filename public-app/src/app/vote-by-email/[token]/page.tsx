@@ -5,8 +5,8 @@ import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Vote, CheckCircle, XCircle, MinusCircle, AlertCircle,
-  Calendar, Building2, Home, Loader2, ArrowRight, Check,
-  Shield, Clock
+  Calendar, Home, Loader2, ArrowRight, Check,
+  Shield, ClipboardCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,18 @@ const voteOptions: { value: VoteChoice; label: string; icon: React.ReactNode; co
   },
 ];
 
+const voteLabels: Record<VoteChoice, string> = {
+  approve: 'Υπέρ',
+  reject: 'Κατά',
+  abstain: 'Λευκό',
+};
+
+const summaryBadgeStyles: Record<VoteChoice, string> = {
+  approve: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  reject: 'bg-red-100 text-red-700 border-red-300',
+  abstain: 'bg-slate-100 text-slate-600 border-slate-200',
+};
+
 export default function VoteByEmailPage() {
   const params = useParams();
   const token = params.token as string;
@@ -78,6 +90,7 @@ export default function VoteByEmailPage() {
   const [submittedCount, setSubmittedCount] = useState(0);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
 
   // Fetch vote data on mount
   useEffect(() => {
@@ -101,6 +114,12 @@ export default function VoteByEmailPage() {
 
     fetchData();
   }, [token]);
+
+  useEffect(() => {
+    if (step === 1 && termsError) {
+      setTermsError(null);
+    }
+  }, [step, termsError]);
 
   const handleVoteSelect = (itemId: string, vote: VoteChoice) => {
     setVotes(prev => ({ ...prev, [itemId]: vote }));
@@ -191,8 +210,8 @@ export default function VoteByEmailPage() {
     );
   }
 
-  // Already voted all
-  if (data?.all_voted || submitted) {
+  // Submitted confirmation
+  if (submitted) {
     return (
       <div className="min-h-screen bg-bg-app-main flex items-center justify-center p-4">
         <motion.div
@@ -210,13 +229,11 @@ export default function VoteByEmailPage() {
           </motion.div>
 
           <h1 className="page-title-sm mb-2">
-            {submitted ? 'Ευχαριστούμε για τη ψήφο σας!' : 'Έχετε ήδη ψηφίσει'}
+            Ευχαριστούμε για τη ψήφο σας!
           </h1>
 
           <p className="text-text-secondary mb-4">
-            {submitted
-              ? `Καταχωρήθηκαν ${submittedCount} ψήφοι επιτυχώς.`
-              : 'Έχετε ολοκληρώσει την ηλεκτρονική ψηφοφορία για αυτή τη συνέλευση.'}
+            Καταχωρήθηκαν {submittedCount} ψήφοι επιτυχώς.
           </p>
 
           {data && (
@@ -242,9 +259,17 @@ export default function VoteByEmailPage() {
   const quorumContributionPercent =
     totalBuildingMills > 0 ? (data.attendee.mills * 100) / totalBuildingMills : 0;
 
-  const pendingItems = data.voting_items.filter(item => !item.has_voted);
-  const allVotesSelected = pendingItems.every(item => votes[item.id]);
-  const canSubmit = allVotesSelected && termsAccepted;
+  const votingItems = data.voting_items;
+  const selectedCount = Object.keys(votes).length;
+  const selectedItems = votingItems
+    .map((item) => {
+      const choice = votes[item.id];
+      if (!choice) return null;
+      return { item, choice };
+    })
+    .filter((entry): entry is { item: VotingItem; choice: VoteChoice } => Boolean(entry));
+  const canSubmit = selectedCount > 0 && termsAccepted;
+  const activeStep = isSubmitting ? 3 : step;
 
   return (
     <div className="min-h-screen bg-bg-app-main">
@@ -265,6 +290,13 @@ export default function VoteByEmailPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {data.all_voted && (
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-800">
+            Έχετε ήδη ψηφίσει. Αν θέλετε, μπορείτε να επιλέξετε νέα ψήφο για όποια θέματα
+            χρειάζεται — η τελευταία υποβολή είναι αυτή που μετρά.
+          </div>
+        )}
+
         {/* Info cards */}
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-card-soft">
@@ -291,139 +323,281 @@ export default function VoteByEmailPage() {
           * Η συμμετοχή σας προσμετράται στην απαρτία ακόμη κι αν δεν είστε παρών/ούσα.
         </p>
 
-        {/* Voting items */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-            <Vote className="w-5 h-5" />
-            Θέματα προς ψήφιση ({pendingItems.length})
-          </h2>
+        <div className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm text-indigo-900">
+          <div className="font-semibold mb-1 flex items-center gap-2">
+            <ClipboardCheck className="w-4 h-4" />
+            Πώς λειτουργεί
+          </div>
+          <ul className="space-y-1 text-indigo-800">
+            <li>• Επιλέξτε ψήφο για όσα θέματα θέλετε να καταχωρίσετε ή να αλλάξετε.</li>
+            <li>• Με την υποβολή, η ψήφος σας καταγράφεται με χρονοσφραγίδα.</li>
+            <li>• Η τελευταία υποβολή ισχύει έως τη λήξη του pre‑voting.</li>
+          </ul>
+        </div>
 
-          {pendingItems.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl overflow-hidden shadow-xl"
-            >
-              {/* Item header */}
-              <div className="p-5 border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-accent-primary/10 rounded-lg flex items-center justify-center text-accent-primary font-bold text-sm">
-                    {item.order}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-text-primary">{item.title}</h3>
-                    {item.description && (
-                      <p className="text-sm text-text-secondary mt-1">{item.description}</p>
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-card-soft">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            {['Επιλογές', 'Επιβεβαίωση', 'Υποβολή'].map((label, index) => {
+              const stepIndex = index + 1;
+              const isActiveStep = activeStep === stepIndex;
+              const isDone = activeStep > stepIndex;
+              return (
+                <div key={label} className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-semibold',
+                      isDone && 'border-emerald-500 bg-emerald-500 text-white',
+                      isActiveStep && !isDone && 'border-indigo-500 text-indigo-600',
+                      !isActiveStep && !isDone && 'border-slate-200 text-slate-400'
                     )}
-                  </div>
+                  >
+                    {stepIndex}
+                  </span>
+                  <span className={cn(isActiveStep ? 'text-slate-700' : 'text-slate-400')}>{label}</span>
+                  {stepIndex < 3 && <span className="text-slate-300">—</span>}
                 </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            {activeStep === 1 && 'Επιλέξτε τις ψήφους σας πριν περάσετε στην επιβεβαίωση.'}
+            {activeStep === 2 && 'Ελέγξτε τις επιλογές και αποδεχθείτε τους όρους για υποβολή.'}
+            {activeStep === 3 && 'Η καταχώρηση ολοκληρώνεται τώρα.'}
+          </p>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {step === 1 ? (
+            <motion.div
+              key="step-selection"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                  <Vote className="w-5 h-5" />
+                  Θέματα ({votingItems.length})
+                </h2>
+
+                {votingItems.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-2xl overflow-hidden shadow-xl"
+                  >
+                    <div className="p-5 border-b border-gray-100">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-accent-primary/10 rounded-lg flex items-center justify-center text-accent-primary font-bold text-sm">
+                          {item.order}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-text-primary">{item.title}</h3>
+                          {item.description && (
+                            <p className="text-sm text-text-secondary mt-1">{item.description}</p>
+                          )}
+                          {item.has_voted && (
+                            <span className="inline-flex items-center gap-1 mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
+                              Έχετε ήδη ψηφίσει — μπορείτε να αλλάξετε
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5">
+                      <p className="text-sm text-text-secondary mb-4">Επιλέξτε την ψήφο σας:</p>
+                      <div className="grid grid-cols-3 gap-3">
+                        {voteOptions.map((option) => {
+                          const isSelected = votes[item.id] === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              onClick={() => handleVoteSelect(item.id, option.value)}
+                              className={cn(
+                                'p-4 rounded-xl border-2 transition-all duration-200',
+                                'flex flex-col items-center justify-center gap-2',
+                                isSelected
+                                  ? `${option.bgColor} ring-2 ring-offset-2 ${option.bgColor.split(' ')[0].replace('bg-', 'ring-')}`
+                                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                              )}
+                            >
+                              <span className={isSelected ? option.color : 'text-text-secondary opacity-60'}>
+                                {option.icon}
+                              </span>
+                              <span className={cn(
+                                'text-sm font-medium',
+                                isSelected ? option.color : 'text-text-secondary'
+                              )}>
+                                {option.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
 
-              {/* Vote options */}
-              <div className="p-5">
-                <p className="text-sm text-text-secondary mb-4">Επιλέξτε την ψήφο σας:</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {voteOptions.map((option) => {
-                    const isSelected = votes[item.id] === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        onClick={() => handleVoteSelect(item.id, option.value)}
-                        className={cn(
-                          'p-4 rounded-xl border-2 transition-all duration-200',
-                          'flex flex-col items-center justify-center gap-2',
-                          isSelected
-                            ? `${option.bgColor} ring-2 ring-offset-2 ${option.bgColor.split(' ')[0].replace('bg-', 'ring-')}`
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                        )}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="mt-6"
+              >
+                <Button
+                  onClick={() => {
+                    if (selectedCount === 0) return;
+                    setStep(2);
+                  }}
+                  disabled={selectedCount === 0}
+                  className={cn(
+                    'w-full py-5 text-lg font-semibold rounded-xl transition-all',
+                    selectedCount > 0
+                      ? 'bg-accent-primary text-white hover:opacity-90'
+                      : 'bg-bg-app-main text-text-secondary border border-gray-200 cursor-not-allowed'
+                  )}
+                >
+                  Συνέχεια στην επιβεβαίωση
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+
+                {selectedCount === 0 ? (
+                  <p className="text-center text-text-secondary text-sm mt-3">
+                    Επιλέξτε τουλάχιστον ένα θέμα για να συνεχίσετε
+                  </p>
+                ) : (
+                  <p className="text-center text-text-secondary text-sm mt-3">
+                    Έχετε επιλέξει {selectedCount} από {votingItems.length} θέματα
+                  </p>
+                )}
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="step-review"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm text-emerald-800">
+                Ελέγξτε τις επιλογές σας. Αν χρειάζεται αλλαγή, επιστρέψτε στα θέματα.
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-text-primary">Επιλεγμένα θέματα</h3>
+                  <span className="text-xs text-text-secondary">
+                    {selectedCount} από {votingItems.length}
+                  </span>
+                </div>
+
+                {selectedItems.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-bg-app-main/70 p-4 text-sm text-text-secondary">
+                    Δεν υπάρχουν επιλογές για επιβεβαίωση. Επιστρέψτε για να επιλέξετε ψήφους.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedItems.map(({ item, choice }) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-gray-100 bg-bg-app-main/60 p-4"
                       >
-                        <span className={isSelected ? option.color : 'text-text-secondary opacity-60'}>
-                          {option.icon}
-                        </span>
-                        <span className={cn(
-                          'text-sm font-medium',
-                          isSelected ? option.color : 'text-text-secondary'
-                        )}>
-                          {option.label}
-                        </span>
-                      </button>
-                    );
-                  })}
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-text-primary">
+                              {item.order}. {item.title}
+                            </div>
+                            {item.description && (
+                              <p className="text-xs text-text-secondary mt-1">{item.description}</p>
+                            )}
+                          </div>
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold',
+                              summaryBadgeStyles[choice]
+                            )}
+                          >
+                            {voteLabels[choice]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <LegalConsent
+                  accepted={termsAccepted}
+                  onAcceptedChange={(value) => {
+                    setTermsAccepted(value);
+                    if (value) setTermsError(null);
+                  }}
+                />
+                {termsError && (
+                  <p className="text-center text-rose-600 text-sm">{termsError}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="w-full sm:w-auto"
+                >
+                  <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                  Πίσω στις επιλογές
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!canSubmit || isSubmitting || selectedCount === 0}
+                  className={cn(
+                    'w-full flex-1 py-5 text-lg font-semibold rounded-xl transition-all',
+                    canSubmit
+                      ? 'bg-accent-primary text-white hover:opacity-90'
+                      : 'bg-bg-app-main text-text-secondary border border-gray-200 cursor-not-allowed'
+                  )}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Καταχώρηση...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      Υποβολή Επιλεγμένων ({selectedCount}/{votingItems.length})
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {!termsAccepted && selectedCount > 0 && (
+                <p className="text-center text-text-secondary text-sm">
+                  Αποδεχθείτε τους όρους για να συνεχίσετε
+                </p>
+              )}
+
+              <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-card-soft">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-text-secondary mt-0.5" />
+                  <div className="text-sm text-text-secondary">
+                    <p>
+                      Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα χιλιοστά του
+                      διαμερίσματός σας ({data.attendee.mills}). Μπορείτε να υποβάλετε νέα επιλογή
+                      μέχρι τη λήξη του pre‑voting.
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>
-          ))}
-        </div>
-
-        <div className="mt-8 space-y-2">
-          <LegalConsent
-            accepted={termsAccepted}
-            onAcceptedChange={(value) => {
-              setTermsAccepted(value);
-              if (value) setTermsError(null);
-            }}
-          />
-          {termsError && (
-            <p className="text-center text-rose-600 text-sm">{termsError}</p>
           )}
-        </div>
-
-        {/* Submit button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8"
-        >
-          <Button
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-            className={cn(
-              'w-full py-6 text-lg font-semibold rounded-xl transition-all',
-              canSubmit
-                ? 'bg-accent-primary text-white hover:opacity-90'
-                : 'bg-bg-app-main text-text-secondary border border-gray-200 cursor-not-allowed'
-            )}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Καταχώρηση...
-              </>
-            ) : (
-              <>
-                <Check className="w-5 h-5 mr-2" />
-                Υποβολή Ψήφων ({Object.keys(votes).length}/{pendingItems.length})
-              </>
-            )}
-          </Button>
-
-          {!allVotesSelected && (
-            <p className="text-center text-text-secondary text-sm mt-3">
-              Επιλέξτε ψήφο για όλα τα θέματα για να συνεχίσετε
-            </p>
-          )}
-          {allVotesSelected && !termsAccepted && (
-            <p className="text-center text-text-secondary text-sm mt-3">
-              Αποδεχθείτε τους όρους για να συνεχίσετε
-            </p>
-          )}
-        </motion.div>
-
-        {/* Legal notice */}
-        <div className="mt-8 p-4 bg-white rounded-xl border border-gray-200 shadow-card-soft">
-          <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-text-secondary mt-0.5" />
-            <div className="text-sm text-text-secondary">
-              <p>
-                Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα χιλιοστά του
-                διαμερίσματός σας ({data.attendee.mills}). Σε περίπτωση φυσικής παρουσίας
-                στη συνέλευση, θα έχετε τη δυνατότητα να αλλάξετε την ψήφο σας.
-              </p>
-            </div>
-          </div>
-        </div>
+        </AnimatePresence>
       </div>
 
       {/* Footer */}
