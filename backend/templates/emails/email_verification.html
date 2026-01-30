@@ -3,7 +3,7 @@
 {% block title %}Επιβεβαίωση Email - New Concierge{% endblock %}
 
 {% block content %}
-<div class="success">
+<div class="success" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
     <h2>Καλώς ήρθατε στο New Concierge!</h2>
     <p>Γεια σας <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
     <p>Ευχαριστούμε που εγγραφήκατε στο σύστημα διαχείρισης κτιρίων New Concierge.</p>
@@ -13,10 +13,10 @@
 <p>Για να ενεργοποιήσετε τον λογαριασμό σας και να αποκτήσετε πρόσβαση σε όλες τις λειτουργίες του συστήματος, παρακαλούμε κάντε κλικ στον παρακάτω σύνδεσμο:</p>
 
 <div style="text-align: center; margin: 30px 0;">
-    <a href="{{ verification_url }}" class="button">Επιβεβαίωση Email</a>
+    <a href="{{ verification_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Επιβεβαίωση Email</a>
 </div>
 
-<div class="warning">
+<div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
     <p><strong>⚠️ Σημαντικό:</strong></p>
     <ul>
         <li>Αυτός ο σύνδεσμος θα λήξει σε <strong>24 ώρες</strong></li>

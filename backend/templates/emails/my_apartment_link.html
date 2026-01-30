@@ -3,17 +3,17 @@
 {% block title %}Άνοιγμα σε υπολογιστή{% endblock %}
 
 {% block content %}
-<div class="success">
+<div class="success" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <h2>💻 Άνοιγμα σε υπολογιστή</h2>
   <p>Γεια σας{% if user.first_name %} <strong>{{ user.first_name }}</strong>{% endif %},</p>
   <p>Πατήστε το κουμπί για να ανοίξετε το New Concierge σε υπολογιστή:</p>
 </div>
 
 <div style="text-align: center; margin: 26px 0;">
-  <a href="{{ link_url }}" class="button">Άνοιγμα στο Laptop</a>
+  <a href="{{ link_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Άνοιγμα στο Laptop</a>
 </div>
 
-<div class="warning">
+<div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <p style="margin: 0;"><strong>Σημείωση:</strong> Αν δεν είστε ήδη συνδεδεμένος/η, θα σας ζητηθεί σύνδεση.</p>
 </div>
 

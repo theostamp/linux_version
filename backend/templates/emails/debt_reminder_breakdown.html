@@ -11,7 +11,7 @@
 </p>
 
 {% if month_label %}
-  <p class="muted" style="font-size: 12px; margin-top: 0;">
+  <p class="muted" style="font-size: 12px; margin-top: 0; color: #888;">
     Περίοδος αναφοράς: {{ month_label }}
   </p>
 {% endif %}
@@ -55,7 +55,7 @@
 </div>
 
 {% if payment_deadline %}
-  <div class="warning">
+  <div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
     <p style="margin:0;">
       <strong>Προθεσμία πληρωμής:</strong> {{ payment_deadline }}
     </p>

@@ -4,148 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Digital Concierge</title>
-    <style>
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8fafc;
-        }
-        .container {
-            background-color: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
-        }
-        .welcome-title {
-            font-size: 24px;
-            color: #1f2937;
-            margin-bottom: 20px;
-        }
-        .content {
-            margin-bottom: 30px;
-        }
-        .highlight {
-            background-color: #eff6ff;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            margin: 20px 0;
-        }
-        .cta-button {
-            display: inline-block;
-            background-color: #2563eb;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 10px 5px;
-        }
-        .cta-button:hover {
-            background-color: #1d4ed8;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .feature {
-            padding: 15px;
-            background-color: #f9fafb;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .feature-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🏢 Digital Concierge</div>
-            <h1 class="welcome-title">Welcome to Digital Concierge!</h1>
-        </div>
-        
-        <div class="content">
-            <p>Dear {{ user_name }},</p>
-            
-            <p>Welcome to Digital Concierge! We're excited to have you and <strong>{{ building_name }}</strong> join our platform.</p>
-            
-            <div class="highlight">
-                <h3>🎉 Your account is now active!</h3>
-                <p>You can now access all the features of Digital Concierge to manage your building efficiently.</p>
-            </div>
-            
-            <h3>🚀 What's Next?</h3>
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">📊</div>
-                    <h4>Dashboard</h4>
-                    <p>Access your building management dashboard</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">👥</div>
-                    <h4>Add Users</h4>
-                    <p>Invite team members and residents</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🏠</div>
-                    <h4>Add Apartments</h4>
-                    <p>Set up your building structure</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">📈</div>
-                    <h4>Analytics</h4>
-                    <p>Track performance and insights</p>
-                </div>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{{ dashboard_url }}" class="cta-button">Go to Dashboard</a>
-                <a href="{{ login_url }}" class="cta-button" style="background-color: #6b7280;">Login</a>
-            </div>
-            
-            <h3>📚 Need Help?</h3>
-            <p>We're here to help you get started:</p>
-            <ul>
-                <li>📖 Check out our <a href="{{ dashboard_url }}">Quick Start Guide</a></li>
-                <li>🎥 Watch our <a href="#">video tutorials</a></li>
-                <li>💬 Contact support at <a href="mailto:{{ support_email }}">{{ support_email }}</a></li>
-            </ul>
-        </div>
-        
-        <div class="footer">
-            <p>Thank you for choosing Digital Concierge!</p>
-            <p>Best regards,<br>The Digital Concierge Team</p>
-            <p style="margin-top: 20px; font-size: 12px;">
-                This email was sent to {{ user.email }}. If you have any questions, please contact us at {{ support_email }}.
-            </p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #333;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; background-color: #f8fafc;">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <tr>
+                        <td style="padding: 40px;">
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <div style="font-size: 28px; font-weight: bold; color: #2563eb; margin-bottom: 10px;">🏢 Digital Concierge</div>
+                                <h1 style="font-size: 24px; color: #1f2937; margin: 0;">Welcome to Digital Concierge!</h1>
+                            </div>
+
+                            <div style="margin-bottom: 30px;">
+                                <p style="margin: 0 0 12px;">Dear {{ user_name }},</p>
+                                <p style="margin: 0 0 12px;">Welcome to Digital Concierge! We're excited to have you and <strong>{{ building_name }}</strong> join our platform.</p>
+
+                                <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 20px 0;">
+                                    <h3 style="margin: 0 0 8px;">🎉 Your account is now active!</h3>
+                                    <p style="margin: 0;">You can now access all the features of Digital Concierge to manage your building efficiently.</p>
+                                </div>
+
+                                <h3 style="margin: 20px 0 12px;">🚀 What's Next?</h3>
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin: 0 0 20px;">
+                                    <tr>
+                                        <td width="50%" style="padding: 8px;">
+                                            <div style="padding: 15px; background-color: #f9fafb; border-radius: 8px; text-align: center;">
+                                                <div style="font-size: 24px; margin-bottom: 10px;">📊</div>
+                                                <h4 style="margin: 0 0 6px;">Dashboard</h4>
+                                                <p style="margin: 0; font-size: 14px; color: #4b5563;">Access your building management dashboard</p>
+                                            </div>
+                                        </td>
+                                        <td width="50%" style="padding: 8px;">
+                                            <div style="padding: 15px; background-color: #f9fafb; border-radius: 8px; text-align: center;">
+                                                <div style="font-size: 24px; margin-bottom: 10px;">👥</div>
+                                                <h4 style="margin: 0 0 6px;">Add Users</h4>
+                                                <p style="margin: 0; font-size: 14px; color: #4b5563;">Invite team members and residents</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="50%" style="padding: 8px;">
+                                            <div style="padding: 15px; background-color: #f9fafb; border-radius: 8px; text-align: center;">
+                                                <div style="font-size: 24px; margin-bottom: 10px;">🏠</div>
+                                                <h4 style="margin: 0 0 6px;">Add Apartments</h4>
+                                                <p style="margin: 0; font-size: 14px; color: #4b5563;">Set up your building structure</p>
+                                            </div>
+                                        </td>
+                                        <td width="50%" style="padding: 8px;">
+                                            <div style="padding: 15px; background-color: #f9fafb; border-radius: 8px; text-align: center;">
+                                                <div style="font-size: 24px; margin-bottom: 10px;">📈</div>
+                                                <h4 style="margin: 0 0 6px;">Analytics</h4>
+                                                <p style="margin: 0; font-size: 14px; color: #4b5563;">Track performance and insights</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="{{ dashboard_url }}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 6px;">Go to Dashboard</a>
+                                    <a href="{{ login_url }}" style="display: inline-block; background-color: #6b7280; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 6px;">Login</a>
+                                </div>
+
+                                <h3 style="margin: 20px 0 12px;">📚 Need Help?</h3>
+                                <p style="margin: 0 0 8px;">We're here to help you get started:</p>
+                                <ul style="margin: 0; padding-left: 18px;">
+                                    <li>📖 Check out our <a href="{{ dashboard_url }}" style="color: #2563eb; text-decoration: underline;">Quick Start Guide</a></li>
+                                    <li>🎥 Watch our <a href="#" style="color: #2563eb; text-decoration: underline;">video tutorials</a></li>
+                                    <li>💬 Contact support at <a href="mailto:{{ support_email }}" style="color: #2563eb; text-decoration: underline;">{{ support_email }}</a></li>
+                                </ul>
+                            </div>
+
+                            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                                <p style="margin: 0 0 6px;">Thank you for choosing Digital Concierge!</p>
+                                <p style="margin: 0 0 6px;">Best regards,<br>The Digital Concierge Team</p>
+                                <p style="margin-top: 20px; font-size: 12px;">
+                                    This email was sent to {{ user.email }}. If you have any questions, please contact us at {{ support_email }}.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

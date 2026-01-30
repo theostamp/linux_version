@@ -7,42 +7,42 @@
     
     {% if notification_type == 'common_expense' %}
     <!-- Κοινόχρηστα -->
-    <div style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <div style="background-color: #3B82F6; background-image: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
         <span style="font-size: 40px;">📊</span>
         <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Λογαριασμός Κοινοχρήστων</h2>
     </div>
     
     {% elif notification_type == 'debt_reminder' %}
     <!-- Υπενθύμιση Οφειλής -->
-    <div style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <div style="background-color: #F59E0B; background-image: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
         <span style="font-size: 40px;">💰</span>
         <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Υπενθύμιση Οφειλής</h2>
     </div>
     
     {% elif notification_type == 'meeting' %}
     <!-- Πρόσκληση Συνέλευσης -->
-    <div style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <div style="background-color: #8B5CF6; background-image: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
         <span style="font-size: 40px;">👥</span>
         <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Πρόσκληση Συνέλευσης</h2>
     </div>
     
     {% elif notification_type == 'maintenance' %}
     <!-- Εργασίες Συντήρησης -->
-    <div style="background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <div style="background-color: #14B8A6; background-image: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
         <span style="font-size: 40px;">🔧</span>
         <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Ενημέρωση Συντήρησης</h2>
     </div>
     
     {% elif notification_type == 'emergency' %}
     <!-- Έκτακτη Ειδοποίηση -->
-    <div style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <div style="background-color: #EF4444; background-image: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
         <span style="font-size: 40px;">🚨</span>
         <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Επείγουσα Ειδοποίηση</h2>
     </div>
     
     {% else %}
     <!-- Γενική Ανακοίνωση -->
-    <div style="background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <div style="background-color: #6366F1; background-image: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
         <span style="font-size: 40px;">📢</span>
         <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Ανακοίνωση</h2>
     </div>
@@ -84,5 +84,4 @@
 
 </div>
 {% endblock %}
-
 

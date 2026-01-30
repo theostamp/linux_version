@@ -3,7 +3,7 @@
 {% block title %}Το Workspace σας είναι έτοιμο{% endblock %}
 
 {% block content %}
-<div class="success">
+<div class="success" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <h2>Καλώς ήρθατε στο {{ app.name|default:"New Concierge" }}!</h2>
   <p>Γεια σας <strong>{{ user.first_name|default:user.email }}</strong>,</p>
   <p>Το workspace σας <strong>{{ tenant.name }}</strong> δημιουργήθηκε επιτυχώς!</p>
@@ -16,10 +16,10 @@
 </div>
 
 <p style="text-align:center; margin: 24px 0;">
-  <a class="button" href="{{ access_url }}">Πρόσβαση στο Workspace</a>
+  <a class="button" href="{{ access_url }}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Πρόσβαση στο Workspace</a>
 </p>
 
-<p class="muted" style="font-size: 12px;">
+<p class="muted" style="font-size: 12px; color: #888;">
   Αυτό το link είναι έγκυρο για 24 ώρες. Μετά μπορείτε να συνδεθείτε κανονικά με το email και τον κωδικό σας.
 </p>
 {% endblock %}

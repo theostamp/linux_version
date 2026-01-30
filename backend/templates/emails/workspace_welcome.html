@@ -3,7 +3,7 @@
 {% block title %}Ο χώρος εργασίας σας είναι έτοιμος{% endblock %}
 
 {% block content %}
-<div class="success">
+<div class="success" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <h2>Ο χώρος εργασίας σας είναι έτοιμος!</h2>
   <p>Γεια σας <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
   <p>Ο χώρος εργασίας σας δημιουργήθηκε επιτυχώς και είναι έτοιμος για χρήση.</p>
@@ -11,10 +11,10 @@
 
 <h3>Σύνδεσμος</h3>
 <p style="text-align:center; margin: 24px 0;">
-  <a class="button" href="{{ workspace_url }}">Άνοιγμα Workspace</a>
+  <a class="button" href="{{ workspace_url }}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Άνοιγμα Workspace</a>
 </p>
 
-<div class="warning">
+<div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <p><strong>Σημείωση:</strong> Αν δεν είστε ήδη συνδεδεμένος/η, θα σας ζητηθεί σύνδεση.</p>
 </div>
 {% endblock %}

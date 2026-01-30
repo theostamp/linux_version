@@ -3,7 +3,7 @@
 {% block title %}Αποκατάσταση Βλάβης - New Concierge{% endblock %}
 
 {% block content %}
-<div class="success">
+<div class="success" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
     <h2>🔧 Η βλάβη αποκαταστάθηκε!</h2>
     <p>Γεια σας <strong>{{ user.first_name }}</strong>,</p>
     <p>Σας ενημερώνουμε ότι η βλάβη που αναφέρατε έχει πλέον αποκατασταθεί.</p>
@@ -34,7 +34,7 @@
 </div>
 
 <div style="text-align: center; margin: 30px 0;">
-    <a href="{{ frontend_url }}/requests/{{ ticket.id }}" class="button">Προβολή Αναφοράς</a>
+    <a href="{{ frontend_url }}/requests/{{ ticket.id }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Προβολή Αναφοράς</a>
 </div>
 
 <p>Εάν θεωρείτε ότι το πρόβλημα παραμένει ή έχετε κάποιο άλλο θέμα, παρακαλούμε επικοινωνήστε με τη διαχείριση ή υποβάλετε μια νέα αναφορά βλάβης μέσω της εφαρμογής.</p>

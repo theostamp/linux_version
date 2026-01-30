@@ -3,7 +3,7 @@
 {% block title %}Αίτημα Προσφοράς{% endblock %}
 
 {% block content %}
-<div class="info">
+<div class="info" style="background-color: #eff6ff; padding: 16px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 0 0 20px;">
   <h2>📩 Αίτημα προσφοράς για εργασία</h2>
   <p>Γεια σας{% if provider_name %} <strong>{{ provider_name }}</strong>{% endif %},</p>
   <p>Σας ζητάμε προσφορά για το παρακάτω έργο/εργασία μέσω του New Concierge Marketplace.</p>
@@ -28,7 +28,7 @@
 {% endif %}
 
 {% if message_to_provider %}
-<div class="warning">
+<div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <p><strong>Σημείωση:</strong></p>
   <p style="white-space:pre-wrap;">{{ message_to_provider }}</p>
 </div>
@@ -38,7 +38,7 @@
 <p>Πατήστε το κουμπί για να συμπληρώσετε όλα τα στοιχεία της προσφοράς (ποσό, προκαταβολή, δόσεις, εγγύηση, χρονοδιάγραμμα κ.λπ.) και να ανεβάσετε συνημμένα (PDF/εικόνες) με το δικό σας λογότυπο/ύφος.</p>
 
 <div style="text-align:center; margin:28px 0;">
-  <a href="{{ provider_form_url }}" class="button">Υποβολή Προσφοράς</a>
+  <a href="{{ provider_form_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Υποβολή Προσφοράς</a>
 </div>
 
 <hr style="margin:28px 0; border:none; border-top:1px solid #eee;">
@@ -48,5 +48,4 @@
   <a href="{{ provider_form_url }}">{{ provider_form_url }}</a>
 </p>
 {% endblock %}
-
 

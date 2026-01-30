@@ -3,10 +3,10 @@
 {% block title %}Ανακοίνωση Συστήματος{% endblock %}
 
 {% block content %}
-<div class="warning">
+<div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
   <h2>{{ announcement_title }}</h2>
   {% if announcement_date %}
-    <p class="muted" style="font-size: 12px; margin: 0;">{{ announcement_date|date:"d/m/Y H:i" }}</p>
+    <p class="muted" style="font-size: 12px; margin: 0; color: #888;">{{ announcement_date|date:"d/m/Y H:i" }}</p>
   {% endif %}
 </div>
 
@@ -16,7 +16,7 @@
 
 {% if dashboard_url %}
   <p style="text-align:center; margin: 24px 0;">
-    <a class="button" href="{{ dashboard_url }}">Άνοιγμα Dashboard</a>
+    <a class="button" href="{{ dashboard_url }}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Άνοιγμα Dashboard</a>
   </p>
 {% endif %}
 {% endblock %}

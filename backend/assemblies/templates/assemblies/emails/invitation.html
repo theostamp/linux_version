@@ -4,240 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Πρόσκληση σε Γενική Συνέλευση</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #1f2937;
-            background-color: #f3f4f6;
-        }
-
-        .email-wrapper {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            padding: 36px 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            color: #ffffff;
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 15px;
-        }
-
-        .content {
-            padding: 28px;
-        }
-
-        .assembly-card {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border: 1px solid #bae6fd;
-            border-radius: 12px;
-            padding: 22px;
-            margin-bottom: 22px;
-        }
-
-        .assembly-card h2 {
-            color: #0369a1;
-            font-size: 20px;
-            margin-bottom: 12px;
-        }
-
-        .assembly-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .meta-item {
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 12px;
-        }
-
-        .rsvp-section {
-            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 18px;
-            margin-bottom: 22px;
-        }
-
-        .rsvp-buttons {
-            display: grid;
-            gap: 10px;
-        }
-
-        .rsvp-button {
-            display: block;
-            text-decoration: none;
-            color: #ffffff !important;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .rsvp-button.attending {
-            background: #10b981;
-        }
-
-        .rsvp-button.online {
-            background: #4f46e5;
-        }
-
-        .rsvp-button.maybe {
-            background: #f59e0b;
-        }
-
-        .rsvp-button.proxy {
-            background: #64748b;
-        }
-
-        .rsvp-hint {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 10px;
-            line-height: 1.5;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: #ffffff !important;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .footer {
-            background-color: #1f2937;
-            padding: 22px 30px;
-            text-align: center;
-        }
-
-        .footer p {
-            color: #9ca3af;
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-
-        .footer a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
-
-        .building-name {
-            color: #f3f4f6;
-            font-weight: 600;
-        }
-
-        @media only screen and (max-width: 600px) {
-            .header {
-                padding: 28px 20px;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .assembly-meta {
-                flex-direction: column;
-                gap: 6px;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="email-wrapper">
-        <div class="header">
-            <h1>👥 Πρόσκληση σε Γενική Συνέλευση</h1>
-            <p>{{ building.name }}</p>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1f2937; background-color: #f3f4f6;">
+    <div style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <div style="background-color: #4f46e5; background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 36px 30px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 26px; font-weight: 700; margin: 0 0 8px;">👥 Πρόσκληση σε Γενική Συνέλευση</h1>
+            <p style="color: rgba(255, 255, 255, 0.85); font-size: 15px; margin: 0;">{{ building.name }}</p>
         </div>
 
-        <div class="content">
-            <p style="color: #374151; font-size: 15px; margin-bottom: 18px; line-height: 1.6;">
+        <div style="padding: 28px;">
+            <p style="color: #374151; font-size: 15px; margin: 0 0 18px; line-height: 1.6;">
                 Καλείστε να παραστείτε στη γενική συνέλευση των ιδιοκτητών. Παρακάτω θα βρείτε τις βασικές πληροφορίες
                 και μπορείτε να δηλώσετε συμμετοχή.
             </p>
 
-            <div class="assembly-card">
-                <h2>{{ assembly.title }}</h2>
-                <div class="assembly-meta">
-                    <span class="meta-item">📅 {{ assembly.scheduled_date|date:"l, d F Y" }}</span>
-                    <span class="meta-item">🕐 {{ assembly.scheduled_time|time:"H:i" }}</span>
+            <div style="background-color: #f0f9ff; background-image: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 22px; margin: 0 0 22px;">
+                <h2 style="color: #0369a1; font-size: 20px; margin: 0 0 12px;">{{ assembly.title }}</h2>
+                <div style="margin: 0 0 12px;">
+                    <div style="font-size: 14px; color: #64748b; margin-bottom: 6px;">📅 {{ assembly.scheduled_date|date:"l, d F Y" }}</div>
+                    <div style="font-size: 14px; color: #64748b; margin-bottom: 6px;">🕐 {{ assembly.scheduled_time|time:"H:i" }}</div>
                     {% if assembly.location %}
-                    <span class="meta-item">📍 {{ assembly.location }}</span>
+                    <div style="font-size: 14px; color: #64748b; margin-bottom: 6px;">📍 {{ assembly.location }}</div>
                     {% endif %}
                     {% if assembly.is_online %}
-                    <span class="meta-item">💻 Διαδικτυακή συμμετοχή</span>
+                    <div style="font-size: 14px; color: #64748b;">💻 Διαδικτυακή συμμετοχή</div>
                     {% endif %}
                 </div>
                 {% if assembly.description %}
-                <p style="color: #475569; font-size: 14px;">{{ assembly.description }}</p>
+                <p style="color: #475569; font-size: 14px; margin: 0;">{{ assembly.description }}</p>
                 {% endif %}
             </div>
 
-            <div class="rsvp-section">
-                <h3 class="section-title">✅ Δήλωση συμμετοχής</h3>
-                <p style="color: #475569; font-size: 14px; margin-bottom: 12px; line-height: 1.6;">
+            <div style="background-color: #f8fafc; background-image: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 0 0 22px;">
+                <h3 style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 12px;">✅ Δήλωση συμμετοχής</h3>
+                <p style="color: #475569; font-size: 14px; margin: 0 0 12px; line-height: 1.6;">
                     Επιλέξτε πώς θα συμμετέχετε. Θα σας ζητηθεί επιβεβαίωση μέσα στην εφαρμογή.
                 </p>
-                <div class="rsvp-buttons">
-                    <a href="{{ assembly_url }}?rsvp=attending" class="rsvp-button attending">
-                        Θα είμαι παρών/παρούσα
-                    </a>
-                    <a href="{{ assembly_url }}?rsvp=not_attending" class="rsvp-button online">
-                        Θα συμμετέχω ηλεκτρονικά
-                    </a>
-                    <a href="{{ assembly_url }}?rsvp=maybe" class="rsvp-button maybe">
-                        Δεν είμαι σίγουρος/η ακόμα
-                    </a>
-                    <a href="{{ assembly_url }}?rsvp=proxy" class="rsvp-button proxy">
-                        Ορίζω εκπρόσωπο
-                    </a>
-                </div>
-                <p class="rsvp-hint">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 0 0 10px;">
+                            <a href="{{ assembly_url }}?rsvp=attending" style="display: block; text-decoration: none; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center; background-color: #10b981;">Θα είμαι παρών/παρούσα</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 0 10px;">
+                            <a href="{{ assembly_url }}?rsvp=not_attending" style="display: block; text-decoration: none; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center; background-color: #4f46e5;">Θα συμμετέχω ηλεκτρονικά</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 0 10px;">
+                            <a href="{{ assembly_url }}?rsvp=maybe" style="display: block; text-decoration: none; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center; background-color: #f59e0b;">Δεν είμαι σίγουρος/η ακόμα</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0;">
+                            <a href="{{ assembly_url }}?rsvp=proxy" style="display: block; text-decoration: none; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: center; background-color: #64748b;">Ορίζω εκπρόσωπο</a>
+                        </td>
+                    </tr>
+                </table>
+                <p style="font-size: 12px; color: #64748b; margin: 10px 0 0; line-height: 1.5;">
                     Για εξουσιοδότηση εκπροσώπου θα επιλέξετε πρόσωπο μέσα στην εφαρμογή.
                 </p>
             </div>
 
             <div style="text-align: center; margin: 24px 0;">
-                <a href="{{ assembly_url }}" class="cta-button">Δείτε τη συνέλευση online</a>
+                <a href="{{ assembly_url }}" style="display: inline-block; background-color: #4f46e5; background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px;">Δείτε τη συνέλευση online</a>
             </div>
         </div>
 
-        <div class="footer">
-            <p class="building-name">{{ building.name }}</p>
-            <p>{{ building.address }}{% if building.city %}, {{ building.city }}{% endif %}</p>
-            <p style="margin-top: 12px; font-size: 11px; color: #6b7280;">
+        <div style="background-color: #1f2937; padding: 22px 30px; text-align: center;">
+            <p style="color: #f3f4f6; font-weight: 600; margin: 0 0 8px;">{{ building.name }}</p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px;">{{ building.address }}{% if building.city %}, {{ building.city }}{% endif %}</p>
+            <p style="margin: 12px 0 0; font-size: 11px; color: #6b7280;">
                 Αυτό το email στάλθηκε από το newconcierge.app<br>
                 © {{ now|date:"Y" }} New Concierge. Με επιφύλαξη παντός δικαιώματος.
             </p>

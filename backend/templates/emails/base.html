@@ -4,103 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ app.name|default:"New Concierge" }}{% endblock %}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .brand-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 10px;
-        }
-        .brand-subtitle {
-            margin: 0;
-            color: #666;
-            font-size: 14px;
-        }
-        .logo-img {
-            max-height: 52px;
-            max-width: 220px;
-            margin-bottom: 10px;
-        }
-        .content {
-            margin-bottom: 30px;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .button:hover {
-            background-color: #0056b3;
-        }
-        .footer {
-            text-align: center;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #666;
-        }
-        .footer-block {
-            margin: 10px 0;
-        }
-        .muted {
-            color: #888;
-        }
-        .warning {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4;">
+    <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div class="container" style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div class="header" style="text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 30px;">
             {% if branding.office_logo_url %}
-                <img class="logo-img" src="{{ branding.office_logo_url }}" alt="{{ branding.office_name|default:app.name }}">
+                <img class="logo-img" src="{{ branding.office_logo_url }}" alt="{{ branding.office_name|default:app.name }}" style="max-height: 52px; max-width: 220px; margin-bottom: 10px;">
             {% elif app.logo_url %}
-                <img class="logo-img" src="{{ app.logo_url }}" alt="{{ app.name }}">
+                <img class="logo-img" src="{{ app.logo_url }}" alt="{{ app.name }}" style="max-height: 52px; max-width: 220px; margin-bottom: 10px;">
             {% endif %}
 
-            <div class="brand-name">
+            <div class="brand-name" style="font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 10px;">
                 {{ branding.office_name|default:app.name }}
             </div>
-            <p class="brand-subtitle">
+            <p class="brand-subtitle" style="margin: 0; color: #666; font-size: 14px;">
                 {% if branding.office_name %}
                     Γραφείο Διαχείρισης
                 {% else %}
@@ -109,13 +27,13 @@
             </p>
         </div>
         
-        <div class="content">
+        <div class="content" style="margin-bottom: 30px;">
             {% block content %}{% endblock %}
         </div>
         
-        <div class="footer">
+        <div class="footer" style="text-align: center; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; font-size: 12px; color: #666;">
             {% if branding.office_name or branding.office_phone or branding.office_address %}
-                <div class="footer-block">
+                <div class="footer-block" style="margin: 10px 0;">
                     <strong>{{ branding.office_name|default:"Στοιχεία Γραφείου" }}</strong><br>
                     {% if branding.office_phone %}Τηλ: {{ branding.office_phone }}<br>{% endif %}
                     {% if branding.office_phone_emergency %}Τηλ. ανάγκης: {{ branding.office_phone_emergency }}<br>{% endif %}
@@ -124,7 +42,7 @@
             {% endif %}
 
             {% if branding.bank_iban or branding.bank_name or branding.bank_beneficiary %}
-                <div class="footer-block">
+                <div class="footer-block" style="margin: 10px 0;">
                     <strong>Στοιχεία Πληρωμής</strong><br>
                     {% if branding.bank_iban %}IBAN: <span style="font-family: monospace;">{{ branding.bank_iban }}</span><br>{% endif %}
                     {% if branding.bank_name %}Τράπεζα: {{ branding.bank_name }}<br>{% endif %}
@@ -132,33 +50,33 @@
                 </div>
             {% endif %}
 
-            <div class="footer-block muted">
+            <div class="footer-block muted" style="margin: 10px 0; color: #888;">
                 Αυτό το email στάλθηκε αυτόματα. Αν δεν αναμένατε αυτό το μήνυμα, μπορείτε να το αγνοήσετε.
             </div>
 
-            <div class="footer-block">
+            <div class="footer-block" style="margin: 10px 0;">
                 <strong>{{ app.name|default:"New Concierge" }}</strong>
                 {% if app.url %}
-                    — <a href="{{ app.url }}">{{ app.url }}</a>
+                    — <a href="{{ app.url }}" style="color: #007bff; text-decoration: underline;">{{ app.url }}</a>
                 {% endif %}
                 <br>
                 {% if app.support_email %}
-                    Υποστήριξη: <a href="mailto:{{ app.support_email }}">{{ app.support_email }}</a>
+                    Υποστήριξη: <a href="mailto:{{ app.support_email }}" style="color: #007bff; text-decoration: underline;">{{ app.support_email }}</a>
                 {% endif %}
                 {% if app.terms_url or app.privacy_url %}
                     <br>
-                    {% if app.terms_url %}<a href="{{ app.terms_url }}">Όροι Χρήσης</a>{% endif %}
-                    {% if app.privacy_url %}{% if app.terms_url %} · {% endif %}<a href="{{ app.privacy_url }}">Πολιτική Απορρήτου</a>{% endif %}
+                    {% if app.terms_url %}<a href="{{ app.terms_url }}" style="color: #007bff; text-decoration: underline;">Όροι Χρήσης</a>{% endif %}
+                    {% if app.privacy_url %}{% if app.terms_url %} · {% endif %}<a href="{{ app.privacy_url }}" style="color: #007bff; text-decoration: underline;">Πολιτική Απορρήτου</a>{% endif %}
                 {% endif %}
             </div>
 
-            <div class="footer-block muted">
+            <div class="footer-block muted" style="margin: 10px 0; color: #888;">
                 © {{ year }} {{ app.name|default:"New Concierge" }}. Όλα τα δικαιώματα διατηρούνται.
             </div>
         </div>
     </div>
+    </div>
 </body>
 </html>
-
 
 

@@ -3,7 +3,7 @@
 {% block title %}Πρόσκληση στο New Concierge{% endblock %}
 
 {% block content %}
-<div class="success">
+<div class="success" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
     <h2>🎉 Έχετε λάβει πρόσκληση!</h2>
     <p>Γεια σας <strong>{{ invitation.first_name }} {{ invitation.last_name }}</strong>,</p>
     <p>Ο/Η <strong>{{ invitation.invited_by.first_name }} {{ invitation.invited_by.last_name }}</strong> σας προσκαλεί να συμμετάσχετε στο σύστημα διαχείρισης κτιρίων New Concierge.</p>
@@ -27,10 +27,10 @@
 <p>Για να αποδεχτείτε την πρόσκληση και να δημιουργήσετε τον λογαριασμό σας, κάντε κλικ στον παρακάτω σύνδεσμο:</p>
 
 <div style="text-align: center; margin: 30px 0;">
-    <a href="{{ invitation_url }}" class="button">Αποδοχή Πρόσκλησης</a>
+    <a href="{{ invitation_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0;">Αποδοχή Πρόσκλησης</a>
 </div>
 
-<div class="warning">
+<div class="warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
     <p><strong>⏰ Προθεσμία:</strong></p>
     <ul>
         <li>Αυτή η πρόσκληση θα λήξει στις <strong>{{ invitation.expires_at|date:"d/m/Y H:i" }}</strong></li>
