@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { apiPost } from '@/lib/api';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
+import { storeAuthTokens } from '@/lib/authTokens';
 
 function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -44,6 +45,7 @@ function TenantAcceptContent() {
           status: string;
           access: string;
           refresh: string;
+          refresh_cookie_set?: boolean;
           tenant: {
             schema_name: string;
             name: string;
@@ -58,14 +60,12 @@ function TenantAcceptContent() {
         }>('/tenants/accept-invite/', { token });
 
         if (response.status === 'success') {
-          // Store tokens
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('access_token', response.access);
-            localStorage.setItem('refresh_token', response.refresh);
-            localStorage.setItem('access', response.access);
-            localStorage.setItem('refresh', response.refresh);
-            console.log('[TenantAccept] Tokens saved to localStorage');
-          }
+          storeAuthTokens({
+            access: response.access,
+            refresh: response.refresh,
+            refreshCookieSet: Boolean(response.refresh_cookie_set),
+          });
+          console.log('[TenantAccept] Tokens stored');
 
           // Redirect to tenant domain
           const tenantDomain = response.tenant.domain;

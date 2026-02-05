@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { getAccessToken } from '@/lib/authTokens';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { getEffectiveRole } from '@/lib/roleUtils';
 import { api } from '@/lib/api';
@@ -419,8 +420,7 @@ export default function AdPortalAdminPage() {
       // Build headers similar to api.ts (auth + tenant host)
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (typeof window !== 'undefined') {
-        const token =
-          localStorage.getItem('access_token') || localStorage.getItem('access') || localStorage.getItem('accessToken');
+        const token = getAccessToken();
         if (token) headers.Authorization = `Bearer ${token}`;
         try {
           const cached = localStorage.getItem('user');

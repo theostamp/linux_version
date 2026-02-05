@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Lock, ArrowRight, Loader2, Eye, EyeOff, CheckCircle, XCircle, UserPlus } from 'lucide-react';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
+import { storeAuthTokens } from '@/lib/authTokens';
 
 function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -134,13 +135,11 @@ function AcceptInvitationForm() {
         throw new Error(data.error || data.detail || 'Σφάλμα αποδοχής πρόσκλησης');
       }
 
-      // Store tokens if provided
-      if (data.tokens?.access) {
-        localStorage.setItem('access_token', data.tokens.access);
-      }
-      if (data.tokens?.refresh) {
-        localStorage.setItem('refresh_token', data.tokens.refresh);
-      }
+      storeAuthTokens({
+        access: data.tokens?.access,
+        refresh: data.tokens?.refresh,
+        refreshCookieSet: Boolean(data.refresh_cookie_set),
+      });
 
       // Store building context from invitation URL or API response
       const finalBuildingId = buildingId || data.building_id;
@@ -161,8 +160,8 @@ function AcceptInvitationForm() {
         // Handle cross-subdomain redirect if tenant_url is provided
         if (data.tenant_url) {
           // Build redirect URL with tokens for cross-subdomain auth
-          const accessToken = localStorage.getItem('access_token') || '';
-          const refreshToken = localStorage.getItem('refresh_token') || '';
+          const accessToken = data.tokens?.access || '';
+          const refreshToken = data.tokens?.refresh || '';
           const redirectUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(accessToken)}&refresh=${encodeURIComponent(refreshToken)}&redirect=${encodeURIComponent(targetPath)}`;
           console.log('[AcceptInvitation] Cross-subdomain redirect to:', redirectUrl);
           window.location.href = redirectUrl;

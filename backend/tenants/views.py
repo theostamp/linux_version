@@ -8,6 +8,7 @@ from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_tenants.utils import schema_context
 from users.models import CustomUser
+from users.auth_cookies import attach_refresh_cookie
 from .models import Client, Domain
 from core.permissions import IsUltraAdmin
 import logging
@@ -52,7 +53,7 @@ class AcceptTenantInviteView(APIView):
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             
-            return Response({
+            response = Response({
                 'status': 'success',
                 'access': access_token,
                 'refresh': str(refresh),
@@ -68,6 +69,8 @@ class AcceptTenantInviteView(APIView):
                     'role': user.role
                 }
             })
+            attach_refresh_cookie(response, str(refresh))
+            return response
             
         except SignatureExpired:
             return Response({

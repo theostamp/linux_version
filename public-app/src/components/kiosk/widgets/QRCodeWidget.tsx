@@ -14,17 +14,44 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
 
   // Generate QR code URL and token
   useEffect(() => {
-    const generateQRUrl = () => {
+    const generateQRUrl = async () => {
       try {
         const buildingId = data?.building_info?.id || 1;
+        let token: string | null = null;
 
-        // Generate a simple token (in production, this should come from backend)
-        // For now, using a combination of building ID and timestamp
-        const token = btoa(`${buildingId}-${Date.now()}`).substring(0, 32);
+        try {
+          const response = await fetch('/api/kiosk/token/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ building_id: buildingId }),
+          });
+
+          if (response.ok) {
+            const payload = await response.json();
+            token = payload?.token ?? null;
+          } else {
+            const errorPayload = await response.json().catch(() => ({}));
+            if (errorPayload?.code === 'KIOSK_SIGNED_QR_DISABLED') {
+              // Legacy fallback when signed QR is disabled
+              token = btoa(`${buildingId}-${Date.now()}`).substring(0, 32);
+            } else {
+              throw new Error(errorPayload?.error || 'Αποτυχία δημιουργίας QR token');
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching kiosk token:', err);
+          setQrError('Σφάλμα δημιουργίας QR token');
+          return;
+        }
+
+        if (!token) {
+          setQrError('Σφάλμα δημιουργίας QR token');
+          return;
+        }
 
         // Construct the URL
         const baseUrl = window.location.origin;
-        const url = `${baseUrl}/kiosk/connect?building=${buildingId}&token=${token}`;
+        const url = `${baseUrl}/kiosk/connect?building=${buildingId}&token=${encodeURIComponent(token)}`;
 
         setQrUrl(url);
 

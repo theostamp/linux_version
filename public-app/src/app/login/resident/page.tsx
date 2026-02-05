@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Home, Mail, Phone, ArrowRight, Loader2, ChevronLeft } from 'lucide-react';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 import { getDefaultLandingPath, type RoleDescriptor } from '@/lib/roleUtils';
+import { storeAuthTokens } from '@/lib/authTokens';
 
 interface UserData extends RoleDescriptor {
   is_superuser?: boolean;
@@ -83,13 +84,11 @@ function ResidentLoginForm() {
         throw new Error(data.error || 'Σφάλμα σύνδεσης');
       }
 
-      // Store tokens
-      if (data.access) {
-        localStorage.setItem('access_token', data.access);
-      }
-      if (data.refresh) {
-        localStorage.setItem('refresh_token', data.refresh);
-      }
+      storeAuthTokens({
+        access: data.access,
+        refresh: data.refresh,
+        refreshCookieSet: Boolean(data.refresh_cookie_set),
+      });
 
       // Store building context if provided
       if (data.building?.id) {

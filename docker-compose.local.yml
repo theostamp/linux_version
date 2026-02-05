@@ -40,7 +40,31 @@ services:
   #       condition: service_healthy
   #     redis:
   #       condition: service_healthy
+  #
+  # Optional: Celery worker + beat for scheduled tasks
+  # celery-worker:
+  #   build: ./backend
+  #   command: celery -A new_concierge_backend worker -l info
+  #   env_file: backend/.env
+  #   volumes:
+  #     - ./backend:/app
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #
+  # celery-beat:
+  #   build: ./backend
+  #   command: celery -A new_concierge_backend beat -l info
+  #   env_file: backend/.env
+  #   volumes:
+  #     - ./backend:/app
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
 volumes:
   pgdata:
-

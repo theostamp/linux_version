@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, CheckCircle, XCircle, Home, ArrowRight } from 'lucide-react';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
+import { clearAuthTokens, storeAuthTokens } from '@/lib/authTokens';
 
 function MagicLoginContent() {
   const router = useRouter();
@@ -22,8 +23,8 @@ function MagicLoginContent() {
       return;
     }
 
-    // Αποθήκευση του token στο localStorage
-    localStorage.setItem('access_token', token);
+    // Αποθήκευση του token στη μνήμη
+    storeAuthTokens({ access: token });
 
     // Επαλήθευση του token με κλήση στο /me
     const verifyToken = async () => {
@@ -51,7 +52,7 @@ function MagicLoginContent() {
 
         if (!response.ok) {
           // Token is invalid or expired
-          localStorage.removeItem('access_token');
+          clearAuthTokens();
           throw new Error('Ο σύνδεσμος έληξε ή δεν είναι έγκυρος. Παρακαλώ ζητήστε νέο.');
         }
 

@@ -6,7 +6,8 @@ from .views import (
     KioskDisplayConfigViewSet,
     KioskSceneViewSet,
     PublicKioskSceneViewSet,
-    kiosk_register  # New: Kiosk registration endpoint
+    kiosk_register,  # New: Kiosk registration endpoint
+    kiosk_token,
 )
 from . import views_apartment_debts as views
 from api.kiosk_views import kiosk_state
@@ -32,6 +33,7 @@ urlpatterns = [
     path('apartment-debts/', views.apartment_debts, name='apartment-debts'),
 
     # Kiosk resident self-registration (no auth required)
+    path('token/', kiosk_token, name='kiosk-token'),
     path('register/', kiosk_register, name='kiosk-register'),
     path('connect/', kiosk_register, name='kiosk-connect'),  # Alias for frontend
 

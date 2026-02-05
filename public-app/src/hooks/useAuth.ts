@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * Simple hook to get authentication token from localStorage
+ * Simple hook to get authentication token (in-memory with localStorage fallback)
  * For full authentication context, use useAuth from @/components/contexts/AuthContext
  */
+import { getAccessToken } from '@/lib/authTokens';
+
 export function useAuthToken() {
     const getToken = (): string | null => {
-        if (typeof window === 'undefined') return null;
-        return localStorage.getItem('access_token') || localStorage.getItem('access') || localStorage.getItem('accessToken');
+        return getAccessToken();
     };
 
     return {

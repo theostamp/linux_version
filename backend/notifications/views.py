@@ -16,6 +16,7 @@ from django.db.models import Q, Count, Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
+from django.core.cache import caches
 
 from buildings.models import Building, BuildingMembership
 from apartments.models import Apartment
@@ -132,6 +133,26 @@ class ViberSubscriptionView(APIView):
 
         subscription.unsubscribe()
         return Response({"message": "Αποσύνδεση Viber ολοκληρώθηκε"})
+
+
+class NotificationTasksStatusView(APIView):
+    """
+    Health/status endpoint for scheduled notification tasks.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            cache = caches["default"]
+        except Exception:
+            cache = caches["throttles"]
+
+        last_heartbeat = cache.get("celery_beat_heartbeat")
+        return Response({
+            "celery_beat_enabled": bool(getattr(settings, "ENABLE_CELERY_BEAT", False)),
+            "last_heartbeat": last_heartbeat,
+            "now": timezone.now().isoformat(),
+        })
 
 
 class NotificationTemplateViewSet(viewsets.ModelViewSet):

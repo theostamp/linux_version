@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Charge, ManualPayment, Payment, PaymentAttempt, PayeeSettings
+from .models import (
+    Charge,
+    ManualPayment,
+    OnlinePaymentAuditLog,
+    OnlinePaymentLedgerLink,
+    Payment,
+    PaymentAttempt,
+    PayeeSettings,
+)
 
 
 @admin.register(Charge)
@@ -34,4 +42,17 @@ class ManualPaymentAdmin(admin.ModelAdmin):
 class PayeeSettingsAdmin(admin.ModelAdmin):
     list_display = ("id", "mode", "provider", "updated_at")
 
+
+@admin.register(OnlinePaymentLedgerLink)
+class OnlinePaymentLedgerLinkAdmin(admin.ModelAdmin):
+    list_display = ("id", "charge", "online_payment", "financial_payment", "provider", "source", "created_at")
+    list_filter = ("provider", "source")
+    search_fields = ("provider_event_id", "provider_payment_id")
+
+
+@admin.register(OnlinePaymentAuditLog)
+class OnlinePaymentAuditLogAdmin(admin.ModelAdmin):
+    list_display = ("timestamp", "action", "charge", "online_payment", "financial_payment", "user")
+    list_filter = ("action",)
+    search_fields = ("provider_event_id", "description")
 

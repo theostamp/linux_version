@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models import Q
 from django.core.cache import cache
 import logging
+from django.conf import settings
 
 from .models import Announcement
 from .serializers import AnnouncementSerializer, AnnouncementListSerializer
@@ -30,6 +31,8 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         # Read access for all
         if self.action in ['list', 'retrieve', 'urgent', 'active']:
+            if getattr(settings, 'ENABLE_SECURE_PUBLIC_INFO', False):
+                return [permissions.IsAuthenticated()]
             return [permissions.AllowAny()]
         # Create, update, destroy: επιτρέπεται σε office managers και internal managers
         return [permissions.IsAuthenticated(), IsOfficeManagerOrInternalManager()]
@@ -45,8 +48,12 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         Returns all announcements if no building parameter is provided.
         """
         queryset = Announcement.objects.select_related('author', 'building').order_by('-priority', '-created_at')
-        
-        # Filter by building if provided in query params
+
+        # If authenticated, apply building scoping to avoid cross-building exposure
+        if getattr(self.request.user, 'is_authenticated', False):
+            return filter_queryset_by_user_and_building(self.request, queryset, building_field='building')
+
+        # Public fallback (only when AllowAny is enabled)
         building_id = self.request.query_params.get('building')
         if building_id:
             try:
@@ -56,7 +63,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             except (ValueError, TypeError):
                 # Invalid building_id, return empty queryset
                 queryset = queryset.none()
-        
+
         return queryset
 
     def perform_create(self, serializer):

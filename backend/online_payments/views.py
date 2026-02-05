@@ -2,6 +2,7 @@ import csv
 import logging
 from typing import Any
 
+from django.conf import settings
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.utils import timezone
@@ -10,7 +11,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from online_payments.models import Charge, ChargeStatus, ManualPayment, PayeeSettings
+from online_payments.models import (
+    Charge,
+    ChargeStatus,
+    OnlinePaymentLedgerLink,
+    ManualPayment,
+    OnlinePaymentAuditAction,
+    OnlinePaymentAuditLog,
+    PayeeSettings,
+)
 from online_payments.serializers import (
     ChargeSerializer,
     CheckoutRequestSerializer,
@@ -84,7 +93,7 @@ class ChargeViewSet(viewsets.ModelViewSet):
         note = request.data.get("note")
         attachment_url = request.data.get("attachment_url")
 
-        ManualPayment.objects.create(
+        manual_payment = ManualPayment.objects.create(
             charge=charge,
             method=method,
             recorded_by_user_id=request.user.id,
@@ -95,6 +104,21 @@ class ChargeViewSet(viewsets.ModelViewSet):
         charge.status = ChargeStatus.PAID
         charge.paid_at = timezone.now()
         charge.save(update_fields=["status", "paid_at", "updated_at"])
+
+        OnlinePaymentAuditLog.log_action(
+            action=OnlinePaymentAuditAction.MANUAL_MARK_PAID,
+            description=f"Manual mark-paid for charge {charge.id}",
+            user=request.user,
+            charge=charge,
+            provider_event_id=None,
+            request=request,
+            metadata={
+                "method": method,
+                "note": note,
+                "attachment_url": attachment_url,
+                "manual_payment_id": str(manual_payment.id),
+            },
+        )
         return Response(ChargeSerializer(charge).data)
 
 
@@ -190,6 +214,62 @@ class ReconciliationExportCsvView(APIView):
         return resp
 
 
+class LedgerReconciliationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not _is_office_level(request.user):
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        if not getattr(settings, "ENABLE_LEDGER_SYNC", False):
+            return Response({"error": "Ledger sync disabled"}, status=status.HTTP_403_FORBIDDEN)
+
+        building_id = request.query_params.get("building")
+        period = request.query_params.get("period")
+
+        charges_qs = Charge.objects.select_related("apartment").filter(status=ChargeStatus.PAID)
+        if building_id:
+            charges_qs = charges_qs.filter(building_id=building_id)
+        if period:
+            charges_qs = charges_qs.filter(period=period)
+
+        linked_charge_ids = OnlinePaymentLedgerLink.objects.filter(charge__in=charges_qs).values_list(
+            "charge_id", flat=True
+        )
+        unlinked_qs = charges_qs.exclude(id__in=linked_charge_ids)
+
+        unlinked_total = unlinked_qs.aggregate(total=Sum("amount"))["total"] or 0
+        links_missing_online_payment = OnlinePaymentLedgerLink.objects.filter(
+            charge__in=charges_qs, online_payment__isnull=True
+        ).count()
+
+        items = [
+            {
+                "charge_id": str(c.id),
+                "building_id": c.building_id,
+                "apartment_id": c.apartment_id,
+                "apartment_number": c.apartment.number,
+                "amount": float(c.amount),
+                "currency": c.currency,
+                "period": c.period,
+                "paid_at": c.paid_at.isoformat() if c.paid_at else None,
+            }
+            for c in unlinked_qs.order_by("-paid_at")[:500]
+        ]
+
+        return Response(
+            {
+                "building": building_id,
+                "period": period,
+                "paid_charges": charges_qs.count(),
+                "linked_charges": OnlinePaymentLedgerLink.objects.filter(charge__in=charges_qs).count(),
+                "unlinked_paid_charges": unlinked_qs.count(),
+                "unlinked_paid_charges_total": float(unlinked_total),
+                "links_missing_online_payment": links_missing_online_payment,
+                "items": items,
+            }
+        )
+
+
 class PayeeSettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -211,5 +291,3 @@ class PayeeSettingsView(APIView):
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response(ser.data)
-
-

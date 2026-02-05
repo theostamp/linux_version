@@ -385,6 +385,7 @@ REST_FRAMEWORK = {
         'password_reset': '3/min',  # 3 password reset requests per minute
         'invitations': '10/hour',  # 10 invitations per hour
         'email_verification': '5/min',  # 5 email verification requests per minute
+        'kiosk_public': '30/min',
     },
 }
 
@@ -467,6 +468,28 @@ elif not os.getenv('RAILWAY_PUBLIC_DOMAIN') and DEBUG:
     CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
 
 # ----------------------------------------
+# 🔐 Refresh Token Cookie (HttpOnly)
+# ----------------------------------------
+# Defaults follow session cookie settings unless explicitly overridden.
+REFRESH_COOKIE_NAME = os.getenv('REFRESH_COOKIE_NAME', 'refresh_token')
+REFRESH_COOKIE_PATH = os.getenv('REFRESH_COOKIE_PATH', '/api/')
+REFRESH_COOKIE_DOMAIN = os.getenv('REFRESH_COOKIE_DOMAIN', '')  # Empty -> host-only
+REFRESH_COOKIE_HTTPONLY = os.getenv('REFRESH_COOKIE_HTTPONLY', 'True').lower() == 'true'
+REFRESH_COOKIE_SAMESITE = os.getenv('REFRESH_COOKIE_SAMESITE', SESSION_COOKIE_SAMESITE if 'SESSION_COOKIE_SAMESITE' in globals() else 'Lax')
+
+_raw_refresh_cookie_secure = os.getenv('REFRESH_COOKIE_SECURE')
+if _raw_refresh_cookie_secure is None:
+    REFRESH_COOKIE_SECURE = SESSION_COOKIE_SECURE if 'SESSION_COOKIE_SECURE' in globals() else False
+else:
+    REFRESH_COOKIE_SECURE = _raw_refresh_cookie_secure.lower() == 'true'
+
+_raw_refresh_cookie_max_age = os.getenv('REFRESH_COOKIE_MAX_AGE')
+try:
+    REFRESH_COOKIE_MAX_AGE = int(_raw_refresh_cookie_max_age) if _raw_refresh_cookie_max_age else None
+except ValueError:
+    REFRESH_COOKIE_MAX_AGE = None
+
+# ----------------------------------------
 # 📧 Email
 # ----------------------------------------
 # Use console backend for testing (emails printed to console)
@@ -545,6 +568,20 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 # Internal API security
 INTERNAL_API_SECRET_KEY = os.getenv('INTERNAL_API_SECRET_KEY', '')
+
+# ----------------------------------------
+# 🧩 Feature Flags (Production Hardening)
+# ----------------------------------------
+ENABLE_LEDGER_SYNC = os.getenv('ENABLE_LEDGER_SYNC', 'False').lower() == 'true'
+ENABLE_KIOSK_SIGNED_QR = os.getenv('ENABLE_KIOSK_SIGNED_QR', 'False').lower() == 'true'
+ENABLE_SECURE_PUBLIC_INFO = os.getenv('ENABLE_SECURE_PUBLIC_INFO', 'False').lower() == 'true'
+ENABLE_CELERY_BEAT = os.getenv('ENABLE_CELERY_BEAT', 'False').lower() == 'true'
+
+# Kiosk QR signing settings
+KIOSK_QR_TTL_SECONDS = int(os.getenv('KIOSK_QR_TTL_SECONDS', '900'))
+KIOSK_QR_ONE_TIME = os.getenv('KIOSK_QR_ONE_TIME', 'False').lower() == 'true'
+KIOSK_QR_SIGNING_SALT = os.getenv('KIOSK_QR_SIGNING_SALT', 'kiosk-qr')
+KIOSK_QR_CACHE_ALIAS = os.getenv('KIOSK_QR_CACHE_ALIAS', 'default')
 
 # ----------------------------------------
 # Django REST framework simple JWT settings

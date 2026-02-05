@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import KioskWidget, KioskDisplaySettings, KioskScene, WidgetPlacement
+from .models import KioskWidget, KioskDisplaySettings, KioskScene, WidgetPlacement, KioskAuditLog
 
 
 @admin.register(KioskWidget)
@@ -155,3 +155,10 @@ class WidgetPlacementAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+
+@admin.register(KioskAuditLog)
+class KioskAuditLogAdmin(admin.ModelAdmin):
+    list_display = ['timestamp', 'action', 'status', 'building', 'apartment', 'email']
+    list_filter = ['action', 'status', 'timestamp']
+    search_fields = ['email', 'phone', 'metadata']

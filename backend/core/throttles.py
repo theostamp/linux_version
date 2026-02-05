@@ -90,4 +90,12 @@ class MyApartmentLinkEmailIPThrottle(AnonRateThrottle):
         }
 
 
+class KioskPublicThrottle(AnonRateThrottle):
+    """
+    Rate limiting for public kiosk endpoints (QR token, connect/register, public-info).
+    """
+    scope = 'kiosk_public'
+    rate = '30/min'
+    cache = caches['throttles']
+
 

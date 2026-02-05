@@ -1550,6 +1550,78 @@ class FinancialDashboardService:
 
         return balances
 
+    def get_debt_report(self, month: str | None = None) -> Dict[str, Any]:
+        """
+        Returns debt report with aging buckets (0-30, 31-60, 61-90, 90+).
+        """
+        from apartments.models import Apartment
+
+        today = timezone.now().date()
+        apartment_balances = self.get_apartment_balances(month=month)
+        apartment_ids = [apt.get('apartment_id') for apt in apartment_balances if apt.get('apartment_id')]
+        apartments_by_id = Apartment.objects.in_bulk(apartment_ids)
+
+        def get_bucket(days_overdue: int) -> str:
+            if days_overdue <= 30:
+                return "0-30"
+            if days_overdue <= 60:
+                return "31-60"
+            if days_overdue <= 90:
+                return "61-90"
+            return "90+"
+
+        items = []
+        buckets = {
+            "0-30": {"count": 0, "amount": Decimal("0.00")},
+            "31-60": {"count": 0, "amount": Decimal("0.00")},
+            "61-90": {"count": 0, "amount": Decimal("0.00")},
+            "90+": {"count": 0, "amount": Decimal("0.00")},
+        }
+
+        for apt in apartment_balances:
+            debt_amount = Decimal(str(apt.get('current_balance', 0)))
+            if debt_amount <= 0:
+                continue
+
+            apartment = apartments_by_id.get(apt.get('apartment_id'))
+            last_payment_date = apt.get('last_payment_date')
+
+            if last_payment_date:
+                days_overdue = max(0, (today - last_payment_date).days)
+            else:
+                created_at = getattr(apartment, 'created_at', None)
+                days_overdue = max(0, (today - created_at.date()).days) if created_at else 0
+
+            bucket = get_bucket(days_overdue)
+            buckets[bucket]["count"] += 1
+            buckets[bucket]["amount"] += debt_amount
+
+            items.append({
+                "apartment_id": apt.get('apartment_id'),
+                "apartment_number": apt.get('apartment_number'),
+                "owner_name": apt.get('owner_name'),
+                "tenant_name": apt.get('tenant_name'),
+                "current_balance": float(debt_amount),
+                "status": apt.get('status'),
+                "last_payment_date": last_payment_date.isoformat() if last_payment_date else None,
+                "days_overdue": days_overdue,
+                "aging_bucket": bucket,
+            })
+
+        summary = {
+            "total_debt": float(sum(bucket["amount"] for bucket in buckets.values())),
+            "total_debtors": sum(bucket["count"] for bucket in buckets.values()),
+            "buckets": {
+                key: {"count": value["count"], "amount": float(value["amount"])} for key, value in buckets.items()
+            },
+        }
+
+        return {
+            "items": items,
+            "summary": summary,
+            "month": month,
+        }
+
     # ❌ DELETED: _calculate_historical_balance() method (was ~197 lines, 1209-1404)
     # This duplicate implementation has been removed as part of the Single Source of Truth refactoring.
     # All historical balance calculations now use:

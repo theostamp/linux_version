@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from django.conf import settings
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from django_tenants.utils import schema_context
@@ -16,9 +17,22 @@ from assemblies.models import Assembly
 from .serializers import AnnouncementPublicSerializer, VotePublicSerializer
 from tenants.models import Domain as TenantDomain
 from financial.services import FinancialDashboardService
+from core.throttles import KioskPublicThrottle
+from kiosk.token_utils import validate_kiosk_token
+
+
+def _extract_kiosk_token(request):
+    token = None
+    if hasattr(request, 'headers'):
+        token = request.headers.get('X-Kiosk-Token') or request.headers.get('x-kiosk-token')
+    if not token:
+        query_params = getattr(request, 'query_params', request.GET)
+        token = query_params.get('kiosk_token') or query_params.get('token')
+    return token
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([KioskPublicThrottle])
 def building_info(request, building_id: int):
     today = timezone.now().date()
     requested_host = (
@@ -633,6 +647,18 @@ def building_info(request, building_id: int):
         except Exception as e:
             logger.error(f"[public_info] Error fetching assemblies for building {building_id}: {str(e)}")
             assembly_data = None
+
+        kiosk_token = _extract_kiosk_token(request)
+        kiosk_token_valid = False
+        if getattr(settings, "ENABLE_SECURE_PUBLIC_INFO", False):
+            kiosk_token_valid = validate_kiosk_token(building_id, kiosk_token or "")
+
+            if not kiosk_token_valid:
+                # Remove apartment-level details for public/guest access
+                if isinstance(financial_data, dict):
+                    financial_data['apartment_balances'] = []
+                    financial_data['top_debtors'] = []
+                    financial_data['apartment_statuses'] = []
 
         return Response({
             'announcements': AnnouncementPublicSerializer(announcements, many=True).data,

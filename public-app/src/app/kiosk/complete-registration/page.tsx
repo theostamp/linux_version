@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Building2, Lock, User, ArrowRight, Check, AlertCircle, Loader2, Eye, EyeOff, Home, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
+import { storeAuthTokens } from '@/lib/authTokens';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -130,13 +131,11 @@ function CompleteRegistrationContent() {
         setSubmitStatus('success');
         setSubmitMessage('Η εγγραφή σας ολοκληρώθηκε επιτυχώς!');
 
-        // Store tokens if provided (backend returns them under 'tokens' key)
-        if (data.tokens?.access) {
-          localStorage.setItem('access_token', data.tokens.access);
-        }
-        if (data.tokens?.refresh) {
-          localStorage.setItem('refresh_token', data.tokens.refresh);
-        }
+        storeAuthTokens({
+          access: data.tokens?.access,
+          refresh: data.tokens?.refresh,
+          refreshCookieSet: Boolean(data.refresh_cookie_set),
+        });
 
         // Store building context from invitation or API response
         const buildingId = data.building_id || invitationDetails?.building_id;
@@ -197,15 +196,15 @@ function CompleteRegistrationContent() {
   // Success state
   if (submitStatus === 'success') {
     // Build URLs for navigation - use tenant subdomain if available
-    const buildUrl = (path: string) => {
-      if (tenantUrl) {
-        // Cross-subdomain redirect with tokens
-        const access = localStorage.getItem('access_token') || '';
-        const refresh = localStorage.getItem('refresh_token') || '';
-        return `https://${tenantUrl}/auth/callback#access=${encodeURIComponent(access)}&refresh=${encodeURIComponent(refresh)}&redirect=${encodeURIComponent(path)}`;
-      }
-      return path;
-    };
+        const buildUrl = (path: string) => {
+          if (tenantUrl) {
+            // Cross-subdomain redirect with tokens
+            const access = data.tokens?.access || '';
+            const refresh = data.tokens?.refresh || '';
+            return `https://${tenantUrl}/auth/callback#access=${encodeURIComponent(access)}&refresh=${encodeURIComponent(refresh)}&redirect=${encodeURIComponent(path)}`;
+          }
+          return path;
+        };
 
     const handleNavigation = (path: string) => {
       const url = buildUrl(path);

@@ -1,6 +1,8 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from buildings.models import Building
+from apartments.models import Apartment
 
 User = get_user_model()
 
@@ -209,3 +211,73 @@ class WidgetPlacement(models.Model):
             'zIndex': self.z_index,
             'widget': self.widget.to_dict(),
         }
+
+
+class KioskAuditAction(models.TextChoices):
+    TOKEN_ISSUED = "token_issued", "Token Issued"
+    REGISTER_ATTEMPT = "register_attempt", "Register Attempt"
+    REGISTER_SUCCESS = "register_success", "Register Success"
+    REGISTER_FAILED = "register_failed", "Register Failed"
+
+
+class KioskAuditLog(models.Model):
+    """
+    Audit log for kiosk/public flows (token issuance, connect/register).
+    """
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=30, choices=KioskAuditAction.choices)
+    status = models.CharField(max_length=30, blank=True)
+
+    building = models.ForeignKey(Building, on_delete=models.SET_NULL, null=True, blank=True)
+    apartment = models.ForeignKey(Apartment, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        verbose_name = "Kiosk Audit Log"
+        verbose_name_plural = "Kiosk Audit Logs"
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["timestamp"]),
+            models.Index(fields=["action"]),
+            models.Index(fields=["status"]),
+        ]
+
+    def __str__(self):
+        return f\"{self.timestamp} - {self.action} - {self.status}\"
+
+    @classmethod
+    def log_event(
+        cls,
+        *,
+        action: str,
+        status: str = "",
+        building=None,
+        apartment=None,
+        user=None,
+        email: str = "",
+        phone: str = "",
+        request=None,
+        metadata=None,
+    ):
+        try:
+            return cls.objects.create(
+                action=action,
+                status=status,
+                building=building,
+                apartment=apartment,
+                user=user if getattr(user, "is_authenticated", False) else None,
+                email=email,
+                phone=phone,
+                ip_address=getattr(request, "META", {}).get("REMOTE_ADDR"),
+                user_agent=getattr(request, "META", {}).get("HTTP_USER_AGENT", ""),
+                metadata=metadata or {},
+            )
+        except Exception:
+            return None

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiGet, apiPost } from '@/lib/api';
+import { getAccessToken } from '@/lib/authTokens';
 import type {
   ChatRoom,
   ChatMessage,
@@ -166,7 +167,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
         wsUrl = `ws://localhost:18000/ws/chat/${buildingId}/`;
       }
 
-      const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+      const token = getAccessToken();
       if (!token) {
         console.log('[useChat] No JWT token found, falling back to REST API polling.');
         setIsConnecting(false);

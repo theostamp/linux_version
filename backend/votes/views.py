@@ -8,11 +8,15 @@ from django.conf import settings
 import logging
 
 from .models import Vote, VoteSubmission, VoteSubmissionEvent
-from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer
+from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer, VoteTaskCreateSerializer
 from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin, IsOfficeManagerOrInternalManager
 from core.utils import filter_queryset_by_user_and_building
 from core.evidence import stable_json_bytes, sha256_hex_bytes, build_audit_root_hash, build_zip_bytes
 from assemblies.services import AssemblyMinutesService
+from todo_management.services import ensure_linked_todo
+from todo_management.models import TodoLink
+from todo_management.serializers import TodoItemSerializer
+from django.contrib.contenttypes.models import ContentType
 
 logger = logging.getLogger(__name__)
 
@@ -532,6 +536,54 @@ class VoteViewSet(viewsets.ModelViewSet):
                 {"error": "Αποτυχία φόρτωσης αποτελεσμάτων"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['post'], url_path='create-task')
+    def create_task(self, request, pk=None):
+        """Create or update a TodoItem linked to this vote (idempotent)."""
+        try:
+            vote = self.get_object()
+        except Http404:
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση σε αυτήν."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = VoteTaskCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        content_type = ContentType.objects.get_for_model(Vote)
+        existing_link = TodoLink.objects.filter(
+            content_type=content_type,
+            object_id=vote.pk,
+        ).first()
+
+        title = payload.get("title") or f"Απόφαση ψηφοφορίας: {vote.title}"
+        description = payload.get("description") or (vote.description or "")
+        due_date = payload.get("due_date")
+        priority = payload.get("priority") or "medium"
+        assigned_to = payload.get("assigned_to")
+
+        try:
+            todo = ensure_linked_todo(
+                content_object=vote,
+                title=title,
+                description=description,
+                due_at=due_date,
+                priority=priority,
+                assigned_to=assigned_to,
+                created_by=request.user,
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "created": existing_link is None,
+                "todo": TodoItemSerializer(todo).data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=['get'], url_path='evidence-package')
     def evidence_package(self, request, pk=None):

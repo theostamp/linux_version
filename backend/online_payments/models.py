@@ -1,3 +1,4 @@
+import logging
 import uuid
 from decimal import Decimal
 
@@ -176,4 +177,123 @@ class ManualPayment(models.Model):
         verbose_name = "Manual Payment"
         verbose_name_plural = "Manual Payments"
 
+
+class LedgerSyncSource(models.TextChoices):
+    WEBHOOK = "webhook", "Webhook"
+    MANUAL = "manual", "Manual"
+    RECONCILE = "reconcile", "Reconcile"
+
+
+class OnlinePaymentLedgerLink(models.Model):
+    """
+    Mapping between online payments (Stripe) and financial ledger payments.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    charge = models.ForeignKey(Charge, on_delete=models.CASCADE, related_name="ledger_links")
+    payment_attempt = models.ForeignKey(
+        PaymentAttempt, on_delete=models.SET_NULL, related_name="ledger_links", null=True, blank=True
+    )
+    online_payment = models.OneToOneField(
+        "online_payments.Payment", on_delete=models.SET_NULL, related_name="ledger_link", null=True, blank=True
+    )
+    financial_payment = models.OneToOneField(
+        "financial.Payment", on_delete=models.CASCADE, related_name="online_payment_link"
+    )
+
+    provider = models.CharField(max_length=20, choices=PayeeProvider.choices, default=PayeeProvider.STRIPE)
+    provider_event_id = models.CharField(max_length=255, unique=True, null=True, blank=True, db_index=True)
+    provider_payment_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    source = models.CharField(max_length=20, choices=LedgerSyncSource.choices, default=LedgerSyncSource.WEBHOOK)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Online Payment Ledger Link"
+        verbose_name_plural = "Online Payment Ledger Links"
+        indexes = [
+            models.Index(fields=["charge", "created_at"]),
+            models.Index(fields=["provider_payment_id"]),
+            models.Index(fields=["source"]),
+        ]
+
+
+class OnlinePaymentAuditAction(models.TextChoices):
+    MANUAL_MARK_PAID = "manual_mark_paid", "Manual Mark Paid"
+    WEBHOOK_SYNC = "webhook_sync", "Webhook Sync"
+    SYNC_SKIPPED = "sync_skipped", "Sync Skipped"
+    RECONCILE = "reconcile", "Reconcile"
+
+
+class OnlinePaymentAuditLog(models.Model):
+    """
+    Audit log for online payment operations (manual mark-paid, webhook sync, reconciliation).
+    """
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    action = models.CharField(max_length=30, choices=OnlinePaymentAuditAction.choices)
+    description = models.TextField()
+
+    charge = models.ForeignKey(Charge, on_delete=models.SET_NULL, null=True, blank=True)
+    online_payment = models.ForeignKey("online_payments.Payment", on_delete=models.SET_NULL, null=True, blank=True)
+    financial_payment = models.ForeignKey("financial.Payment", on_delete=models.SET_NULL, null=True, blank=True)
+
+    provider_event_id = models.CharField(max_length=255, null=True, blank=True)
+
+    request_method = models.CharField(max_length=10, blank=True)
+    request_path = models.CharField(max_length=255, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        verbose_name = "Online Payment Audit Log"
+        verbose_name_plural = "Online Payment Audit Logs"
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["timestamp"]),
+            models.Index(fields=["action"]),
+            models.Index(fields=["provider_event_id"]),
+        ]
+
+    def __str__(self):
+        return f"{self.timestamp} - {self.action} - {self.description}"
+
+    @classmethod
+    def log_action(
+        cls,
+        *,
+        action: str,
+        description: str,
+        user=None,
+        charge=None,
+        online_payment=None,
+        financial_payment=None,
+        provider_event_id=None,
+        request=None,
+        metadata=None,
+    ):
+        try:
+            return cls.objects.create(
+                user=user if getattr(user, "is_authenticated", False) else None,
+                action=action,
+                description=description,
+                charge=charge,
+                online_payment=online_payment,
+                financial_payment=financial_payment,
+                provider_event_id=provider_event_id,
+                request_method=getattr(request, "method", ""),
+                request_path=getattr(request, "path", ""),
+                ip_address=getattr(request, "META", {}).get("REMOTE_ADDR"),
+                user_agent=getattr(request, "META", {}).get("HTTP_USER_AGENT", ""),
+                metadata=metadata or {},
+            )
+        except Exception as exc:
+            logger = logging.getLogger(__name__)
+            logger.warning("[ONLINE_PAYMENTS][AUDIT] Failed to log audit action: %s", exc)
+            return None
 

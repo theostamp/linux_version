@@ -3,7 +3,7 @@ Public API endpoints for apartment personal kiosk access.
 No authentication required - access via unique kiosk_token.
 """
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -16,10 +16,12 @@ from apartments.models import Apartment
 from financial.models import CommonExpensePeriod, ApartmentShare, Transaction
 from announcements.models import Announcement
 from maintenance.models import MaintenanceTicket
+from core.throttles import KioskPublicThrottle
 
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([KioskPublicThrottle])
 def apartment_personal_dashboard(request, token):
     """
     Get personal dashboard data for apartment by kiosk token.
@@ -147,6 +149,7 @@ def apartment_personal_dashboard(request, token):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([KioskPublicThrottle])
 def apartment_common_expenses_history(request, token):
     """
     Get common expenses history for apartment.
@@ -176,6 +179,7 @@ def apartment_common_expenses_history(request, token):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([KioskPublicThrottle])
 def apartment_validate_token(request):
     """
     Validate apartment kiosk token.

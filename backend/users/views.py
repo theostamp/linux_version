@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.utils import timezone
 from .models import CustomUser, UserInvitation, PasswordResetToken
+from .auth_cookies import attach_refresh_cookie, clear_refresh_cookie, get_refresh_token_from_request
 from .serializers import (
     UserSerializer, OfficeDetailsSerializer, CustomTokenObtainPairSerializer,
     UserRegistrationSerializer, UserInvitationSerializer, UserInvitationCreateSerializer,
@@ -87,12 +88,37 @@ def send_myapartment_link_view(request):
         status=status.HTTP_200_OK,
     )
 
+class SimpleTokenObtainPairView(TokenObtainPairView):
+    """
+    Standard JWT token view with HttpOnly refresh cookie attachment.
+    """
+    throttle_classes = [LoginThrottle]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            refresh_token = None
+            if isinstance(getattr(response, "data", None), dict):
+                refresh_token = response.data.get("refresh")
+            attach_refresh_cookie(response, refresh_token)
+        return response
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Custom JWT token view that uses email instead of username
     """
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [LoginThrottle]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            refresh_token = None
+            if isinstance(getattr(response, "data", None), dict):
+                refresh_token = response.data.get("refresh")
+            attach_refresh_cookie(response, refresh_token)
+        return response
 
 
 class CustomTokenRefreshView(TokenRefreshView):
@@ -103,6 +129,26 @@ class CustomTokenRefreshView(TokenRefreshView):
     from .serializers import CustomTokenRefreshSerializer
     serializer_class = CustomTokenRefreshSerializer
     throttle_classes = []  # No throttling for refresh
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = None
+        data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+        refresh_token = data.get("refresh")
+        if not refresh_token:
+            refresh_token = get_refresh_token_from_request(request)
+            if refresh_token:
+                data["refresh"] = refresh_token
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        response = Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+        if isinstance(serializer.validated_data, dict) and serializer.validated_data.get("refresh"):
+            attach_refresh_cookie(response, serializer.validated_data.get("refresh"))
+        elif refresh_token:
+            attach_refresh_cookie(response, refresh_token)
+
+        return response
 
 
 @ensure_csrf_cookie
@@ -266,13 +312,15 @@ def login_view(request):
         else:
             print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, role: {user_role}, redirecting to /dashboard")
 
-    return Response({
+    response = Response({
         'access': access,
         'refresh': str(refresh),
         'user': user_data,
         'redirect_path': redirect_path,
         'tenant_url': tenant_url,
     }, status=status.HTTP_200_OK)
+    attach_refresh_cookie(response, str(refresh))
+    return response
 
 
 @api_view(['GET', 'PATCH', 'PUT'])
@@ -397,21 +445,25 @@ def logout_view(request):
     Blacklist του refresh token για αποσύνδεση.
     Αναμένει JSON { refresh: <refresh_token> }.
     """
-    refresh_token = request.data.get('refresh')
+    refresh_token = request.data.get('refresh') or get_refresh_token_from_request(request)
     if not refresh_token:
-        return Response(
+        response = Response(
             {'error': 'Απαιτείται το refresh token.'},
             status=status.HTTP_400_BAD_REQUEST
         )
+        clear_refresh_cookie(response)
+        return response
     try:
         token = RefreshToken(refresh_token)
         token.blacklist()
+        response = Response({'message': 'Αποσυνδεθήκατε επιτυχώς.'}, status=status.HTTP_200_OK)
     except Exception:
-        return Response(
+        response = Response(
             {'error': 'Άκυρο refresh token.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    return Response({'message': 'Αποσυνδεθήκατε επιτυχώς.'}, status=status.HTTP_200_OK)
+    clear_refresh_cookie(response)
+    return response
 
 
 @api_view(['PUT', 'PATCH'])
@@ -1016,7 +1068,9 @@ def resident_login_view(request):
             except Exception:
                 pass
         
-        return Response(response_data, status=status.HTTP_200_OK)
+        response = Response(response_data, status=status.HTTP_200_OK)
+        attach_refresh_cookie(response, str(refresh))
+        return response
         
     except Exception as e:
         logger.error(f"Error in resident_login_view: {e}", exc_info=True)
@@ -1366,7 +1420,7 @@ def accept_invitation_view(request):
             ).order_by('-accepted_at').first()
             building_id = invitation.building_id if invitation else None
             
-            return Response({
+            response = Response({
                 'message': 'Πρόσκληση αποδεχτή επιτυχώς.',
                 'user': {
                     'id': user.id,
@@ -1383,6 +1437,8 @@ def accept_invitation_view(request):
                 'redirect_path': redirect_path,
                 'building_id': building_id,
             }, status=status.HTTP_201_CREATED)
+            attach_refresh_cookie(response, refresh_token)
+            return response
             
         except ValueError as e:
             return Response({
@@ -1612,7 +1668,7 @@ def create_free_tenant_view(request):
         
         tenant_url = f"{tenant.schema_name}.newconcierge.app"
         
-        return Response({
+        response = Response({
             'success': True,
             'message': 'Το workspace δημιουργήθηκε επιτυχώς!',
             'tenantUrl': tenant_url,
@@ -1626,6 +1682,8 @@ def create_free_tenant_view(request):
                 'refresh': str(refresh)
             }
         }, status=status.HTTP_201_CREATED)
+        attach_refresh_cookie(response, str(refresh))
+        return response
         
     except Exception as e:
         logger.error(f"[FREE TENANT] Failed to create tenant: {e}", exc_info=True)

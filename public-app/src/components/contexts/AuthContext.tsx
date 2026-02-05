@@ -15,7 +15,9 @@ import {
   getCurrentUser,
   loginUser,
   logoutUser as apiLogoutUser,
+  refreshAccessToken,
 } from '@/lib/api';
+import { clearAuthTokens, getAccessToken, storeAuthTokens } from '@/lib/authTokens';
 import FullPageSpinner from '@/components/FullPageSpinner';
 
 // Paths where AuthContext should NOT auto-verify tokens (OAuth callbacks handle their own auth)
@@ -66,12 +68,7 @@ export function AuthProvider({
   }, []);
 
   const performClientLogout = useCallback(() => {
-    // Remove both access_token/refresh_token and access/refresh for backward compatibility
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
-    localStorage.removeItem('user');
+    clearAuthTokens();
     setUser(null);
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
@@ -99,9 +96,7 @@ export function AuthProvider({
     try {
       setIsLoading(true);
 
-      // Store the token (both access_token and access for backward compatibility)
-      localStorage.setItem('access_token', token);
-      localStorage.setItem('access', token);
+      storeAuthTokens({ access: token });
 
       // Fetch user data with this token
       const user = await getCurrentUser();
@@ -115,8 +110,7 @@ export function AuthProvider({
     } catch (error) {
       console.error('AuthContext: Token login failed:', error);
       // Clean up on failure
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('access');
+      clearAuthTokens();
       setIsLoading(false);
       throw error;
     }
@@ -144,7 +138,7 @@ export function AuthProvider({
   const refreshUser = useCallback(async () => {
     try {
       // Check both access_token and access for backward compatibility
-      const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+      const token = getAccessToken();
       if (!token) {
         console.log('AuthContext: No token found, cannot refresh user');
         return;
@@ -199,13 +193,20 @@ export function AuthProvider({
         return;
       }
 
-      // Check both access_token and access for backward compatibility
-      const token = localStorage.getItem('access_token') || localStorage.getItem('access');
       const cachedUser = localStorage.getItem('user');
 
       // Skip auto-login to simplify the flow - users can manually login
 
-      if (!token) {
+      if (!getAccessToken()) {
+        try {
+          await refreshAccessToken();
+        } catch (err) {
+          console.warn('[AuthContext] Refresh attempt failed on mount', err);
+        }
+      }
+
+      const tokenAfterRefresh = getAccessToken();
+      if (!tokenAfterRefresh) {
         console.log('[AuthContext] No token found on mount, setting auth as ready');
         if (timeoutId) clearTimeout(timeoutId);
         if (!isMounted) return;
@@ -216,7 +217,7 @@ export function AuthProvider({
         return;
       }
 
-      if (cachedUser && token) {
+      if (cachedUser && tokenAfterRefresh) {
         try {
           const parsedUser = JSON.parse(cachedUser) as User;
 
@@ -315,7 +316,7 @@ export function AuthProvider({
 
   // Compute isAuthenticated based on user state and token existence
   // Check both access_token and access for backward compatibility
-  const isAuthenticated = !!userState && (!!localStorage.getItem('access_token') || !!localStorage.getItem('access'));
+  const isAuthenticated = !!userState && !!getAccessToken();
 
   // Εκτελούμε έλεγχο του token κάθε λεπτό
   useEffect(() => {
@@ -326,7 +327,7 @@ export function AuthProvider({
     if (!isAuthenticated) return;
 
     const checkTokenInterval = setInterval(() => {
-      const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+      const token = getAccessToken();
       if (!token) {
         console.log('AuthContext: Token check - No token found, logging out');
         performClientLogout();

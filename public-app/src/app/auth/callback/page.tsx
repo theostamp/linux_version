@@ -6,6 +6,7 @@ import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/contexts/AuthContext';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
+import { storeAuthTokens } from '@/lib/authTokens';
 
 interface StateData {
   provider?: string;
@@ -43,6 +44,8 @@ function OAuthCallback() {
             const hashParams = new URLSearchParams(hash.substring(1));
             const access = hashParams.get('access');
             const refresh = hashParams.get('refresh');
+            const refreshCookieSet =
+              hashParams.get('rc') === '1' || hashParams.get('refresh_cookie_set') === '1';
             const redirectPath = hashParams.get('redirect') || '/dashboard';
             const buildingId = hashParams.get('building');
 
@@ -54,10 +57,11 @@ function OAuthCallback() {
                 console.log(`[AuthCallback] Set building context from redirect: ${buildingId}`);
               }
 
-              // Store refresh token first
-              if (refresh) {
-                localStorage.setItem('refresh_token', refresh);
-              }
+              storeAuthTokens({
+                access,
+                refresh,
+                refreshCookieSet,
+              });
 
               // Use loginWithToken to properly set auth state
               await loginWithToken(access);
@@ -152,10 +156,11 @@ function OAuthCallback() {
           throw new Error(data.error || 'OAuth callback failed');
         }
 
-        // Store refresh token first
-        if (data.refresh) {
-          localStorage.setItem('refresh_token', data.refresh);
-        }
+        storeAuthTokens({
+          access: data.access,
+          refresh: data.refresh,
+          refreshCookieSet: Boolean(data.refresh_cookie_set),
+        });
 
         // Use loginWithToken to properly set auth state (if not cross-domain redirect)
         if (data.access && !data.tenant_url) {
@@ -165,11 +170,11 @@ function OAuthCallback() {
           } catch (tokenError) {
             console.error('[OAuth Callback] loginWithToken failed:', tokenError);
             // Fall back to localStorage-only approach
-            localStorage.setItem('access_token', data.access);
+            storeAuthTokens({ access: data.access });
           }
         } else if (data.access) {
           // For cross-domain redirect, just store the token (will be transferred via URL hash)
-          localStorage.setItem('access_token', data.access);
+          storeAuthTokens({ access: data.access });
         }
 
         // Handle different flows based on state

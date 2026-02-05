@@ -14,6 +14,11 @@ app.autodiscover_tasks()
 
 # Celery Beat schedule for periodic tasks
 app.conf.beat_schedule = {
+    # Celery beat heartbeat (health check) every 5 minutes
+    'celery-beat-heartbeat': {
+        'task': 'notifications.tasks.record_scheduler_heartbeat',
+        'schedule': crontab(minute='*/5'),
+    },
     # Check for monthly tasks every hour
     'check-monthly-tasks-hourly': {
         'task': 'notifications.tasks.check_and_execute_monthly_tasks',
@@ -86,6 +91,15 @@ app.conf.beat_schedule = {
         'args': (30,),
     },
 }
+
+try:
+    from django.conf import settings
+
+    if not getattr(settings, "ENABLE_CELERY_BEAT", False):
+        app.conf.beat_schedule = {}
+except Exception:
+    # Fail safe: keep schedule if settings cannot be loaded
+    pass
 
 
 @app.task(bind=True)

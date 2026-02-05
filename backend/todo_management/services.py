@@ -18,6 +18,8 @@ def _infer_category_name_for_object(content_object) -> str:
         return "Maintenance"
     if model_name in {"project", "milestone", "contract", "offer"}:
         return "Projects"
+    if model_name in {"vote", "assemblyvote", "agendaitem"}:
+        return "Votes"
     return "General"
 
 
@@ -39,6 +41,16 @@ def _get_building_from_object(obj):
     """
     if hasattr(obj, "building") and getattr(obj, "building") is not None:
         return obj.building
+
+    if hasattr(obj, "agenda_item"):
+        try:
+            agenda_item = getattr(obj, "agenda_item")
+        except Exception:
+            agenda_item = None
+        if agenda_item is not None and hasattr(agenda_item, "assembly"):
+            assembly = getattr(agenda_item, "assembly")
+            if assembly is not None and hasattr(assembly, "building") and getattr(assembly, "building") is not None:
+                return assembly.building
 
     # Common parent relations that carry building
     parent_attrs = [
@@ -79,18 +91,21 @@ def _resolve_actor_for_object(content_object, created_by: Optional[User], assign
         return assigned_to
 
     # Look on the object itself
-    for attr in ["reporter", "created_by"]:
+    for attr in ["reporter", "created_by", "creator"]:
         if hasattr(content_object, attr) and getattr(content_object, attr) is not None:
             return getattr(content_object, attr)
 
     # Look on known parents
-    parent_attrs = ["ticket", "project", "offer", "contract"]
+    parent_attrs = ["ticket", "project", "offer", "contract", "agenda_item"]
     for parent_attr in parent_attrs:
         if hasattr(content_object, parent_attr):
-            parent = getattr(content_object, parent_attr)
+            try:
+                parent = getattr(content_object, parent_attr)
+            except Exception:
+                parent = None
             if parent is None:
                 continue
-            for attr in ["reporter", "created_by"]:
+            for attr in ["reporter", "created_by", "creator"]:
                 if hasattr(parent, attr) and getattr(parent, attr) is not None:
                     return getattr(parent, attr)
 
@@ -337,5 +352,3 @@ def sync_maintenance_schedule(building_id: int, actor) -> Dict[str, int]:
         "skipped": skipped,
         "total_scheduled": maint_qs.count(),
     }
-
-

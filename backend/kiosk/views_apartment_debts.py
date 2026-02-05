@@ -2,20 +2,24 @@
 Custom view για την εμφάνιση κοινοχρήστων διαμερισμάτων στο kiosk
 Επιστρέφει τα υπολογισμένα ποσά από το φύλλο κοινοχρήστων του τρέχοντος μήνα
 """
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 from financial.models import Apartment
 from financial.services import CommonExpenseCalculator
 from decimal import Decimal
 from datetime import date
 from buildings.models import Building
 from buildings.entitlements import resolve_building_entitlements, resolve_tenant_state
+from core.throttles import KioskPublicThrottle
+from kiosk.token_utils import validate_kiosk_token
 
 
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Public endpoint for kiosk
+@throttle_classes([KioskPublicThrottle])
 def apartment_debts(request):
     """
     Επιστρέφει τα κοινόχρηστα διαμερισμάτων για το kiosk widget
@@ -29,6 +33,14 @@ def apartment_debts(request):
             {'error': 'Building ID is required'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    if getattr(settings, "ENABLE_SECURE_PUBLIC_INFO", False):
+        kiosk_token = request.headers.get('X-Kiosk-Token') or request.query_params.get('kiosk_token')
+        if not validate_kiosk_token(building_id, kiosk_token or ''):
+            return Response(
+                {'error': 'Kiosk token required', 'code': 'KIOSK_TOKEN_REQUIRED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
     # Enforce Premium entitlement (Kiosk widgets are premium-only, office-only)
     try:

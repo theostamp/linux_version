@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import { getDefaultLandingPath, type RoleDescriptor } from '@/lib/roleUtils';
+import { storeAuthTokens } from '@/lib/authTokens';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 // Καθορίζει τη σωστή landing page βάσει του ρόλου του χρήστη
@@ -118,13 +119,11 @@ function OfficeLoginForm() {
         throw new Error(data.error || 'Σφάλμα σύνδεσης');
       }
 
-      // Store tokens if provided
-      if (data.access) {
-        localStorage.setItem('access_token', data.access);
-      }
-      if (data.refresh) {
-        localStorage.setItem('refresh_token', data.refresh);
-      }
+      storeAuthTokens({
+        access: data.access,
+        refresh: data.refresh,
+        refreshCookieSet: Boolean(data.refresh_cookie_set),
+      });
 
       // Καθορισμός redirect URL βάσει ρόλου χρήστη
       const targetRedirect = getRedirectForRole(data.user, explicitRedirect || undefined);

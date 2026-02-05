@@ -5,6 +5,7 @@ import logging
 
 from celery import shared_task
 from django.conf import settings
+from django.core.cache import caches
 from django.utils import timezone
 from django_tenants.utils import schema_context, get_tenant_model
 from datetime import datetime, timedelta
@@ -12,6 +13,23 @@ from typing import Optional
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_status_cache():
+    try:
+        return caches["default"]
+    except Exception:
+        return caches['throttles']
+
+
+@shared_task
+def record_scheduler_heartbeat():
+    """
+    Record a heartbeat timestamp for Celery beat health checks.
+    """
+    cache = _get_status_cache()
+    cache.set("celery_beat_heartbeat", timezone.now().isoformat(), timeout=60 * 60)
+    return {"status": "ok"}
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=30)

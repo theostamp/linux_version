@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import Vote
+from core.throttles import KioskPublicThrottle
 
 
 class PublicVoteResultsView(APIView):
@@ -13,6 +14,7 @@ class PublicVoteResultsView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [KioskPublicThrottle]
 
     def get(self, request, vote_id: int):
         try:
@@ -34,5 +36,4 @@ class PublicVoteResultsView(APIView):
             'is_valid': vote.is_valid_result,
             'results': results,
         })
-
 

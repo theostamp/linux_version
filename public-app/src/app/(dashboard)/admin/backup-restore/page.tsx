@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { apiGet, apiPost, apiDelete, getApiUrl } from '@/lib/api';
+import { getAccessToken } from '@/lib/authTokens';
 import {
   Download,
   Upload,
@@ -216,7 +217,7 @@ export default function BackupRestorePage() {
     try {
       // For local storage, we need raw fetch to handle blob download
       if (selectedStorage === 'local') {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || localStorage.getItem('access_token') || localStorage.getItem('access') : null;
+        const token = typeof window !== 'undefined' ? getAccessToken() : null;
         const response = await fetch(getApiUrl('/financial/admin/backup/'), {
           method: 'POST',
           headers: {

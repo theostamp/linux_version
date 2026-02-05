@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { logoutUser } from '@/lib/api';
+import { clearAuthTokens } from '@/lib/authTokens';
 
 export default function useLogout() {
   const router = useRouter();
@@ -18,11 +19,7 @@ export default function useLogout() {
       toast.error(error.message ?? 'Αποτυχία αποσύνδεσης');
     } finally {
       // Fallback client-side cleanup
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
-      localStorage.removeItem('user');
+      clearAuthTokens();
       setUser(null);
       toast.success('Αποσυνδεθήκατε');
       router.replace('/login');

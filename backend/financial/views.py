@@ -2268,6 +2268,31 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=False, methods=['get'], url_path='debt-report')
+    def debt_report(self, request):
+        """Debt report with aging buckets (0-30, 31-60, 61-90, 90+)"""
+        query_params = get_query_params(request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
+
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from .services import FinancialDashboardService
+
+            service = FinancialDashboardService(building_id=building_id)
+            report = service.get_debt_report(month=month)
+            return Response(report)
+        except Exception as e:
+            return Response(
+                {'error': f'Error generating debt report: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=False, methods=['get'])
     def apartment_transaction_history(self, request):
         """Λήψη ιστορικού κινήσεων διαμερίσματος (χρεώσεις και πληρωμές) ανά μήνα"""

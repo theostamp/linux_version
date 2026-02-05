@@ -12,11 +12,11 @@ import ParticipationMeter from '@/components/votes/ParticipationMeter';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2, Clock, Calendar, Building2, User, AlertCircle, CheckCircle2, Zap, ShieldCheck, ClipboardCheck, Link as LinkIcon, QrCode, Copy } from 'lucide-react';
-import { deleteVote, type Vote } from '@/lib/api';
+import { createVoteTask, deleteVote, type Vote } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
-import { hasOfficeAdminAccess } from '@/lib/roleUtils';
+import { hasInternalManagerAccess, hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +27,7 @@ export default function VoteDetailPage() {
   const { buildings, selectedBuilding, currentBuilding, isLoading: buildingsLoading } = useBuilding();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isDownloadingEvidence, setIsDownloadingEvidence] = useState(false);
   const [verifyInfo, setVerifyInfo] = useState<{
     url: string;
@@ -46,6 +47,7 @@ export default function VoteDetailPage() {
   const { data: results, refetch: refetchResults } = useVoteResults(voteId, buildingId);
 
   const canDelete = hasOfficeAdminAccess(user);
+  const canManageVote = hasInternalManagerAccess(user, selectedBuilding ?? currentBuilding ?? undefined);
 
   const handleDelete = async () => {
     if (!vote) return;
@@ -68,6 +70,24 @@ export default function VoteDetailPage() {
       console.error('Error deleting vote:', err);
       toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');
       setIsDeleting(false);
+    }
+  };
+
+  const handleCreateTask = async () => {
+    if (!vote) return;
+    setIsCreatingTask(true);
+    try {
+      const result = await createVoteTask(vote.id, {}, buildingId);
+      if (result?.created) {
+        toast.success('Η εργασία δημιουργήθηκε');
+      } else {
+        toast.message('Η εργασία υπάρχει ήδη');
+      }
+    } catch (err) {
+      console.error('Error creating task from vote:', err);
+      toast.error('Σφάλμα κατά τη δημιουργία εργασίας');
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
@@ -441,25 +461,39 @@ export default function VoteDetailPage() {
             )}
           </div>
 
-          {/* Delete button */}
-          {canDelete && (
+          {/* Action buttons */}
+          {(canDelete || canManageVote) && (
             <div className="absolute top-4 right-4 flex items-center gap-2">
-              <button
-                onClick={handleDownloadEvidence}
-                disabled={isDownloadingEvidence}
-                className="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 transition-colors text-xs font-medium"
-                title="Λήψη αποδεικτικών"
-              >
-                {isDownloadingEvidence ? 'Λήψη...' : 'Αποδεικτικά (ZIP)'}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="p-2 rounded-lg bg-white/10 hover:bg-red-500/50 transition-colors disabled:opacity-50"
-                title="Διαγραφή ψηφοφορίας"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              {canManageVote && (
+                <button
+                  onClick={handleCreateTask}
+                  disabled={isCreatingTask}
+                  className="px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-medium"
+                  title="Δημιουργία εργασίας από την ψηφοφορία"
+                >
+                  {isCreatingTask ? 'Δημιουργία...' : 'Δημιουργία εργασίας'}
+                </button>
+              )}
+              {canDelete && (
+                <>
+                  <button
+                    onClick={handleDownloadEvidence}
+                    disabled={isDownloadingEvidence}
+                    className="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 transition-colors text-xs font-medium"
+                    title="Λήψη αποδεικτικών"
+                  >
+                    {isDownloadingEvidence ? 'Λήψη...' : 'Αποδεικτικά (ZIP)'}
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="p-2 rounded-lg bg-white/10 hover:bg-red-500/50 transition-colors disabled:opacity-50"
+                    title="Διαγραφή ψηφοφορίας"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

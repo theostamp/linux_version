@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 
 import stripe
 from django.conf import settings
@@ -48,6 +49,10 @@ class StripeWebhookView(APIView):
 
         event_id = event.get("id")
         event_type = event.get("type")
+        event_created_ts = event.get("created")
+        event_created = None
+        if event_created_ts:
+            event_created = datetime.fromtimestamp(event_created_ts, tz=timezone.utc)
 
         # Idempotency
         if event_id and WebhookEvent.objects.filter(event_id=event_id).exists():
@@ -77,6 +82,7 @@ class StripeWebhookView(APIView):
 
             with schema_context(str(tenant_schema)):
                 from online_payments.models import Charge, Payment, PaymentAttempt, ChargeStatus, PaymentAttemptStatus
+                from online_payments.services.ledger_sync import sync_ledger_for_online_payment
 
                 charge = Charge.objects.get(id=charge_id)
 
@@ -92,7 +98,7 @@ class StripeWebhookView(APIView):
                     )
                     # Create payment record (provider_payment_id uses payment_intent if available else session id)
                     provider_payment_id = payment_intent_id or session_id
-                    Payment.objects.get_or_create(
+                    online_payment, _created = Payment.objects.get_or_create(
                         provider_payment_id=provider_payment_id,
                         defaults={
                             "charge": charge,
@@ -105,9 +111,18 @@ class StripeWebhookView(APIView):
                             "raw_summary": {"event_id": event_id, "type": event_type, "building_id": building_id},
                         },
                     )
+                    payment_attempt = PaymentAttempt.objects.filter(provider_session_id=session_id).first()
                     charge.status = ChargeStatus.PAID
                     charge.paid_at = timezone.now()
                     charge.save(update_fields=["status", "paid_at", "updated_at"])
+                    sync_ledger_for_online_payment(
+                        charge=charge,
+                        online_payment=online_payment,
+                        payment_attempt=payment_attempt,
+                        event_id=event_id,
+                        event_type=event_type,
+                        event_created=event_created,
+                    )
 
                 elif event_type == "payment_intent.payment_failed":
                     pi_id = obj.get("id")
@@ -125,23 +140,31 @@ class StripeWebhookView(APIView):
                         status=PaymentAttemptStatus.SUCCEEDED,
                         updated_at=timezone.now(),
                     )
-                    if charge.status != ChargeStatus.PAID:
-                        Payment.objects.get_or_create(
-                            provider_payment_id=pi_id,
-                            defaults={
-                                "charge": charge,
-                                "provider": "stripe",
-                                "paid_at": timezone.now(),
-                                "amount": charge.amount,
-                                "currency": charge.currency,
-                                "method": "unknown",
-                                "routed_to": charge.compute_routed_to(),
-                                "raw_summary": {"event_id": event_id, "type": event_type, "building_id": building_id},
-                            },
-                        )
-                        charge.status = ChargeStatus.PAID
-                        charge.paid_at = timezone.now()
-                        charge.save(update_fields=["status", "paid_at", "updated_at"])
+                    online_payment, _created = Payment.objects.get_or_create(
+                        provider_payment_id=pi_id,
+                        defaults={
+                            "charge": charge,
+                            "provider": "stripe",
+                            "paid_at": timezone.now(),
+                            "amount": charge.amount,
+                            "currency": charge.currency,
+                            "method": "unknown",
+                            "routed_to": charge.compute_routed_to(),
+                            "raw_summary": {"event_id": event_id, "type": event_type, "building_id": building_id},
+                        },
+                    )
+                    charge.status = ChargeStatus.PAID
+                    charge.paid_at = timezone.now()
+                    charge.save(update_fields=["status", "paid_at", "updated_at"])
+                    payment_attempt = PaymentAttempt.objects.filter(provider_payment_intent_id=pi_id).first()
+                    sync_ledger_for_online_payment(
+                        charge=charge,
+                        online_payment=online_payment,
+                        payment_attempt=payment_attempt,
+                        event_id=event_id,
+                        event_type=event_type,
+                        event_created=event_created,
+                    )
 
                 else:
                     logger.info(f"[ONLINE_PAYMENTS][WEBHOOK] Unhandled event type: {event_type}")
@@ -158,5 +181,4 @@ class StripeWebhookView(APIView):
             we.error_message = str(e)
             we.save(update_fields=["processed_at", "processing_status", "error_message"])
             return HttpResponse(status=500)
-
 

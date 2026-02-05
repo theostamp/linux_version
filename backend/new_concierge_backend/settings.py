@@ -446,6 +446,7 @@ REST_FRAMEWORK = {
         'password_reset': '3/min',  # 3 password reset requests per minute
         'invitations': '10/hour',  # 10 invitations per hour
         'email_verification': '5/min',  # 5 email verification requests per minute
+        'kiosk_public': '30/min',
     },
 }
 
@@ -619,6 +620,20 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 # Internal API security
 INTERNAL_API_SECRET_KEY = os.getenv('INTERNAL_API_SECRET_KEY', '')
+
+# ----------------------------------------
+# 🧩 Feature Flags (Production Hardening)
+# ----------------------------------------
+ENABLE_LEDGER_SYNC = os.getenv('ENABLE_LEDGER_SYNC', 'False').lower() == 'true'
+ENABLE_KIOSK_SIGNED_QR = os.getenv('ENABLE_KIOSK_SIGNED_QR', 'False').lower() == 'true'
+ENABLE_SECURE_PUBLIC_INFO = os.getenv('ENABLE_SECURE_PUBLIC_INFO', 'False').lower() == 'true'
+ENABLE_CELERY_BEAT = os.getenv('ENABLE_CELERY_BEAT', 'False').lower() == 'true'
+
+# Kiosk QR signing settings
+KIOSK_QR_TTL_SECONDS = int(os.getenv('KIOSK_QR_TTL_SECONDS', '900'))
+KIOSK_QR_ONE_TIME = os.getenv('KIOSK_QR_ONE_TIME', 'False').lower() == 'true'
+KIOSK_QR_SIGNING_SALT = os.getenv('KIOSK_QR_SIGNING_SALT', 'kiosk-qr')
+KIOSK_QR_CACHE_ALIAS = os.getenv('KIOSK_QR_CACHE_ALIAS', 'default')
 
 # ----------------------------------------
 # Django REST framework simple JWT settings

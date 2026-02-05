@@ -1,5 +1,37 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(isProd ? [] : ["'unsafe-eval'"]),
+  "https://js.stripe.com",
+  "https://m.stripe.network",
+];
+const styleSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  "https://fonts.googleapis.com",
+  "https://m.stripe.network",
+];
+const cspBase = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'self'",
+  `script-src ${scriptSrc.join(" ")}`,
+  `style-src ${styleSrc.join(" ")}`,
+  "img-src 'self' data: https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https: wss:",
+  "frame-src https://js.stripe.com https://m.stripe.network",
+].join("; ");
+
+const cspPlasmic = cspBase.replace(
+  "frame-ancestors 'self'",
+  "frame-ancestors 'self' https://studio.plasmic.app https://*.plasmic.app https://*.trycloudflare.com",
+);
+
 const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: false,
@@ -38,7 +70,16 @@ const nextConfig: NextConfig = {
           // Content-Security-Policy frame-ancestors is the modern replacement for X-Frame-Options
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'self' https://studio.plasmic.app https://*.plasmic.app https://*.trycloudflare.com;",
+            value: cspPlasmic,
+          },
+        ],
+      },
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspBase,
           },
         ],
       },

@@ -3,9 +3,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import login_view, CustomTokenObtainPairView, CustomTokenRefreshView, me_view, update_office_details
+from .views import (
+    login_view,
+    CustomTokenObtainPairView,
+    CustomTokenRefreshView,
+    SimpleTokenObtainPairView,
+    me_view,
+    update_office_details,
+)
 from .oauth_views import google_oauth_initiate, microsoft_oauth_initiate, oauth_callback, oauth_health
-from rest_framework_simplejwt.views import TokenObtainPairView
 from .profile_views import (
     UserProfileView, 
     UserChangePasswordView, 
@@ -49,7 +55,7 @@ urlpatterns = [
     path('resident-login/', views.resident_login_view, name='user-resident-login'),
     path('resident-login', views.resident_login_view, name='user-resident-login-no-slash'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/simple/', TokenObtainPairView.as_view(), name='token_obtain_pair_simple'),
+    path('token/simple/', SimpleTokenObtainPairView.as_view(), name='token_obtain_pair_simple'),
     path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
 
     # Profile endpoints

@@ -11,6 +11,7 @@ import {
   getUltraAdminTenantOverride,
   setUltraAdminTenantOverride
 } from '@/lib/api';
+import { getAccessToken } from '@/lib/authTokens';
 import {
   Search,
   Building as BuildingIcon,
@@ -123,16 +124,7 @@ export default function BuildingSelector({
   }, []);
 
   const hasAuthToken = () => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return Boolean(
-        localStorage.getItem('access_token') ||
-        localStorage.getItem('access') ||
-        localStorage.getItem('accessToken')
-      );
-    } catch {
-      return false;
-    }
+    return Boolean(getAccessToken());
   };
 
   // Determine if user should only see their own buildings (via BuildingMembership)

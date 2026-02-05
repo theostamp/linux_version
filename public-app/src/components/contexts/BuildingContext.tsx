@@ -13,6 +13,7 @@ import React, {
 import type { Building } from '@/lib/api';
 import { fetchAllBuildings, fetchMyBuildings, api } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { clearAuthTokens } from '@/lib/authTokens';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -490,10 +491,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     if (!isLoading && error && error.includes('403')) {
       console.log('[BuildingContext] 403 error detected, redirecting to login');
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        clearAuthTokens();
         localStorage.removeItem('selectedBuildingId');
       }
       router.push('/login');

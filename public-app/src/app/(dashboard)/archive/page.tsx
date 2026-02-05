@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 import { getEffectiveRoleForBuilding } from '@/lib/roleUtils';
+import { getAccessToken } from '@/lib/authTokens';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -239,10 +240,7 @@ function ArchiveContent() {
 
     setOpeningDocId(doc.id);
     try {
-      const token =
-        localStorage.getItem('access_token') ||
-        localStorage.getItem('access') ||
-        localStorage.getItem('accessToken');
+      const token = getAccessToken();
 
       if (!token) {
         toast.error('Δεν βρέθηκαν διαπιστευτήρια. Παρακαλώ συνδεθείτε ξανά.');

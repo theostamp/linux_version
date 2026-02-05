@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { clearAuthTokens, getAccessToken, storeAuthTokens } from '@/lib/authTokens';
 import {
   Building2,
   Mail,
@@ -25,7 +26,7 @@ export const dynamic = 'force-dynamic';
 function checkAuth(): { isAuthenticated: boolean; userEmail?: string } {
   if (typeof window === 'undefined') return { isAuthenticated: false };
 
-  const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+  const token = getAccessToken();
   const userStr = localStorage.getItem('user');
 
   if (!token) return { isAuthenticated: false };
@@ -196,8 +197,7 @@ function KioskConnectContent() {
         // Check if this is an existing user with instant login token
         if (data.status === 'existing_user' && data.access_token) {
           // Instant login - store token and redirect immediately
-          localStorage.setItem('access_token', data.access_token);
-          localStorage.setItem('access', data.access_token);
+          storeAuthTokens({ access: data.access_token });
 
           // Store user data if provided
           if (data.user) {
@@ -283,10 +283,7 @@ function KioskConnectContent() {
   // Handle "not me" - switch to new user registration
   const handleNotMe = () => {
     // Clear existing auth tokens to start fresh registration
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    clearAuthTokens();
     console.log('[KioskConnect] Cleared existing tokens for new registration');
 
     // Clear auth state and show registration form

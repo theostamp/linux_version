@@ -24,9 +24,9 @@ urlpatterns = [
     path("payments/building/", views.BuildingPaymentsView.as_view(), name="payments-building"),
     # Reconciliation & exports
     path("reconciliation/summary/", views.ReconciliationSummaryView.as_view(), name="reconciliation-summary"),
+    path("reconciliation/ledger/", views.LedgerReconciliationView.as_view(), name="reconciliation-ledger"),
     path("exports/reconciliation.csv", views.ReconciliationExportCsvView.as_view(), name="reconciliation-export-csv"),
     # Payee settings (Two-IBAN)
     path("settings/payee/", views.PayeeSettingsView.as_view(), name="payee-settings"),
 ]
-
 

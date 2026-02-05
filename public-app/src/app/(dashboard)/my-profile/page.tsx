@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { getEffectiveRole, getRoleLabel, hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useViberConnect } from '@/hooks/useViberConnect';
+import { clearAuthTokens } from '@/lib/authTokens';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
@@ -135,10 +136,7 @@ export default function MyProfilePage() {
         toast.warning('Η συνδρομή δεν ακυρώθηκε πλήρως. Επικοινώνησε μαζί μας για έλεγχο.');
       }
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        clearAuthTokens();
         window.location.href = '/login?deleted=1';
       }
     },
@@ -477,10 +475,7 @@ export default function MyProfilePage() {
                     variant="secondary"
                     onClick={() => {
                       if (typeof window !== 'undefined') {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        localStorage.removeItem('access');
-                        localStorage.removeItem('refresh');
+                        clearAuthTokens();
                         toast.success('Τα tokens διαγράφηκαν. Συνδέσου ξανά αν χρειαστεί.');
                       }
                     }}

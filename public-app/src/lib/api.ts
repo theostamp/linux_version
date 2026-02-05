@@ -5,6 +5,7 @@
  * Το Next.js rewrite τα προωθεί στο server-side proxy (`/backend-proxy`)
  * οπότε δεν κάνουμε ποτέ απευθείας κλήσεις στο Railway από τον browser.
  */
+import { clearAuthTokens, getAccessToken, isRefreshCookieEnabled, storeAuthTokens } from '@/lib/authTokens';
 
 type ApiErrorResponse = {
   status: number;
@@ -181,7 +182,7 @@ let refreshTokenPromise: Promise<string | null> | null = null;
  * Attempt to refresh the access token using the refresh token
  * Returns the new access token or null if refresh failed
  */
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
   // If already refreshing, return the existing promise
   if (isRefreshingToken && refreshTokenPromise) {
     console.log('[API TOKEN REFRESH] Already refreshing, waiting for existing refresh...');
@@ -191,9 +192,8 @@ async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
 
   const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refresh');
-  if (!refreshToken) {
-    console.log('[API TOKEN REFRESH] No refresh token found');
-    return null;
+  if (!refreshToken && !isRefreshCookieEnabled()) {
+    console.log('[API TOKEN REFRESH] No refresh token found, attempting cookie refresh');
   }
 
   isRefreshingToken = true;
@@ -201,13 +201,17 @@ async function refreshAccessToken(): Promise<string | null> {
 
   refreshTokenPromise = (async () => {
     try {
+      const headers: Record<string, string> = {};
+      let body: string | undefined;
+
+      headers['Content-Type'] = 'application/json';
+      body = refreshToken ? JSON.stringify({ refresh: refreshToken }) : JSON.stringify({});
+
       const response = await fetch('/api/users/token/refresh/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
-        body: JSON.stringify({ refresh: refreshToken }),
+        body,
       });
 
       if (!response.ok) {
@@ -215,18 +219,14 @@ async function refreshAccessToken(): Promise<string | null> {
         return null;
       }
 
-      const data = await response.json() as { access: string; refresh?: string };
+      const data = await response.json() as { access: string; refresh?: string; refresh_cookie_set?: boolean };
       const newAccessToken = data.access;
 
-      // Store new access token
-      localStorage.setItem('access_token', newAccessToken);
-      localStorage.setItem('access', newAccessToken);
-
-      // If a new refresh token was returned (rotation enabled), store it too
-      if (data.refresh) {
-        localStorage.setItem('refresh_token', data.refresh);
-        localStorage.setItem('refresh', data.refresh);
-      }
+      storeAuthTokens({
+        access: newAccessToken,
+        refresh: data.refresh,
+        refreshCookieSet: Boolean(data.refresh_cookie_set),
+      });
 
       console.log('[API TOKEN REFRESH] Token refreshed successfully');
       return newAccessToken;
@@ -399,10 +399,7 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
 
   if (typeof window !== "undefined") {
     // Add auth token if available
-    const token =
-      localStorage.getItem("access_token") ||
-      localStorage.getItem("access") ||
-      localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1006,16 +1003,17 @@ export async function loginUser(
   password: string,
 ): Promise<{ access: string; refresh: string; user: User }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
-  const data = await apiPost<{ access: string; refresh: string }>('/users/token/simple/', { email, password });
+  const data = await apiPost<{ access: string; refresh: string; refresh_cookie_set?: boolean }>(
+    '/users/token/simple/',
+    { email, password },
+  );
 
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('access_token', data.access);
-    localStorage.setItem('refresh_token', data.refresh);
-    // Also store as 'access' and 'refresh' for backward compatibility
-    localStorage.setItem('access', data.access);
-    localStorage.setItem('refresh', data.refresh);
-    console.log('[loginUser] Tokens saved to localStorage');
-  }
+  storeAuthTokens({
+    access: data.access,
+    refresh: data.refresh,
+    refreshCookieSet: Boolean(data.refresh_cookie_set),
+  });
+  console.log('[loginUser] Tokens stored');
 
   // Get user data using the access token
   const userData = await getCurrentUser();
@@ -1029,24 +1027,20 @@ export async function loginUser(
 
 export async function logoutUser(): Promise<void> {
   console.log('[API CALL] Attempting logout.');
-  const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') || localStorage.getItem('refresh') : null;
+  const refresh = typeof window !== 'undefined'
+    ? localStorage.getItem('refresh_token') || localStorage.getItem('refresh')
+    : null;
 
-  if (refresh) {
-    try {
-      await apiPost('/users/logout/', { refresh });
-      console.log('[logoutUser] Logout request sent to backend.');
-    } catch (error) {
-      console.error("[logoutUser] Logout API call failed:", error);
-    }
-  } else {
-    console.warn('[logoutUser] No refresh token found in localStorage to send for logout.');
+  try {
+    await apiPost('/users/logout/', refresh ? { refresh } : {});
+    console.log('[logoutUser] Logout request sent to backend.');
+  } catch (error) {
+    console.error("[logoutUser] Logout API call failed:", error);
   }
 
+  storeAuthTokens({ refreshCookieSet: true, allowRefreshStorage: false });
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
+    clearAuthTokens();
     localStorage.removeItem('user');
     console.log('[logoutUser] Tokens and user data cleared from localStorage.');
   }
@@ -1462,6 +1456,19 @@ export type CreateVotePayload = {
   is_active?: boolean; // Optional - defaults to true on backend
 };
 
+export type CreateVoteTaskPayload = {
+  title?: string;
+  description?: string;
+  due_date?: string;
+  priority?: string;
+  assigned_to?: number | null;
+};
+
+export type VoteTaskResponse = {
+  created: boolean;
+  todo: Record<string, any>;
+};
+
 export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
   const params: Record<string, string | number> = {};
   if (buildingId) {
@@ -1539,6 +1546,15 @@ export async function createVote(payload: CreateVotePayload): Promise<Vote> {
 export async function deleteVote(voteId: number): Promise<string> {
   await apiDelete(`/votes/${voteId}/`);
   return 'Η ψηφοφορία διαγράφηκε επιτυχώς';
+}
+
+export async function createVoteTask(
+  voteId: number,
+  payload: CreateVoteTaskPayload = {},
+  buildingId?: number | null,
+): Promise<VoteTaskResponse> {
+  const query = typeof buildingId === 'number' ? `?building=${buildingId}` : '';
+  return apiPost<VoteTaskResponse>(`/votes/${voteId}/create-task/${query}`, payload);
 }
 
 // ============================================================================

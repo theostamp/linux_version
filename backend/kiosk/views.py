@@ -673,13 +673,16 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
 # KIOSK RESIDENT REGISTRATION
 # ============================================================================
 
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
+from django.conf import settings
 from users.models import UserInvitation, CustomUser
 from users.services import EmailService
 from apartments.models import Apartment
+from core.throttles import KioskPublicThrottle
+from .token_utils import generate_kiosk_token, validate_kiosk_token
+from .models import KioskAuditLog, KioskAuditAction
 import logging
-import base64
 import unicodedata
 import re
 
@@ -996,27 +999,58 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
         }
 
 
-def validate_kiosk_token(building_id: str, token: str) -> bool:
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([KioskPublicThrottle])
+def kiosk_token(request):
     """
-    Validate the kiosk token.
-    The token is a base64 encoded string containing building_id and timestamp.
-    For security, we only verify that the building_id matches.
+    Issue a short-lived signed kiosk QR token (server-side).
     """
+    if not getattr(settings, "ENABLE_KIOSK_SIGNED_QR", False):
+        return Response(
+            {'error': 'Signed QR is disabled', 'code': 'KIOSK_SIGNED_QR_DISABLED'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    building_id = request.data.get('building_id') or request.query_params.get('building_id')
+    if not building_id:
+        return Response(
+            {'error': 'Building ID is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     try:
-        # Decode the token
-        decoded = base64.b64decode(token).decode('utf-8')
-        # Token format: "building_id-timestamp"
-        parts = decoded.split('-')
-        if len(parts) >= 1:
-            token_building_id = parts[0]
-            return str(building_id) == token_building_id
-    except Exception as e:
-        kiosk_logger.warning(f"Invalid kiosk token: {e}")
-    return False
+        building = Building.objects.get(id=building_id)
+    except Building.DoesNotExist:
+        return Response(
+            {'error': 'Το κτίριο δεν βρέθηκε'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    deny = _require_kiosk_premium(request, int(building_id))
+    if deny:
+        return deny
+
+    token = generate_kiosk_token(building_id)
+    ttl_seconds = int(getattr(settings, "KIOSK_QR_TTL_SECONDS", 900))
+
+    KioskAuditLog.log_event(
+        action=KioskAuditAction.TOKEN_ISSUED,
+        status="success",
+        building=building,
+        request=request,
+        metadata={"ttl_seconds": ttl_seconds},
+    )
+
+    return Response({
+        'token': token,
+        'expires_in': ttl_seconds,
+    })
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([KioskPublicThrottle])
 def kiosk_register(request):
     """
     Kiosk resident self-registration endpoint.
@@ -1058,25 +1092,59 @@ def kiosk_register(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Validate the kiosk token
-    if not validate_kiosk_token(building_id, token):
-        return Response(
-            {'error': 'Μη έγκυρο token. Παρακαλώ σαρώστε ξανά το QR code.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
     # Check if building exists
     try:
         building = Building.objects.get(id=building_id)
     except Building.DoesNotExist:
+        KioskAuditLog.log_event(
+            action=KioskAuditAction.REGISTER_FAILED,
+            status="building_not_found",
+            email=email,
+            phone=phone,
+            request=request,
+            metadata={"building_id": building_id},
+        )
         return Response(
             {'error': 'Το κτίριο δεν βρέθηκε'},
             status=status.HTTP_404_NOT_FOUND
         )
 
+    KioskAuditLog.log_event(
+        action=KioskAuditAction.REGISTER_ATTEMPT,
+        status="started",
+        building=building,
+        email=email,
+        phone=phone,
+        request=request,
+        metadata={"token_present": bool(token)},
+    )
+
+    # Validate the kiosk token
+    if not validate_kiosk_token(building_id, token):
+        KioskAuditLog.log_event(
+            action=KioskAuditAction.REGISTER_FAILED,
+            status="invalid_token",
+            building=building,
+            email=email,
+            phone=phone,
+            request=request,
+        )
+        return Response(
+            {'error': 'Μη έγκυρο token. Παρακαλώ σαρώστε ξανά το QR code.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     # Enforce Premium entitlement (Kiosk is premium-only and office-only)
     deny = _require_kiosk_premium(request, int(building_id))
     if deny:
+        KioskAuditLog.log_event(
+            action=KioskAuditAction.REGISTER_FAILED,
+            status=getattr(deny, "data", {}).get("code", "premium_denied") if hasattr(deny, "data") else "premium_denied",
+            building=building,
+            email=email,
+            phone=phone,
+            request=request,
+        )
         return deny
 
     # Verify phone number against building apartments
@@ -1084,6 +1152,15 @@ def kiosk_register(request):
 
     if not verification['verified']:
         kiosk_logger.warning(f"Phone verification failed for {email}: {verification['error']}")
+        KioskAuditLog.log_event(
+            action=KioskAuditAction.REGISTER_FAILED,
+            status="phone_verification_failed",
+            building=building,
+            email=email,
+            phone=phone,
+            request=request,
+            metadata={"error": verification.get("error")},
+        )
         return Response(
             {'error': verification['error']},
             status=status.HTTP_400_BAD_REQUEST
@@ -1264,6 +1341,19 @@ def kiosk_register(request):
                 tenant_url = f"{existing_user.tenant.schema_name}.newconcierge.app"
 
             # Return token for instant login - no email verification needed
+            KioskAuditLog.log_event(
+                action=KioskAuditAction.REGISTER_SUCCESS,
+                status="existing_user",
+                building=building,
+                apartment=apartment,
+                email=email,
+                phone=phone,
+                request=request,
+                metadata={
+                    "match_type": match_type,
+                    "apartments": [m['apartment'].number for m in all_matches],
+                },
+            )
             return Response({
                 'message': message,
                 'status': 'existing_user',
@@ -1284,6 +1374,16 @@ def kiosk_register(request):
                 EmailService.send_magic_login_email(existing_user, building, apartment)
             except:
                 pass
+            KioskAuditLog.log_event(
+                action=KioskAuditAction.REGISTER_SUCCESS,
+                status="existing_user_email",
+                building=building,
+                apartment=apartment,
+                email=email,
+                phone=phone,
+                request=request,
+                metadata={"match_type": match_type},
+            )
             return Response({
                 'message': 'Έχετε ήδη λογαριασμό. Ελέγξτε το email σας για σύνδεση.',
                 'status': 'existing_user'
@@ -1306,6 +1406,16 @@ def kiosk_register(request):
         kiosk_logger.info(f"Pending invitation exists for {email}, resending")
         try:
             EmailService.send_kiosk_registration_email(pending_invitation, building, apartment)
+            KioskAuditLog.log_event(
+                action=KioskAuditAction.REGISTER_SUCCESS,
+                status="resent",
+                building=building,
+                apartment=apartment,
+                email=email,
+                phone=phone,
+                request=request,
+                metadata={"invitation_id": pending_invitation.id},
+            )
             return Response({
                 'message': 'Έχετε ήδη αίτημα εγγραφής. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
                 'status': 'resent'
@@ -1436,6 +1546,20 @@ def kiosk_register(request):
         else:
             message = f'Επιτυχία! Βρέθηκε το τηλέφωνό σας στο διαμέρισμα {apartment.number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.'
 
+        KioskAuditLog.log_event(
+            action=KioskAuditAction.REGISTER_SUCCESS,
+            status="created",
+            building=building,
+            apartment=apartment,
+            email=email,
+            phone=phone,
+            request=request,
+            metadata={
+                "match_type": match_type,
+                "apartments": all_apt_numbers,
+                "invitation_id": invitation.id,
+            },
+        )
         return Response({
             'message': message,
             'status': 'created',

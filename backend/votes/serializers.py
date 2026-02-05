@@ -1,8 +1,12 @@
 # backend/votes/serializers.py
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 from .models import Vote, VoteSubmission
 from buildings.models import Building
 from projects.models import Project
+from todo_management.models import TodoItem
+
+User = get_user_model()
 
 class VoteSerializer(serializers.ModelSerializer):
     building = serializers.PrimaryKeyRelatedField(
@@ -192,6 +196,14 @@ class VoteSubmissionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Η ψηφοφορία δεν είναι ενεργή αυτή τη στιγμή")
 
         return data
+
+
+class VoteTaskCreateSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, allow_blank=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    due_date = serializers.DateTimeField(required=False, allow_null=True)
+    priority = serializers.ChoiceField(required=False, choices=TodoItem.PRIORITY_CHOICES)
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
 
     def get_user_name(self, obj):
         return obj.user.get_full_name() or obj.user.email

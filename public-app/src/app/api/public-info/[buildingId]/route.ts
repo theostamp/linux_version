@@ -50,7 +50,8 @@ export async function GET(
   console.log('[PUBLIC-INFO API] Building ID:', buildingId);
 
   const normalizedBase = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
-  const targetUrl = `${normalizedBase}/api/public-info/${buildingId}/`;
+  const queryString = request.nextUrl.searchParams.toString();
+  const targetUrl = `${normalizedBase}/api/public-info/${buildingId}/${queryString ? `?${queryString}` : ''}`;
 
   console.log('[PUBLIC-INFO API] Fetching from:', targetUrl);
 
@@ -94,13 +95,21 @@ export async function GET(
 
     const finalHost = publicHostname || 'demo.localhost';
 
-    const headers = {
+    const kioskToken =
+      request.nextUrl.searchParams.get('kiosk_token') ||
+      request.nextUrl.searchParams.get('token') ||
+      '';
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Host: finalHost,
       'X-Forwarded-Host': finalHost,
       'X-Tenant-Host': finalHost,
       'X-Forwarded-Proto': request.headers.get('x-forwarded-proto') ?? 'https',
     };
+    if (kioskToken) {
+      headers['X-Kiosk-Token'] = kioskToken;
+    }
 
     console.log('[PUBLIC-INFO API] Request headers:', headers);
 
@@ -124,27 +133,29 @@ export async function GET(
 
     const data = await response.json();
 
-    // Privacy: never expose per-apartment balances or names via the public kiosk endpoint.
-    try {
-      const financial = (data as any)?.financial;
-      if (financial && typeof financial === 'object') {
-        if (Array.isArray((financial as any).apartment_balances)) {
-          (financial as any).apartment_balances = [];
+    // Privacy: sanitize only when no kiosk token is provided.
+    if (!kioskToken) {
+      try {
+        const financial = (data as any)?.financial;
+        if (financial && typeof financial === 'object') {
+          if (Array.isArray((financial as any).apartment_balances)) {
+            (financial as any).apartment_balances = [];
+          }
+          if (Array.isArray((financial as any).top_debtors)) {
+            (financial as any).top_debtors = [];
+          }
+          if (Array.isArray((financial as any).apartment_statuses)) {
+            (financial as any).apartment_statuses = (financial as any).apartment_statuses
+              .map((item: any) => ({
+                apartment_number: typeof item?.apartment_number === 'string' ? item.apartment_number : String(item?.apartment_number ?? ''),
+                has_pending: Boolean(item?.has_pending),
+              }))
+              .filter((item: any) => item.apartment_number);
+          }
         }
-        if (Array.isArray((financial as any).top_debtors)) {
-          (financial as any).top_debtors = [];
-        }
-        if (Array.isArray((financial as any).apartment_statuses)) {
-          (financial as any).apartment_statuses = (financial as any).apartment_statuses
-            .map((item: any) => ({
-              apartment_number: typeof item?.apartment_number === 'string' ? item.apartment_number : String(item?.apartment_number ?? ''),
-              has_pending: Boolean(item?.has_pending),
-            }))
-            .filter((item: any) => item.apartment_number);
-        }
+      } catch (e) {
+        console.warn('[PUBLIC-INFO API] Sanitization error:', e);
       }
-    } catch (e) {
-      console.warn('[PUBLIC-INFO API] Sanitization error:', e);
     }
 
     // If backend public-info doesn't include upcoming assembly (or returns a minimal legacy shape),

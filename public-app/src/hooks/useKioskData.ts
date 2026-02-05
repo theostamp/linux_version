@@ -373,12 +373,55 @@ export const useKioskData = (buildingId: number | null = 1) => {
   const [data, setData] = useState<KioskData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [kioskTokenState, setKioskTokenState] = useState<{ token: string; expiresAt: number } | null>(null);
   const requestIdRef = useRef(0);
   const inFlightRef = useRef(false);
   const pollModeRef = useRef<{ isLive: boolean; isVoting: boolean }>({
     isLive: false,
     isVoting: false,
   });
+
+  const ensureKioskToken = useCallback(async () => {
+    if (!buildingId) return null;
+
+    if (kioskTokenState && kioskTokenState.expiresAt > Date.now() + 10_000) {
+      return kioskTokenState.token;
+    }
+
+    try {
+      const response = await fetch('/api/kiosk/token/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ building_id: buildingId }),
+      });
+
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => ({}));
+        if (errorJson?.code === 'KIOSK_SIGNED_QR_DISABLED') {
+          setKioskTokenState(null);
+          return null;
+        }
+        console.warn('[useKioskData] Failed to fetch kiosk token', response.status, errorJson);
+        setKioskTokenState(null);
+        return null;
+      }
+
+      const tokenPayload = await response.json();
+      if (!tokenPayload?.token) {
+        setKioskTokenState(null);
+        return null;
+      }
+
+      const expiresIn = Number(tokenPayload.expires_in || 0);
+      const expiresAt = Date.now() + Math.max(expiresIn, 60) * 1000;
+      setKioskTokenState({ token: tokenPayload.token, expiresAt });
+      return tokenPayload.token as string;
+    } catch (err) {
+      console.warn('[useKioskData] Error fetching kiosk token', err);
+      setKioskTokenState(null);
+      return null;
+    }
+  }, [buildingId, kioskTokenState]);
 
   const fetchKioskData = useCallback(async () => {
     if (buildingId == null) return;
@@ -395,8 +438,10 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
       console.log(`[useKioskData] 🏢 Fetching data for building ID: ${buildingId}`);
 
+      const kioskToken = await ensureKioskToken();
+
       // Use unified public-info endpoint that returns all kiosk data
-      const apiUrl = `/api/public-info/${buildingId}/?month=${currentMonth}`;
+      const apiUrl = `/api/public-info/${buildingId}/?month=${currentMonth}${kioskToken ? `&kiosk_token=${encodeURIComponent(kioskToken)}` : ''}`;
       console.log(`[useKioskData] 📡 API URL: ${apiUrl}`);
 
       const publicData = await apiGet<PublicInfoResponse>(apiUrl);
@@ -678,7 +723,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
       }
       inFlightRef.current = false;
     }
-  }, [buildingId]);
+  }, [buildingId, ensureKioskToken]);
 
   // Auto-refresh data - faster when assembly is live (and fastest when a voting item is active)
   useEffect(() => {

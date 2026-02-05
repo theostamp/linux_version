@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { getAccessToken } from '@/lib/authTokens';
 
 /**
  * Hook για real-time ενημερώσεις συνελεύσεων μέσω WebSockets.
@@ -17,7 +18,7 @@ export function useAssemblyWebSocket(assemblyId: string | undefined) {
   useEffect(() => {
     if (!isAuthenticated || !assemblyId) return;
 
-    const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+    const token = getAccessToken();
     if (!token) {
       console.log('[useAssemblyWebSocket] No JWT token found, skipping WebSocket connection');
       return;

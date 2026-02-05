@@ -10,6 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from .oauth_service import OAuthService
+from .auth_cookies import attach_refresh_cookie
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +182,7 @@ def oauth_callback(request):
             else:
                 logger.info(f"[OAUTH] User has tenant: {user.tenant.schema_name}, role: {user_role}, redirecting to /dashboard")
 
-        return Response({
+        response = Response({
             'access': tokens['access'],
             'refresh': tokens['refresh'],
             'user': {
@@ -195,6 +196,8 @@ def oauth_callback(request):
             'redirect_path': redirect_path,
             'tenant_url': tenant_url
         })
+        attach_refresh_cookie(response, tokens.get('refresh'))
+        return response
         
     except Exception as e:
         logger.error(f"OAuth callback error: {e}")

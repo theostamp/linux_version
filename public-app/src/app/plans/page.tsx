@@ -7,6 +7,7 @@ import { Building, Home, Monitor, CheckCircle, ArrowRight, Loader2, Minus, Plus,
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { getMonthlyPrice, getYearlyPrice, isFreeEligible, PlanId } from '@/lib/pricing';
+import { getAccessToken, storeAuthTokens } from '@/lib/authTokens';
 
 /**
  * Τιμολογιακή Πολιτική:
@@ -135,7 +136,7 @@ function PlansContent() {
 
     try {
       // Get access token from localStorage
-      const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const accessToken = typeof window !== 'undefined' ? getAccessToken() : null;
 
       if (!accessToken) {
         throw new Error('Πρέπει να συνδεθείτε πρώτα');
@@ -161,14 +162,12 @@ function PlansContent() {
           throw new Error(data.error || 'Αποτυχία δημιουργίας workspace');
         }
 
-        // Store new tokens if provided
         if (data.tokens) {
-          if (data.tokens.access) {
-            localStorage.setItem('access_token', data.tokens.access);
-          }
-          if (data.tokens.refresh) {
-            localStorage.setItem('refresh_token', data.tokens.refresh);
-          }
+          storeAuthTokens({
+            access: data.tokens.access,
+            refresh: data.tokens.refresh,
+            refreshCookieSet: Boolean(data.refresh_cookie_set),
+          });
         }
 
         // Redirect to tenant dashboard with tokens in hash for cross-domain auth
@@ -228,7 +227,7 @@ function PlansContent() {
 
   if (!user) {
     // Check if tokens exist in localStorage (user might be loading)
-    const hasTokens = typeof window !== 'undefined' && localStorage.getItem('access_token');
+    const hasTokens = typeof window !== 'undefined' && !!getAccessToken();
 
     if (hasTokens) {
       // Tokens exist but user not loaded yet - show loading
