@@ -1,41 +1,82 @@
 'use client';
 
-import React from 'react';
-import { useLoading } from '@/components/contexts/LoadingContext';
+import { useEffect, useRef, useState } from 'react';
+
+const SHOW_DELAY_MS = 700;
+const MIN_VISIBLE_MS = 400;
 
 export default function GlobalLoadingOverlay() {
-  const { isLoading, loadingMessage } = useLoading();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const showTimeoutRef = useRef<number | null>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
+  const visibleSinceRef = useRef<number | null>(null);
 
-  if (!isLoading) return null;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const w = window as any;
+    if (w.__ncFetchWrapped) return;
+
+    const originalFetch = window.fetch.bind(window);
+    w.__ncFetchWrapped = true;
+    w.__ncOriginalFetch = originalFetch;
+
+    window.fetch = async (...args) => {
+      setPendingCount((count) => count + 1);
+      try {
+        return await originalFetch(...args);
+      } finally {
+        setPendingCount((count) => Math.max(0, count - 1));
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pendingCount > 0) {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+
+      if (!isVisible && !showTimeoutRef.current && typeof window !== 'undefined') {
+        showTimeoutRef.current = window.setTimeout(() => {
+          showTimeoutRef.current = null;
+          if (pendingCount > 0) {
+            setIsVisible(true);
+            visibleSinceRef.current = Date.now();
+          }
+        }, SHOW_DELAY_MS);
+      }
+      return;
+    }
+
+    if (showTimeoutRef.current) {
+      clearTimeout(showTimeoutRef.current);
+      showTimeoutRef.current = null;
+    }
+
+    if (isVisible && typeof window !== 'undefined') {
+      const visibleFor = Date.now() - (visibleSinceRef.current ?? Date.now());
+      const remaining = Math.max(0, MIN_VISIBLE_MS - visibleFor);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+      hideTimeoutRef.current = window.setTimeout(() => {
+        setIsVisible(false);
+        visibleSinceRef.current = null;
+        hideTimeoutRef.current = null;
+      }, remaining);
+    }
+  }, [pendingCount, isVisible]);
+
+  if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center">
-      <div className="bg-white rounded-lg p-8 shadow-2xl max-w-sm w-full mx-4">
-        <div className="flex flex-col items-center space-y-4">
-          {/* Animated spinner */}
-          <div className="relative">
-            <div className="w-12 h-12 border-4 border-blue-200 rounded-full animate-spin">
-              <div className="absolute top-0 left-0 w-12 h-12 border-4 border-transparent border-t-blue-600 rounded-full animate-spin"></div>
-            </div>
-          </div>
-
-          {/* Loading message */}
-          <div className="text-center">
-            <p className="text-gray-700 font-medium text-lg">
-              {loadingMessage}
-            </p>
-            <p className="text-gray-500 text-sm mt-1">
-              Παρακαλώ περιμένετε...
-            </p>
-          </div>
-
-          {/* Progress dots animation */}
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-          </div>
-        </div>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/90 px-5 py-4 text-white shadow-2xl">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        <span className="text-sm font-medium">Φόρτωση...</span>
       </div>
     </div>
   );

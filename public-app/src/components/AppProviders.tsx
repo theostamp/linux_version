@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/contexts/AuthContext';
 import { BuildingProvider } from '@/components/contexts/BuildingContext';
 import { LoadingProvider } from '@/components/contexts/LoadingContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
+import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
@@ -92,6 +93,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     return (
       <LoadingProvider>
         {children}
+        <GlobalLoadingOverlay />
         <Toaster position="top-right" richColors closeButton />
       </LoadingProvider>
     );
@@ -102,6 +104,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     return (
       <LoadingProvider>
         <LayoutWrapper>{children}</LayoutWrapper>
+        <GlobalLoadingOverlay />
         <Toaster position="top-right" richColors closeButton />
       </LoadingProvider>
     );
@@ -122,6 +125,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
       return (
         <LoadingProvider>
           {children}
+          <GlobalLoadingOverlay />
           <Toaster position="top-right" richColors closeButton />
         </LoadingProvider>
       );
@@ -129,6 +133,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     return (
       <LoadingProvider>
         <AuthProvider showInitialSpinner={false}>{children}</AuthProvider>
+        <GlobalLoadingOverlay />
         <Toaster position="top-right" richColors closeButton />
       </LoadingProvider>
     );
@@ -139,6 +144,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
       <AuthProvider>
         <BuildingProvider>
           {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
+          <GlobalLoadingOverlay />
           {/* ✅ Sonner Toaster - Available globally for all routes */}
           <Toaster position="top-right" richColors closeButton />
         </BuildingProvider>
