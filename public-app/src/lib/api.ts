@@ -218,7 +218,11 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       if (!response.ok) {
         console.log(`[API TOKEN REFRESH] Refresh failed with status: ${response.status}`);
-        if (response.status === 400 && refreshCookieEnabled && !refreshToken) {
+        if (response.status === 400) {
+          // Stale/invalid refresh state. Clear local storage + cookie flag to avoid retry loops.
+          clearAuthTokens();
+          setRefreshCookieEnabled(false);
+        } else if (refreshCookieEnabled && !refreshToken) {
           // Cookie flag is stale; clear it to avoid retry loops.
           setRefreshCookieEnabled(false);
         }
