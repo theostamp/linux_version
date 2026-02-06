@@ -250,7 +250,7 @@ class KioskAuditLog(models.Model):
         ]
 
     def __str__(self):
-        return f\"{self.timestamp} - {self.action} - {self.status}\"
+        return f"{self.timestamp} - {self.action} - {self.status}"
 
     @classmethod
     def log_event(
