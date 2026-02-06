@@ -11,6 +11,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.utils import timezone
 from .models import CustomUser, UserInvitation, PasswordResetToken
@@ -139,8 +141,20 @@ class CustomTokenRefreshView(TokenRefreshView):
             if refresh_token:
                 data["refresh"] = refresh_token
 
+        if not refresh_token:
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            clear_refresh_cookie(response)
+            return response
+
         serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except (InvalidToken, TokenError, ValidationError):
+            # Treat invalid/expired refresh as no content to avoid noisy 400s.
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            clear_refresh_cookie(response)
+            return response
+
         response = Response(serializer.validated_data, status=status.HTTP_200_OK)
 
         if isinstance(serializer.validated_data, dict) and serializer.validated_data.get("refresh"):

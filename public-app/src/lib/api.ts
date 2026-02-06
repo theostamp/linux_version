@@ -235,6 +235,13 @@ export async function refreshAccessToken(): Promise<string | null> {
         body,
       });
 
+      if (response.status === 204) {
+        console.log('[API TOKEN REFRESH] Refresh returned no content; clearing auth state');
+        clearAuthTokens();
+        setRefreshCookieEnabled(false);
+        return null;
+      }
+
       if (!response.ok) {
         console.log(`[API TOKEN REFRESH] Refresh failed with status: ${response.status}`);
         if (response.status === 400) {
