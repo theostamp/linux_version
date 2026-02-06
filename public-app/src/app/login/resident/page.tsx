@@ -7,6 +7,7 @@ import { Home, Mail, Phone, ArrowRight, Loader2, ChevronLeft } from 'lucide-reac
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 import { getDefaultLandingPath, type RoleDescriptor } from '@/lib/roleUtils';
 import { storeAuthTokens } from '@/lib/authTokens';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 interface UserData extends RoleDescriptor {
   is_superuser?: boolean;
@@ -21,6 +22,7 @@ function getRedirectForRole(user: UserData | null, explicitRedirect?: string): s
 
 function ResidentLoginForm() {
   const router = useRouter();
+  const { loginWithToken } = useAuth();
   const searchParams = useSearchParams();
   const explicitRedirect = searchParams.get('redirect');
 
@@ -99,6 +101,35 @@ function ResidentLoginForm() {
 
       // Redirect
       const targetRedirect = getRedirectForRole(data.user, explicitRedirect || undefined);
+
+      if (data.tenant_url) {
+        const tenantUrl = data.tenant_url.startsWith('http')
+          ? data.tenant_url
+          : `https://${data.tenant_url}`;
+        let tenantHost = '';
+        try {
+          tenantHost = new URL(tenantUrl).host;
+        } catch {
+          tenantHost = data.tenant_url;
+        }
+
+        if (tenantHost && tenantHost !== window.location.hostname) {
+          const params = new URLSearchParams();
+          if (data.access) params.set('access', data.access);
+          if (data.refresh) params.set('refresh', data.refresh);
+          params.set('redirect', targetRedirect);
+          window.location.href = `${tenantUrl}/auth/callback#${params.toString()}`;
+          return;
+        }
+      }
+
+      if (data.access) {
+        try {
+          await loginWithToken(data.access);
+        } catch (loginError) {
+          console.error('AuthContext loginWithToken failed:', loginError);
+        }
+      }
 
       if (data.tenant_url) {
         window.location.href = `https://${data.tenant_url}${targetRedirect}`;
