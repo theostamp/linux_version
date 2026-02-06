@@ -37,6 +37,7 @@ All notable changes to this project will be documented in this file.
 - Frontend prefers cookie-based refresh and avoids storing refresh tokens when cookie is set.
 - Added CSP headers and in-memory access token handling when refresh cookies are enabled.
 - Announcements read endpoints require auth when `ENABLE_SECURE_PUBLIC_INFO=true` and enforce building scoping.
+- Login reliability fixes: preserve access token even when refresh cookie exists, accept 204 refresh responses, and ensure cross-domain logins pass tokens via `/auth/callback`.
 
 ### Change Set 9: Vote → Task Pipeline
 - Added `POST /api/votes/{id}/create-task/` to create (idempotently) a TodoItem linked to the vote.
