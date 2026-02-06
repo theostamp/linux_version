@@ -266,6 +266,7 @@ async function proxyTenantRequest(
 ) {
   const logger = createLogger(config.logLabel ?? "unknown");
   const startTime = Date.now();
+  const isProduction = process.env.NODE_ENV === "production";
 
   const targetUrl = await buildTargetUrl(request, method, config, context);
   const headers = createForwardHeaders(request);
@@ -342,7 +343,22 @@ async function proxyTenantRequest(
       );
     }
 
-    const responseHeaders = stripHopByHopHeaders(new Headers(response.headers));
+  const responseHeaders = stripHopByHopHeaders(new Headers(response.headers));
+  const cacheTtlSeconds =
+    process.env.PROXY_CACHE_TTL_SECONDS
+      ? Number(process.env.PROXY_CACHE_TTL_SECONDS)
+      : (isProduction ? 10 : 0);
+  if (
+    method === "GET" &&
+    response.status === 200 &&
+    cacheTtlSeconds > 0 &&
+    !responseHeaders.has("cache-control")
+  ) {
+    responseHeaders.set(
+      "Cache-Control",
+      `private, max-age=${cacheTtlSeconds}, stale-while-revalidate=30`,
+    );
+  }
 
     logger.info("Response forwarded successfully", {
       method,

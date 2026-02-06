@@ -9,6 +9,7 @@ const FALLBACK_RESPONSE = {
 };
 
 export async function GET(request: NextRequest) {
+  const isProxyDebug = process.env.PROXY_DEBUG === 'true';
   const url = request.nextUrl || new URL(request.url);
   const buildingId = url.searchParams.get('building_id');
 
@@ -24,11 +25,15 @@ export async function GET(request: NextRequest) {
   // Use NEXT_PUBLIC_DJANGO_API_URL if explicitly set
   const backendUrl = (process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000').replace(/\/$/, '');
 
-  console.log('[API PROXY] Using backend URL:', backendUrl);
+  if (isProxyDebug) {
+    console.log('[API PROXY] Using backend URL:', backendUrl);
+  }
 
   const targetUrl = `${backendUrl}/api/kiosk/public/configs/?building_id=${buildingId}`;
 
-  console.log('[API PROXY] Fetching kiosk widgets from:', targetUrl);
+  if (isProxyDebug) {
+    console.log('[API PROXY] Fetching kiosk widgets from:', targetUrl);
+  }
 
   try {
     const controller = new AbortController();
@@ -64,7 +69,9 @@ export async function GET(request: NextRequest) {
       'X-Forwarded-Proto': forwardedProto,
     };
 
-    console.log('[KIOSK-WIDGETS API] Request headers:', headers);
+    if (isProxyDebug) {
+      console.log('[KIOSK-WIDGETS API] Request headers:', headers);
+    }
 
     const response = await fetch(targetUrl, {
       headers,
@@ -73,7 +80,9 @@ export async function GET(request: NextRequest) {
 
     clearTimeout(timeoutId);
 
-    console.log('[API PROXY] Backend response status:', response.status);
+    if (isProxyDebug) {
+      console.log('[API PROXY] Backend response status:', response.status);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

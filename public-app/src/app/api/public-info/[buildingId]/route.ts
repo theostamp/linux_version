@@ -29,6 +29,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ buildingId: string }> }
 ) {
+  const isProxyDebug = process.env.PROXY_DEBUG === 'true';
   const { buildingId } = await params;
 
   if (!buildingId) {
@@ -45,15 +46,19 @@ export async function GET(
     process.env.NEXT_PUBLIC_DJANGO_API_URL ||
     'https://linuxversion-production.up.railway.app';
 
-  console.log('[PUBLIC-INFO API] ===== NEW CODE VERSION =====');
-  console.log('[PUBLIC-INFO API] Using backend URL:', backendUrl);
-  console.log('[PUBLIC-INFO API] Building ID:', buildingId);
+  if (isProxyDebug) {
+    console.log('[PUBLIC-INFO API] ===== NEW CODE VERSION =====');
+    console.log('[PUBLIC-INFO API] Using backend URL:', backendUrl);
+    console.log('[PUBLIC-INFO API] Building ID:', buildingId);
+  }
 
   const normalizedBase = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
   const queryString = request.nextUrl.searchParams.toString();
   const targetUrl = `${normalizedBase}/api/public-info/${buildingId}/${queryString ? `?${queryString}` : ''}`;
 
-  console.log('[PUBLIC-INFO API] Fetching from:', targetUrl);
+  if (isProxyDebug) {
+    console.log('[PUBLIC-INFO API] Fetching from:', targetUrl);
+  }
 
   try {
     const controller = new AbortController();
@@ -111,7 +116,9 @@ export async function GET(
       headers['X-Kiosk-Token'] = kioskToken;
     }
 
-    console.log('[PUBLIC-INFO API] Request headers:', headers);
+    if (isProxyDebug) {
+      console.log('[PUBLIC-INFO API] Request headers:', headers);
+    }
 
     const response = await fetch(targetUrl, {
       headers,
@@ -120,7 +127,9 @@ export async function GET(
 
     clearTimeout(timeoutId);
 
-    console.log('[API PROXY] Backend response status:', response.status);
+    if (isProxyDebug) {
+      console.log('[API PROXY] Backend response status:', response.status);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
