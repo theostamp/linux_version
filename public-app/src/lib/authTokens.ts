@@ -16,12 +16,6 @@ let inMemoryAccessToken: string | null = null;
 export function getAccessToken(): string | null {
   if (inMemoryAccessToken) return inMemoryAccessToken;
   if (typeof window === 'undefined') return null;
-  if (isRefreshCookieEnabled()) {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('access');
-    localStorage.removeItem('accessToken');
-    return null;
-  }
   const stored =
     localStorage.getItem('access_token') ||
     localStorage.getItem('access') ||
@@ -99,8 +93,7 @@ export function storeAuthTokens(options: TokenStorageOptions): void {
 
   if (access) {
     setAccessToken(access);
-    const shouldStoreAccess =
-      allowAccessStorage === true || (!refreshCookieSet && allowAccessStorage !== false);
+    const shouldStoreAccess = allowAccessStorage !== false;
     if (shouldStoreAccess) {
       localStorage.setItem('access_token', access);
       localStorage.setItem('access', access);
