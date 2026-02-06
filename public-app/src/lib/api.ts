@@ -192,8 +192,10 @@ export async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
 
   const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refresh');
-  if (!refreshToken && !isRefreshCookieEnabled()) {
-    console.log('[API TOKEN REFRESH] No refresh token found, attempting cookie refresh');
+  const refreshCookieEnabled = isRefreshCookieEnabled();
+  if (!refreshToken && !refreshCookieEnabled) {
+    console.log('[API TOKEN REFRESH] No refresh token or cookie flag; skipping refresh');
+    return null;
   }
 
   isRefreshingToken = true;
