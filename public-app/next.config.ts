@@ -7,12 +7,15 @@ const scriptSrc = [
   ...(isProd ? [] : ["'unsafe-eval'"]),
   "https://js.stripe.com",
   "https://m.stripe.network",
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
 ];
 const styleSrc = [
   "'self'",
   "'unsafe-inline'",
   "https://fonts.googleapis.com",
   "https://m.stripe.network",
+  "https://maps.googleapis.com",
 ];
 const cspBase = [
   "default-src 'self'",
@@ -21,9 +24,9 @@ const cspBase = [
   "frame-ancestors 'self'",
   `script-src ${scriptSrc.join(" ")}`,
   `style-src ${styleSrc.join(" ")}`,
-  "img-src 'self' data: https:",
+  "img-src 'self' data: https://maps.gstatic.com https://maps.googleapis.com https:",
   "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self' https: wss:",
+  "connect-src 'self' https: wss: https://maps.googleapis.com https://maps.gstatic.com",
   "frame-src https://js.stripe.com https://m.stripe.network",
 ].join("; ");
 
@@ -52,7 +55,7 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy:
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://gc.kis.v2.scr.kaspersky-labs.com; style-src 'self' 'unsafe-inline' https://m.stripe.network https://gc.kis.v2.scr.kaspersky-labs.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://m.stripe.network wss://gc.kis.v2.scr.kaspersky-labs.com;",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://maps.googleapis.com https://maps.gstatic.com https://gc.kis.v2.scr.kaspersky-labs.com; style-src 'self' 'unsafe-inline' https://m.stripe.network https://maps.googleapis.com https://gc.kis.v2.scr.kaspersky-labs.com; img-src 'self' data: https: https://maps.googleapis.com https://maps.gstatic.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://m.stripe.network https://maps.googleapis.com https://maps.gstatic.com wss://gc.kis.v2.scr.kaspersky-labs.com;",
   },
   compress: true,
   poweredByHeader: false,
