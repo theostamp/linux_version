@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { BaseWidgetProps } from '@/types/kiosk';
 import { QrCode, Smartphone, Building2 } from 'lucide-react';
 import QRCodeLib from 'qrcode';
+import { extractProxyErrorCode } from '@/lib/proxyErrors';
 
 const QR_DIMENSION = 120;
 
@@ -31,7 +32,8 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
             token = payload?.token ?? null;
           } else {
             const errorPayload = await response.json().catch(() => ({}));
-            if (errorPayload?.code === 'KIOSK_SIGNED_QR_DISABLED') {
+            const errorCode = extractProxyErrorCode(errorPayload);
+            if (errorCode === 'KIOSK_SIGNED_QR_DISABLED') {
               // Legacy fallback when signed QR is disabled
               token = btoa(`${buildingId}-${Date.now()}`).substring(0, 32);
             } else {

@@ -3,6 +3,7 @@
 // hooks/useKioskData.ts - Specialized hook for public kiosk data (no auth required)
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { extractProxyErrorCode } from '@/lib/proxyErrors';
 
 // Simple API get function for kiosk (no complex auth).
 // It calls a relative Next.js API route, which then proxies the request to the backend.
@@ -397,7 +398,8 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
       if (!response.ok) {
         const errorJson = await response.json().catch(() => ({}));
-        if (errorJson?.code === 'KIOSK_SIGNED_QR_DISABLED') {
+        const errorCode = extractProxyErrorCode(errorJson);
+        if (errorCode === 'KIOSK_SIGNED_QR_DISABLED') {
           setKioskTokenState(null);
           return null;
         }
