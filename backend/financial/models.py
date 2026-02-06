@@ -1782,7 +1782,7 @@ class RecurringExpenseConfig(models.Model):
         # Unique constraint: Δεν μπορούν να υπάρχουν overlapping periods
         constraints = [
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     (models.Q(calculation_method='fixed_per_apartment') & models.Q(amount_per_apartment__isnull=False)) |
                     (models.Q(calculation_method='percentage_of_expenses') & models.Q(percentage__isnull=False)) |
                     (models.Q(calculation_method='fixed_total') & models.Q(total_amount__isnull=False))
