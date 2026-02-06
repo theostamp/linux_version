@@ -90,6 +90,13 @@ const normalizeBackendPath = (
   return prefixed.endsWith("/") ? prefixed : `${prefixed}/`;
 };
 
+const getCacheTtlSeconds = (pathname: string, defaultTtl: number): number => {
+  if (!pathname) return defaultTtl;
+  if (pathname.includes("/api/office-analytics/dashboard")) return Math.max(defaultTtl, 30);
+  if (pathname.includes("/api/financial/dashboard/overview")) return Math.max(defaultTtl, 30);
+  return defaultTtl;
+};
+
 const buildTargetUrl = async (
   request: NextRequest,
   method: HttpMethod,
@@ -344,10 +351,14 @@ async function proxyTenantRequest(
     }
 
   const responseHeaders = stripHopByHopHeaders(new Headers(response.headers));
-  const cacheTtlSeconds =
+  const defaultCacheTtlSeconds =
     process.env.PROXY_CACHE_TTL_SECONDS
       ? Number(process.env.PROXY_CACHE_TTL_SECONDS)
       : (isProduction ? 10 : 0);
+  const cacheTtlSeconds = getCacheTtlSeconds(
+    request.nextUrl.pathname,
+    defaultCacheTtlSeconds,
+  );
   if (
     method === "GET" &&
     response.status === 200 &&
