@@ -106,6 +106,31 @@ if os.getenv('RAILWAY_PUBLIC_DOMAIN') or not DEBUG:
     CSRF_COOKIE_SAMESITE = 'Lax'  # Changed from 'None' to 'Lax'
 
 # ----------------------------------------
+# 🔐 Refresh Token Cookie (HttpOnly)
+# ----------------------------------------
+# Defaults follow session cookie settings unless explicitly overridden.
+REFRESH_COOKIE_NAME = os.getenv('REFRESH_COOKIE_NAME', 'refresh_token')
+REFRESH_COOKIE_PATH = os.getenv('REFRESH_COOKIE_PATH', '/api/')
+REFRESH_COOKIE_DOMAIN = os.getenv('REFRESH_COOKIE_DOMAIN', '')  # Empty -> host-only
+REFRESH_COOKIE_HTTPONLY = os.getenv('REFRESH_COOKIE_HTTPONLY', 'True').lower() == 'true'
+REFRESH_COOKIE_SAMESITE = os.getenv(
+    'REFRESH_COOKIE_SAMESITE',
+    SESSION_COOKIE_SAMESITE if 'SESSION_COOKIE_SAMESITE' in globals() else 'Lax',
+)
+
+_raw_refresh_cookie_secure = os.getenv('REFRESH_COOKIE_SECURE')
+if _raw_refresh_cookie_secure is None:
+    REFRESH_COOKIE_SECURE = SESSION_COOKIE_SECURE if 'SESSION_COOKIE_SECURE' in globals() else False
+else:
+    REFRESH_COOKIE_SECURE = _raw_refresh_cookie_secure.lower() == 'true'
+
+_raw_refresh_cookie_max_age = os.getenv('REFRESH_COOKIE_MAX_AGE')
+try:
+    REFRESH_COOKIE_MAX_AGE = int(_raw_refresh_cookie_max_age) if _raw_refresh_cookie_max_age else None
+except ValueError:
+    REFRESH_COOKIE_MAX_AGE = None
+
+# ----------------------------------------
 # 🏘️ django-tenants split apps
 # backend/new_concierge_backend/settings.py
 # ----------------------------------------
@@ -211,6 +236,7 @@ if DEBUG:
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',
         'core.middleware.CustomTenantMiddleware',
+        'new_concierge_backend.middleware.JWTRefreshCookieMiddleware',
         'django.middleware.security.SecurityMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
         'django.contrib.sessions.middleware.SessionMiddleware',
@@ -235,6 +261,7 @@ else:
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',
         'core.middleware.CustomTenantMiddleware',
+        'new_concierge_backend.middleware.JWTRefreshCookieMiddleware',
         'django.middleware.security.SecurityMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
         'django.contrib.sessions.middleware.SessionMiddleware',
@@ -821,20 +848,4 @@ SMS_ALLOWANCE_PER_BUILDING = int(os.getenv('SMS_ALLOWANCE_PER_BUILDING', '0'))
 SMS_MIN_ALLOWANCE = int(os.getenv('SMS_MIN_ALLOWANCE', '0'))
 SMS_MAX_ALLOWANCE = int(os.getenv('SMS_MAX_ALLOWANCE', '0'))
 
-# ----------------------------------------
-# 📲 Viber Notifications
-# ----------------------------------------
-VIBER_ENABLED = os.getenv('VIBER_ENABLED', 'False') == 'True'
-VIBER_API_TOKEN = os.getenv('VIBER_API_TOKEN', '')
-VIBER_SENDER_NAME = os.getenv('VIBER_SENDER_NAME', 'New Concierge')
-VIBER_SENDER_AVATAR = os.getenv('VIBER_SENDER_AVATAR', '')
-VIBER_CHAT_URI = os.getenv('VIBER_CHAT_URI', '')
-VIBER_WEBHOOK_VERIFY = os.getenv('VIBER_WEBHOOK_VERIFY', 'True') == 'True'
-VIBER_AUTO_WITH_EMAIL = os.getenv('VIBER_AUTO_WITH_EMAIL', 'True') == 'True'
-
-# ----------------------------------------
-# 🔔 Web Push (VAPID)
-# ----------------------------------------
-VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
-VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
-VAPID_SUBJECT = os.getenv('VAPID_SUBJECT', DEFAULT_FROM_EMAIL or '')
+# ------------------
