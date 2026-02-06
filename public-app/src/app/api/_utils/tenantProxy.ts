@@ -217,9 +217,13 @@ const createForwardHeaders = (request: NextRequest) => {
 function createLogger(logLabel: string) {
   const prefix = logLabel ? `[tenantProxy:${logLabel}]` : "[tenantProxy]";
   const isProduction = process.env.NODE_ENV === "production";
+  const isDebugEnabled = process.env.PROXY_DEBUG === "true";
 
   return {
     info: (message: string, meta?: Record<string, unknown>) => {
+      if (!isDebugEnabled && isProduction) {
+        return;
+      }
       const logData = {
         timestamp: new Date().toISOString(),
         level: "info",
