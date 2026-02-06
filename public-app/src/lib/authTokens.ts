@@ -44,18 +44,28 @@ export function isRefreshCookieEnabled(): boolean {
   const setAtRaw = localStorage.getItem(REFRESH_COOKIE_SET_AT);
   const maxAgeRaw = localStorage.getItem(REFRESH_COOKIE_MAX_AGE);
 
-  if (setAtRaw && maxAgeRaw) {
-    const setAt = Number(setAtRaw);
-    const maxAge = Number(maxAgeRaw);
-    if (Number.isFinite(setAt) && Number.isFinite(maxAge) && maxAge > 0) {
-      const expiresAt = setAt + (maxAge * 1000);
-      if (Date.now() >= expiresAt) {
-        localStorage.removeItem(REFRESH_COOKIE_FLAG);
-        localStorage.removeItem(REFRESH_COOKIE_SET_AT);
-        localStorage.removeItem(REFRESH_COOKIE_MAX_AGE);
-        return false;
-      }
-    }
+  if (!setAtRaw || !maxAgeRaw) {
+    localStorage.removeItem(REFRESH_COOKIE_FLAG);
+    localStorage.removeItem(REFRESH_COOKIE_SET_AT);
+    localStorage.removeItem(REFRESH_COOKIE_MAX_AGE);
+    return false;
+  }
+
+  const setAt = Number(setAtRaw);
+  const maxAge = Number(maxAgeRaw);
+  if (!Number.isFinite(setAt) || !Number.isFinite(maxAge) || maxAge <= 0) {
+    localStorage.removeItem(REFRESH_COOKIE_FLAG);
+    localStorage.removeItem(REFRESH_COOKIE_SET_AT);
+    localStorage.removeItem(REFRESH_COOKIE_MAX_AGE);
+    return false;
+  }
+
+  const expiresAt = setAt + (maxAge * 1000);
+  if (Date.now() >= expiresAt) {
+    localStorage.removeItem(REFRESH_COOKIE_FLAG);
+    localStorage.removeItem(REFRESH_COOKIE_SET_AT);
+    localStorage.removeItem(REFRESH_COOKIE_MAX_AGE);
+    return false;
   }
 
   return true;
