@@ -4,6 +4,34 @@ import { useEffect, useRef, useState } from 'react';
 
 const SHOW_DELAY_MS = 700;
 const MIN_VISIBLE_MS = 400;
+const POLLING_ENDPOINT_BLACKLIST = [
+  '/api/kiosk',
+  '/api/public-info',
+  '/api/kiosk-widgets-public',
+  '/api/kiosk-scenes-active',
+  '/api/todos/notifications',
+  '/api/notifications',
+  '/api/maintenance/public',
+  '/api/chat',
+  '/api/assemblies',
+];
+
+const isBlacklistedRequest = (input: RequestInfo | URL): boolean => {
+  try {
+    const rawUrl =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input instanceof Request
+            ? input.url
+            : String(input);
+    const url = new URL(rawUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    return POLLING_ENDPOINT_BLACKLIST.some((pattern) => url.pathname.startsWith(pattern));
+  } catch {
+    return false;
+  }
+};
 
 export default function GlobalLoadingOverlay() {
   const [pendingCount, setPendingCount] = useState(0);
@@ -23,6 +51,9 @@ export default function GlobalLoadingOverlay() {
     w.__ncOriginalFetch = originalFetch;
 
     window.fetch = async (...args) => {
+      if (isBlacklistedRequest(args[0])) {
+        return await originalFetch(...args);
+      }
       setPendingCount((count) => count + 1);
       try {
         return await originalFetch(...args);
