@@ -88,6 +88,7 @@ function ResidentLoginForm() {
         access: data.access,
         refresh: data.refresh,
         refreshCookieSet: Boolean(data.refresh_cookie_set),
+        refreshCookieMaxAge: data.refresh_cookie_max_age,
       });
 
       // Store building context if provided

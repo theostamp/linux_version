@@ -167,6 +167,7 @@ function PlansContent() {
             access: data.tokens.access,
             refresh: data.tokens.refresh,
             refreshCookieSet: Boolean(data.refresh_cookie_set),
+            refreshCookieMaxAge: data.refresh_cookie_max_age,
           });
         }
 

@@ -160,6 +160,7 @@ function OAuthCallback() {
           access: data.access,
           refresh: data.refresh,
           refreshCookieSet: Boolean(data.refresh_cookie_set),
+          refreshCookieMaxAge: data.refresh_cookie_max_age,
         });
 
         // Use loginWithToken to properly set auth state (if not cross-domain redirect)

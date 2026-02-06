@@ -5,7 +5,15 @@
  * Το Next.js rewrite τα προωθεί στο server-side proxy (`/backend-proxy`)
  * οπότε δεν κάνουμε ποτέ απευθείας κλήσεις στο Railway από τον browser.
  */
-import { clearAuthTokens, getAccessToken, isRefreshCookieEnabled, setRefreshCookieEnabled, storeAuthTokens } from '@/lib/authTokens';
+import {
+  clearAuthTokens,
+  clearStoredRefreshToken,
+  getAccessToken,
+  isRefreshCookieEnabled,
+  isRefreshTokenExpired,
+  setRefreshCookieEnabled,
+  storeAuthTokens,
+} from '@/lib/authTokens';
 
 type ApiErrorResponse = {
   status: number;
@@ -191,8 +199,19 @@ export async function refreshAccessToken(): Promise<string | null> {
 
   if (typeof window === 'undefined') return null;
 
-  const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refresh');
+  let refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refresh');
   const refreshCookieEnabled = isRefreshCookieEnabled();
+
+  if (refreshToken && isRefreshTokenExpired(refreshToken)) {
+    console.log('[API TOKEN REFRESH] Stored refresh token expired; clearing refresh token');
+    clearStoredRefreshToken();
+    refreshToken = null;
+    if (!refreshCookieEnabled) {
+      clearAuthTokens();
+      return null;
+    }
+  }
+
   if (!refreshToken && !refreshCookieEnabled) {
     console.log('[API TOKEN REFRESH] No refresh token or cookie flag; skipping refresh');
     return null;
@@ -229,13 +248,19 @@ export async function refreshAccessToken(): Promise<string | null> {
         return null;
       }
 
-      const data = await response.json() as { access: string; refresh?: string; refresh_cookie_set?: boolean };
+      const data = await response.json() as {
+        access: string;
+        refresh?: string;
+        refresh_cookie_set?: boolean;
+        refresh_cookie_max_age?: number;
+      };
       const newAccessToken = data.access;
 
       storeAuthTokens({
         access: newAccessToken,
         refresh: data.refresh,
         refreshCookieSet: Boolean(data.refresh_cookie_set),
+        refreshCookieMaxAge: data.refresh_cookie_max_age,
       });
 
       console.log('[API TOKEN REFRESH] Token refreshed successfully');
@@ -1013,7 +1038,12 @@ export async function loginUser(
   password: string,
 ): Promise<{ access: string; refresh: string; user: User }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
-  const data = await apiPost<{ access: string; refresh: string; refresh_cookie_set?: boolean }>(
+  const data = await apiPost<{
+    access: string;
+    refresh: string;
+    refresh_cookie_set?: boolean;
+    refresh_cookie_max_age?: number;
+  }>(
     '/users/token/simple/',
     { email, password },
   );
@@ -1022,6 +1052,7 @@ export async function loginUser(
     access: data.access,
     refresh: data.refresh,
     refreshCookieSet: Boolean(data.refresh_cookie_set),
+    refreshCookieMaxAge: data.refresh_cookie_max_age,
   });
   console.log('[loginUser] Tokens stored');
 

@@ -121,6 +121,7 @@ def attach_refresh_cookie(response: HttpResponse, refresh_token: str | None) -> 
     try:
         if isinstance(response.data, dict):
             response.data["refresh_cookie_set"] = True
+            response.data["refresh_cookie_max_age"] = _resolve_refresh_cookie_max_age()
     except Exception:
         # Response might not carry .data (streaming), ignore
         pass

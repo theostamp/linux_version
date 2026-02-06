@@ -46,6 +46,7 @@ function TenantAcceptContent() {
           access: string;
           refresh: string;
           refresh_cookie_set?: boolean;
+          refresh_cookie_max_age?: number;
           tenant: {
             schema_name: string;
             name: string;
@@ -64,6 +65,7 @@ function TenantAcceptContent() {
             access: response.access,
             refresh: response.refresh,
             refreshCookieSet: Boolean(response.refresh_cookie_set),
+            refreshCookieMaxAge: response.refresh_cookie_max_age,
           });
           console.log('[TenantAccept] Tokens stored');
 
