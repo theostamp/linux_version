@@ -5,7 +5,7 @@
  * Το Next.js rewrite τα προωθεί στο server-side proxy (`/backend-proxy`)
  * οπότε δεν κάνουμε ποτέ απευθείας κλήσεις στο Railway από τον browser.
  */
-import { clearAuthTokens, getAccessToken, isRefreshCookieEnabled, storeAuthTokens } from '@/lib/authTokens';
+import { clearAuthTokens, getAccessToken, isRefreshCookieEnabled, setRefreshCookieEnabled, storeAuthTokens } from '@/lib/authTokens';
 
 type ApiErrorResponse = {
   status: number;
@@ -218,6 +218,10 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       if (!response.ok) {
         console.log(`[API TOKEN REFRESH] Refresh failed with status: ${response.status}`);
+        if (response.status === 400 && refreshCookieEnabled && !refreshToken) {
+          // Cookie flag is stale; clear it to avoid retry loops.
+          setRefreshCookieEnabled(false);
+        }
         return null;
       }
 
