@@ -104,7 +104,7 @@ export default function GlobalLoadingOverlay() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-transparent">
       <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/90 px-5 py-4 text-white shadow-2xl">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
         <span className="text-sm font-medium">Φόρτωση...</span>
