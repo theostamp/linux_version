@@ -160,7 +160,11 @@ class CommonExpenseNotificationService:
 
             # Calculate apartment's share based on participation mills
             total_expense = expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0')
-            mills = apartment.participation_mills or apartment.participation_permilles or 0
+            mills = (
+                getattr(apartment, 'participation_mills', 0)
+                or getattr(apartment, 'participation_permilles', 0)
+                or 0
+            )
             expense_share = (total_expense * Decimal(mills)) / Decimal('1000') if mills else Decimal('0')
 
             # Get payments for this month
