@@ -179,6 +179,9 @@ TENANT_APPS = [
     # 💰 Οικονομικό σύστημα
     'financial',
 
+    # 📥 Collections OS (Debt workflows)
+    'collections_os',
+
     # 💳 Online payments (Stripe charges) - tenant schema
     'online_payments',
 
@@ -203,6 +206,9 @@ TENANT_APPS = [
 
     # 💼 Office Finance (Income/Expense Management for the Office)
     'office_finance',
+
+    # 🧠 Office Ops (Bulk job engine for office workflows)
+    'office_ops',
 
     # 📋 Assembly Management (Γενικές Συνελεύσεις)
     'assemblies.apps.AssembliesConfig',
@@ -655,6 +661,16 @@ ENABLE_LEDGER_SYNC = os.getenv('ENABLE_LEDGER_SYNC', 'False').lower() == 'true'
 ENABLE_KIOSK_SIGNED_QR = os.getenv('ENABLE_KIOSK_SIGNED_QR', 'False').lower() == 'true'
 ENABLE_SECURE_PUBLIC_INFO = os.getenv('ENABLE_SECURE_PUBLIC_INFO', 'False').lower() == 'true'
 ENABLE_CELERY_BEAT = os.getenv('ENABLE_CELERY_BEAT', 'False').lower() == 'true'
+ENABLE_COLLECTIONS_OS = os.getenv('ENABLE_COLLECTIONS_OS', 'False').lower() == 'true'
+ENABLE_BULK_OPS = os.getenv('ENABLE_BULK_OPS', 'False').lower() == 'true'
+ENABLE_VOTE_AUTOMATION = os.getenv('ENABLE_VOTE_AUTOMATION', 'False').lower() == 'true'
+ENABLE_VENDOR_PORTAL = os.getenv('ENABLE_VENDOR_PORTAL', 'False').lower() == 'true'
+ENABLE_HTTPONLY_AUTH = os.getenv('ENABLE_HTTPONLY_AUTH', 'False').lower() == 'true'
+ENABLE_SLO_METRICS = os.getenv('ENABLE_SLO_METRICS', 'False').lower() == 'true'
+DASHBOARD_OVERVIEW_CACHE_TTL = int(os.getenv('DASHBOARD_OVERVIEW_CACHE_TTL', '45'))
+ENABLE_DASHBOARD_CACHE_WARMER = os.getenv('ENABLE_DASHBOARD_CACHE_WARMER', 'False').lower() == 'true'
+OFFICE_FINANCE_DASHBOARD_CACHE_TTL = int(os.getenv('OFFICE_FINANCE_DASHBOARD_CACHE_TTL', '30'))
+OFFICE_FINANCE_YEARLY_CACHE_TTL = int(os.getenv('OFFICE_FINANCE_YEARLY_CACHE_TTL', '300'))
 
 # Kiosk QR signing settings
 KIOSK_QR_TTL_SECONDS = int(os.getenv('KIOSK_QR_TTL_SECONDS', '900'))

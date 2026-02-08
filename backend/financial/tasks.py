@@ -2,12 +2,17 @@
 Celery tasks για αυτόματες οικονομικές λειτουργίες
 """
 from celery import shared_task
+from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
+from django_tenants.utils import get_tenant_model, schema_context
 from datetime import date, timedelta
 from decimal import Decimal
 from buildings.models import Building
 from apartments.models import Apartment
 from .models import Expense
+from .serializers import FinancialSummarySerializer
+from .services import FinancialDashboardService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -212,3 +217,149 @@ def backfill_management_fees(building_id: int, start_month: str, end_month: str 
 
     logger.info(f"✅ Backfill completed: {result}")
     return result
+
+
+def _dashboard_cache_ttl_seconds() -> int:
+    return int(getattr(settings, 'DASHBOARD_OVERVIEW_CACHE_TTL', 45) or 45)
+
+
+def _dashboard_shared_cache_key(kind: str, schema_name: str, building_id: int, month: str | None) -> str:
+    return f"financial:dashboard:{kind}:v2:{schema_name}:{building_id}:{month or 'all'}"
+
+
+def _overview_building_component_cache_key(schema_name: str, building_id: int, month: str) -> str:
+    return f"financial:dashboard:overview-building:v1:{schema_name}:{building_id}:{month}"
+
+
+def _build_apartment_balances_payload(apartment_balances: list[dict], month: str | None) -> dict:
+    total_obligations = sum(
+        float(apt.get('current_balance', 0))
+        for apt in apartment_balances
+        if float(apt.get('current_balance', 0)) > 0
+    )
+    total_payments = sum(float(apt.get('month_payments', 0)) for apt in apartment_balances)
+    total_net_obligations = sum(
+        float(apt.get('net_obligation', 0))
+        for apt in apartment_balances
+        if float(apt.get('net_obligation', 0)) > 0
+    )
+    active_count = len([apt for apt in apartment_balances if apt['status'] == 'Ενεργό'])
+    debt_count = len([apt for apt in apartment_balances if apt['status'] in ['Οφειλή', 'Κρίσιμο']])
+    critical_count = len([apt for apt in apartment_balances if apt['status'] == 'Κρίσιμο'])
+    credit_count = len([apt for apt in apartment_balances if apt['status'] == 'Πιστωτικό'])
+
+    return {
+        'apartments': apartment_balances,
+        'summary': {
+            'total_obligations': total_obligations,
+            'total_payments': total_payments,
+            'total_net_obligations': total_net_obligations,
+            'active_count': active_count,
+            'debt_count': debt_count,
+            'critical_count': critical_count,
+            'credit_count': credit_count,
+            'total_apartments': len(apartment_balances),
+            'data_month': month,
+            'requested_month': month,
+        },
+    }
+
+
+@shared_task(bind=True, max_retries=1, default_retry_delay=30)
+def warm_financial_dashboard_cache(
+    self,
+    *,
+    schema_name: str | None = None,
+    building_ids: list[int] | None = None,
+    month: str | None = None,
+):
+    """
+    Warm shared financial dashboard caches (summary/apartment-balances/debt-report).
+    """
+    if not getattr(settings, 'ENABLE_DASHBOARD_CACHE_WARMER', False):
+        return {'status': 'skipped', 'reason': 'dashboard cache warmer disabled'}
+
+    ttl = _dashboard_cache_ttl_seconds()
+    if ttl <= 0:
+        return {'status': 'skipped', 'reason': 'cache ttl disabled'}
+
+    target_months: list[str | None]
+    if month:
+        target_months = [month]
+    else:
+        target_months = [None, timezone.now().strftime('%Y-%m')]
+
+    tenant_schemas: list[str] = []
+    if schema_name:
+        tenant_schemas = [schema_name]
+    else:
+        tenant_schemas = [
+            tenant.schema_name
+            for tenant in get_tenant_model().objects.exclude(schema_name='public')
+        ]
+
+    tenants_processed = 0
+    buildings_processed = 0
+    failures = 0
+
+    for tenant_schema in tenant_schemas:
+        with schema_context(tenant_schema):
+            tenants_processed += 1
+            queryset = Building.objects.all().order_by('id')
+            if building_ids:
+                queryset = queryset.filter(id__in=building_ids)
+
+            for building in queryset.iterator():
+                buildings_processed += 1
+                service = FinancialDashboardService(building.id)
+
+                try:
+                    for month_value in target_months:
+                        summary = service.get_summary(month_value)
+                        summary_payload = FinancialSummarySerializer(summary).data
+                        cache.set(
+                            _dashboard_shared_cache_key('summary', tenant_schema, building.id, month_value),
+                            summary_payload,
+                            ttl,
+                        )
+
+                        apartment_balances = service.get_apartment_balances(month=month_value)
+                        apartment_payload = _build_apartment_balances_payload(apartment_balances, month_value)
+                        cache.set(
+                            _dashboard_shared_cache_key('apartment-balances', tenant_schema, building.id, month_value),
+                            apartment_payload,
+                            ttl,
+                        )
+
+                        debt_report = service.get_debt_report(month=month_value)
+                        cache.set(
+                            _dashboard_shared_cache_key('debt-report', tenant_schema, building.id, month_value),
+                            debt_report,
+                            ttl,
+                        )
+
+                        if month_value:
+                            cache.set(
+                                _overview_building_component_cache_key(tenant_schema, building.id, month_value),
+                                {
+                                    'summary': summary,
+                                    'apartment_balances': apartment_balances,
+                                },
+                                ttl,
+                            )
+                except Exception as exc:
+                    failures += 1
+                    logger.exception(
+                        "Financial dashboard cache warm failed (schema=%s, building=%s): %s",
+                        tenant_schema,
+                        building.id,
+                        exc,
+                    )
+
+    return {
+        'status': 'ok',
+        'tenants_processed': tenants_processed,
+        'buildings_processed': buildings_processed,
+        'months_warmed': [m or 'all' for m in target_months],
+        'failures': failures,
+    }

@@ -10,6 +10,7 @@ import json
 from decimal import Decimal
 import mimetypes
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -27,6 +28,57 @@ def get_query_params(request):
     Helper function to get query parameters from both DRF and Django requests
     """
     return getattr(request, 'query_params', request.GET)
+
+
+def _dashboard_cache_ttl_seconds() -> int:
+    return int(getattr(settings, 'DASHBOARD_OVERVIEW_CACHE_TTL', 45) or 45)
+
+
+def _dashboard_user_cache_key(kind: str, tenant_schema: str, user_id: int, building_id, month: str | None) -> str:
+    return f"financial:dashboard:{kind}:v1:{tenant_schema}:{user_id}:{building_id}:{month or 'all'}"
+
+
+def _dashboard_shared_cache_key(kind: str, tenant_schema: str, building_id, month: str | None) -> str:
+    return f"financial:dashboard:{kind}:v2:{tenant_schema}:{building_id}:{month or 'all'}"
+
+
+def _overview_building_component_cache_key(tenant_schema: str, building_id: int, month: str) -> str:
+    return f"financial:dashboard:overview-building:v1:{tenant_schema}:{building_id}:{month}"
+
+
+def _build_apartment_balances_payload(apartment_balances: list[dict], month: str | None):
+    total_obligations = sum(
+        float(apt.get('current_balance', 0))
+        for apt in apartment_balances
+        if float(apt.get('current_balance', 0)) > 0
+    )
+    total_payments = sum(float(apt.get('month_payments', 0)) for apt in apartment_balances)
+    total_net_obligations = sum(
+        float(apt.get('net_obligation', 0))
+        for apt in apartment_balances
+        if float(apt.get('net_obligation', 0)) > 0
+    )
+
+    active_count = len([apt for apt in apartment_balances if apt['status'] == 'Ενεργό'])
+    debt_count = len([apt for apt in apartment_balances if apt['status'] in ['Οφειλή', 'Κρίσιμο']])
+    critical_count = len([apt for apt in apartment_balances if apt['status'] == 'Κρίσιμο'])
+    credit_count = len([apt for apt in apartment_balances if apt['status'] == 'Πιστωτικό'])
+
+    return {
+        'apartments': apartment_balances,
+        'summary': {
+            'total_obligations': total_obligations,
+            'total_payments': total_payments,
+            'total_net_obligations': total_net_obligations,
+            'active_count': active_count,
+            'debt_count': debt_count,
+            'critical_count': critical_count,
+            'credit_count': credit_count,
+            'total_apartments': len(apartment_balances),
+            'data_month': month,
+            'requested_month': month,
+        },
+    }
 
 from .models import Expense, ExpensePayment, CashFunding, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt, MonthlyBalance
 from .serializers import (
@@ -1752,10 +1804,29 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
 
         try:
+            cache_ttl_seconds = _dashboard_cache_ttl_seconds()
+            tenant_schema = getattr(getattr(request, 'tenant', None), 'schema_name', 'default')
+            user_cache_key = _dashboard_user_cache_key('summary', tenant_schema, request.user.id, building_id, month)
+            shared_cache_key = _dashboard_shared_cache_key('summary', tenant_schema, building_id, month)
+            if cache_ttl_seconds > 0:
+                cached_payload = cache.get(user_cache_key)
+                if cached_payload is not None:
+                    return Response(cached_payload)
+                shared_payload = cache.get(shared_cache_key)
+                if shared_payload is not None:
+                    cache.set(user_cache_key, shared_payload, cache_ttl_seconds)
+                    return Response(shared_payload)
+
             service = FinancialDashboardService(int(building_id))
             summary = service.get_summary(month)
             serializer = FinancialSummarySerializer(summary)
-            return Response(serializer.data)
+            payload = serializer.data
+
+            if cache_ttl_seconds > 0:
+                cache.set(shared_cache_key, payload, cache_ttl_seconds)
+                cache.set(user_cache_key, payload, cache_ttl_seconds)
+
+            return Response(payload)
         except Exception as e:
             return Response(
                 {'error': str(e)},
@@ -2228,39 +2299,37 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
 
         try:
+            cache_ttl_seconds = _dashboard_cache_ttl_seconds()
+            tenant_schema = getattr(getattr(request, 'tenant', None), 'schema_name', 'default')
+            user_cache_key = _dashboard_user_cache_key(
+                'apartment-balances',
+                tenant_schema,
+                request.user.id,
+                building_id,
+                month,
+            )
+            shared_cache_key = _dashboard_shared_cache_key('apartment-balances', tenant_schema, building_id, month)
+            if cache_ttl_seconds > 0:
+                cached_payload = cache.get(user_cache_key)
+                if cached_payload is not None:
+                    return Response(cached_payload)
+                shared_payload = cache.get(shared_cache_key)
+                if shared_payload is not None:
+                    cache.set(user_cache_key, shared_payload, cache_ttl_seconds)
+                    return Response(shared_payload)
+
             # ΔΙΟΡΘΩΣΗ: Χρησιμοποιούμε το FinancialDashboardService που έχει τη σωστή λογική
             from .services import FinancialDashboardService
 
             service = FinancialDashboardService(building_id=building_id)
             apartment_balances = service.get_apartment_balances(month=month)
+            payload = _build_apartment_balances_payload(apartment_balances, month)
 
-            # Υπολογισμός summary statistics από τα δεδομένα του service
-            total_obligations = sum(float(apt.get('current_balance', 0)) for apt in apartment_balances if float(apt.get('current_balance', 0)) > 0)
-            # ΔΙΟΡΘΩΣΗ: Χρήση του month_payments για στατιστικά μήνα (αντί για total_payments που είναι all-time)
-            total_payments = sum(float(apt.get('month_payments', 0)) for apt in apartment_balances)
-            total_net_obligations = sum(float(apt.get('net_obligation', 0)) for apt in apartment_balances if float(apt.get('net_obligation', 0)) > 0)
+            if cache_ttl_seconds > 0:
+                cache.set(shared_cache_key, payload, cache_ttl_seconds)
+                cache.set(user_cache_key, payload, cache_ttl_seconds)
 
-            # Count apartments by status
-            active_count = len([apt for apt in apartment_balances if apt['status'] == 'Ενεργό'])
-            debt_count = len([apt for apt in apartment_balances if apt['status'] in ['Οφειλή', 'Κρίσιμο']])
-            critical_count = len([apt for apt in apartment_balances if apt['status'] == 'Κρίσιμο'])
-            credit_count = len([apt for apt in apartment_balances if apt['status'] == 'Πιστωτικό'])
-
-            return Response({
-                'apartments': apartment_balances,
-                'summary': {
-                    'total_obligations': total_obligations,
-                    'total_payments': total_payments,
-                    'total_net_obligations': total_net_obligations,
-                    'active_count': active_count,
-                    'debt_count': debt_count,
-                    'critical_count': critical_count,
-                    'credit_count': credit_count,
-                    'total_apartments': len(apartment_balances),
-                    'data_month': month,  # Add the actual month of the data
-                    'requested_month': month  # Add the requested month for comparison
-                }
-            })
+            return Response(payload)
 
         except Exception as e:
             return Response(
@@ -2282,16 +2351,81 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
 
         try:
+            cache_ttl_seconds = _dashboard_cache_ttl_seconds()
+            tenant_schema = getattr(getattr(request, 'tenant', None), 'schema_name', 'default')
+            user_cache_key = _dashboard_user_cache_key(
+                'debt-report',
+                tenant_schema,
+                request.user.id,
+                building_id,
+                month,
+            )
+            shared_cache_key = _dashboard_shared_cache_key('debt-report', tenant_schema, building_id, month)
+            if cache_ttl_seconds > 0:
+                cached_payload = cache.get(user_cache_key)
+                if cached_payload is not None:
+                    return Response(cached_payload)
+                shared_payload = cache.get(shared_cache_key)
+                if shared_payload is not None:
+                    cache.set(user_cache_key, shared_payload, cache_ttl_seconds)
+                    return Response(shared_payload)
+
             from .services import FinancialDashboardService
 
             service = FinancialDashboardService(building_id=building_id)
             report = service.get_debt_report(month=month)
+            if cache_ttl_seconds > 0:
+                cache.set(shared_cache_key, report, cache_ttl_seconds)
+                cache.set(user_cache_key, report, cache_ttl_seconds)
             return Response(report)
         except Exception as e:
             return Response(
                 {'error': f'Error generating debt report: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=['post'], url_path='warm-cache')
+    def warm_cache(self, request):
+        """
+        Queue async warm-up for financial dashboard shared caches.
+        """
+        user = request.user
+        role = getattr(user, 'role', None)
+        if not (user.is_superuser or user.is_staff or role in {'manager', 'staff'}):
+            return Response(
+                {'error': 'Δεν έχετε δικαίωμα να εκτελέσετε warm-cache.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        data = getattr(request, 'data', None) or {}
+        raw_building_id = data.get('building_id') or request.query_params.get('building_id')
+        building_ids = None
+
+        if raw_building_id not in (None, ''):
+            try:
+                building_ids = [int(raw_building_id)]
+            except (TypeError, ValueError):
+                return Response(
+                    {'error': 'Invalid building_id'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        from .tasks import warm_financial_dashboard_cache
+
+        async_result = warm_financial_dashboard_cache.delay(
+            schema_name=getattr(getattr(request, 'tenant', None), 'schema_name', None),
+            building_ids=building_ids,
+        )
+
+        return Response(
+            {
+                'queued': True,
+                'task_id': async_result.id,
+                'schema_name': getattr(getattr(request, 'tenant', None), 'schema_name', 'public'),
+                'building_ids': building_ids or [],
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     @action(detail=False, methods=['get'])
     def apartment_transaction_history(self, request):
@@ -2489,6 +2623,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
 
             # Get building_id filter from query params
             building_id = request.query_params.get('building_id')
+            force_refresh = str(request.query_params.get('force_refresh', '')).lower() in {'1', 'true', 'yes'}
 
             # Get all buildings accessible to user (using same logic as BuildingViewSet)
             if user.is_superuser or user.is_staff:
@@ -2505,6 +2640,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     buildings = Building.objects.filter(memberships__resident=user).distinct()
 
             buildings = buildings.distinct()
+            buildings = buildings.annotate(apartments_total=Count('apartments', distinct=True))
 
             # Apply building_id filter if provided
             if building_id:
@@ -2537,6 +2673,16 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     'buildings': []
                 })
 
+            tenant_schema = getattr(getattr(request, 'tenant', None), 'schema_name', 'public')
+            cache_scope = building_id if building_id else 'all'
+            cache_key = f'financial:dashboard:overview:v1:{tenant_schema}:{user.id}:{cache_scope}'
+            cache_ttl_seconds = _dashboard_cache_ttl_seconds()
+
+            if cache_ttl_seconds > 0 and not force_refresh:
+                cached_payload = cache.get(cache_key)
+                if cached_payload is not None:
+                    return Response(cached_payload)
+
             # Aggregate metrics
             buildings_count = buildings.count()
             apartments_count = Apartment.objects.filter(building__in=buildings).count()
@@ -2555,17 +2701,39 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             buildings_data = []
             for building in buildings:
                 try:
-                    service = FinancialDashboardService(building.id)
-                    summary = service.get_summary(month=current_month)  # Με μήνα για consistent data
+                    summary = None
+                    apt_balances = None
+                    component_cache_key = _overview_building_component_cache_key(
+                        tenant_schema,
+                        building.id,
+                        current_month,
+                    )
+
+                    if cache_ttl_seconds > 0 and not force_refresh:
+                        component_payload = cache.get(component_cache_key)
+                        if component_payload:
+                            summary = component_payload.get('summary') or {}
+                            apt_balances = component_payload.get('apartment_balances') or []
+
+                    if summary is None or apt_balances is None:
+                        service = FinancialDashboardService(building.id)
+                        summary = service.get_summary(month=current_month)  # Με μήνα για consistent data
+                        apt_balances = service.get_apartment_balances(month=current_month)
+                        if cache_ttl_seconds > 0:
+                            cache.set(
+                                component_cache_key,
+                                {
+                                    'summary': summary,
+                                    'apartment_balances': apt_balances,
+                                },
+                                cache_ttl_seconds,
+                            )
 
                     building_balance = float(summary.get('current_reserve', 0) or 0)
                     building_pending = float(summary.get('pending_expenses', 0) or 0)
 
                     total_balance += building_balance
                     pending_expenses += building_pending
-
-                    # Get apartment balances with current month for net_obligation calculation
-                    apt_balances = service.get_apartment_balances(month=current_month)
 
                     # 📝 Χρήση net_obligation αντί για current_balance για consistency με Financial Page
                     # net_obligation = previous_balance + expense_share - month_payments
@@ -2589,7 +2757,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'id': building.id,
                         'name': building.name,
                         'address': building.address,
-                        'apartments_count': building.apartments.count(),
+                        'apartments_count': getattr(building, 'apartments_total', 0),
                         'balance': building_balance,
                         'pending_obligations': building_obligations,
                         'health_score': self._calculate_building_health(building, summary, apt_balances)
@@ -2601,7 +2769,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'id': building.id,
                         'name': building.name,
                         'address': building.address,
-                        'apartments_count': building.apartments.count(),
+                        'apartments_count': getattr(building, 'apartments_total', 0),
                         'balance': 0,
                         'pending_obligations': 0,
                         'health_score': 50
@@ -2691,7 +2859,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             recent_activity.sort(key=lambda x: x['date'], reverse=True)
             recent_activity = recent_activity[:10]
 
-            return Response({
+            payload = {
                 'buildings_count': buildings_count,
                 'apartments_count': apartments_count,
                 'total_balance': total_balance,
@@ -2715,7 +2883,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 },
                 'recent_activity': recent_activity,
                 'buildings': buildings_data
-            })
+            }
+
+            if cache_ttl_seconds > 0:
+                cache.set(cache_key, payload, cache_ttl_seconds)
+
+            return Response(payload)
 
         except Exception as e:
             print(f"Error in dashboard overview: {str(e)}")

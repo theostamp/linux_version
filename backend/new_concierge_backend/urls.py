@@ -60,6 +60,9 @@ urlpatterns = [
     # Financial management
     path('api/financial/', include('financial.urls')),
 
+    # Collections OS
+    path('api/collections/', include('collections_os.urls')),
+
     # Archive (Electronic Document Archive)
     path('api/archive/', include('archive.urls')),
 
@@ -139,6 +142,9 @@ urlpatterns = [
 
     # Office Finance (Income/Expense Management for the Office)
     path('api/office-finance/', include('office_finance.urls')),
+
+    # Office Ops (Bulk Center)
+    path('api/office-ops/', include('office_ops.urls')),
 
     # Assemblies (Γενικές Συνελεύσεις)
     path('api/', include('assemblies.urls')),

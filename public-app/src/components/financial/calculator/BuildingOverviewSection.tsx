@@ -366,8 +366,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         setLoading(true);
       }
 
-      // Fetch building data if not complete
-      if (!currentBuilding?.management_fee_per_apartment) {
+      // Fetch building data only when context is missing this field (null/undefined).
+      // A value of 0 is valid and should not trigger an extra network call.
+      if (!currentBuilding || currentBuilding.management_fee_per_apartment == null) {
         try {
           const buildingResponse = await makeRequestWithRetry({
             method: 'get',

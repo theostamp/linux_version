@@ -43,6 +43,12 @@ export interface DashboardOverview {
   }>;
 }
 
+interface UseDashboardDataOptions {
+  enabled?: boolean;
+  staleTime?: number;
+  refetchOnWindowFocus?: boolean;
+}
+
 /**
  * Fetch dashboard overview data
  */
@@ -73,15 +79,25 @@ async function fetchDashboardOverviewByBuilding(buildingId: number): Promise<Das
  * Hook to get dashboard overview data
  * @param buildingId - Optional building ID to filter data for a specific building
  */
-export function useDashboardData(buildingId?: number) {
+export function useDashboardData(
+  buildingId?: number,
+  options: UseDashboardDataOptions = {}
+) {
+  const {
+    enabled = true,
+    staleTime = 5 * 60 * 1000,
+    refetchOnWindowFocus = false,
+  } = options;
+
   const query = useQuery({
     queryKey: buildingId ? ['dashboard', 'overview', buildingId] : ['dashboard', 'overview'],
     queryFn: buildingId ? () => fetchDashboardOverviewByBuilding(buildingId) : fetchDashboardOverview,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime,
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     retry: 2,
-    refetchOnWindowFocus: true,
-    enabled: true, // Always enabled, even with building filter
+    refetchOnWindowFocus,
+    refetchOnReconnect: false,
+    enabled,
   });
 
   return {

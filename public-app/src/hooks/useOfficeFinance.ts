@@ -487,4 +487,14 @@ export function useYearlySummary(year?: number) {
   });
 }
 
+// Warm cache trigger (async server-side precompute)
+export function useWarmOfficeFinanceCache() {
+  return useMutation({
+    mutationFn: async (year?: number) => {
+      const payload = year ? { year } : {};
+      return await api.post('/office-finance/warm-cache/', payload);
+    },
+  });
+}
+
 export default useOfficeFinanceDashboard;

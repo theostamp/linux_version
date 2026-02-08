@@ -90,6 +90,18 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute=20, hour=2),  # 02:20 daily
         'args': (30,),
     },
+    # Warm shared financial dashboard caches (tenant/building/month)
+    'warm-financial-dashboard-cache': {
+        'task': 'financial.tasks.warm_financial_dashboard_cache',
+        'schedule': crontab(minute='*/10'),
+        'args': (),
+    },
+    # Warm office finance dashboard/yearly caches for office users
+    'warm-office-finance-cache': {
+        'task': 'office_finance.tasks.warm_office_finance_cache',
+        'schedule': crontab(minute='*/15'),
+        'args': (),
+    },
 }
 
 try:
@@ -97,6 +109,9 @@ try:
 
     if not getattr(settings, "ENABLE_CELERY_BEAT", False):
         app.conf.beat_schedule = {}
+    elif not getattr(settings, "ENABLE_DASHBOARD_CACHE_WARMER", False):
+        app.conf.beat_schedule.pop('warm-financial-dashboard-cache', None)
+        app.conf.beat_schedule.pop('warm-office-finance-cache', None)
 except Exception:
     # Fail safe: keep schedule if settings cannot be loaded
     pass

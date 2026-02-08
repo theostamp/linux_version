@@ -705,6 +705,11 @@ class Expense(models.Model):
         verbose_name = "Δαπάνη"
         verbose_name_plural = "Δαπάνες"
         ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=['building', 'date'], name='fin_exp_bldg_date_idx'),
+            models.Index(fields=['building', 'category', 'date'], name='fin_exp_bldg_cat_date_idx'),
+            models.Index(fields=['building', 'created_at'], name='fin_exp_bldg_created_idx'),
+        ]
 
     def has_installments(self):
         """Ελέγχει αν η δαπάνη έχει δόσεις/διακανονισμούς μέσω συνδεδεμένων έργων συντήρησης"""
@@ -1009,6 +1014,13 @@ class Transaction(models.Model):
         verbose_name = "Κίνηση Ταμείου"
         verbose_name_plural = "Κινήσεις Ταμείου"
         ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=['building', 'date'], name='fin_txn_bldg_date_idx'),
+            models.Index(
+                fields=['apartment', 'reference_type', 'type', 'reference_id'],
+                name='fin_txn_apt_ref_idx',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.amount}€ ({self.date.strftime('%d/%m/%Y')})"
@@ -1073,6 +1085,10 @@ class Payment(models.Model):
         verbose_name = "Είσπραξη"
         verbose_name_plural = "Εισπράξεις"
         ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=['apartment', 'date', 'created_at'], name='fin_pay_aptdtcrt_idx'),
+            models.Index(fields=['date'], name='fin_pay_date_idx'),
+        ]
 
     def __str__(self):
         return f"Είσπραξη {self.apartment.number} - {self.amount}€ ({self.get_method_display()})"
@@ -1156,6 +1172,10 @@ class ExpensePayment(models.Model):
         verbose_name = "Εξόφληση Δαπάνης"
         verbose_name_plural = "Εξοφλήσεις Δαπανών"
         ordering = ['-payment_date', '-created_at']
+        indexes = [
+            models.Index(fields=['expense', 'payment_date'], name='fin_exppay_exp_dt_idx'),
+            models.Index(fields=['payment_date'], name='fin_exppay_date_idx'),
+        ]
 
     def __str__(self):
         return f"Πληρωμή {self.expense.title} - {self.amount}€ ({self.payment_date})"
@@ -1216,6 +1236,9 @@ class CashFunding(models.Model):
         verbose_name = "Χρηματοδότηση Ταμείου"
         verbose_name_plural = "Χρηματοδοτήσεις Ταμείου"
         ordering = ['-funding_date', '-created_at']
+        indexes = [
+            models.Index(fields=['building', 'funding_date'], name='fin_cash_bldg_date_idx'),
+        ]
 
     def __str__(self):
         return f"Χρηματοδότηση {self.amount}€ ({self.funding_date})"
@@ -1330,6 +1353,10 @@ class CommonExpensePeriod(models.Model):
         verbose_name_plural = "Περίοδοι Κοινοχρήστων"
         ordering = ['-start_date']
         unique_together = ['building', 'period_name']
+        indexes = [
+            models.Index(fields=['building', 'start_date'], name='fin_period_bldg_start_idx'),
+            models.Index(fields=['building', 'is_active', 'start_date'], name='fin_period_bldg_act_idx'),
+        ]
 
     def __str__(self):
         return f"{self.period_name} ({self.building.name})"

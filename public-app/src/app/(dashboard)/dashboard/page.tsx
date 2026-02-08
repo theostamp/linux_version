@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Building, Loader2, CalendarDays, Clock, MessageSquare, Vote as VoteIcon, Bell } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { useBuildings } from '@/hooks/useBuildings';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { useVotes } from '@/hooks/useVotes';
 import { useRequests } from '@/hooks/useRequests';
@@ -129,18 +128,37 @@ function DashboardContent() {
     setPushPromptDismissed(true);
   };
 
-  const { currentBuilding, selectedBuilding, buildings } = useBuilding();
-  const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
+  const { currentBuilding, selectedBuilding, buildings, isLoading: buildingsLoading } = useBuilding();
   const activeBuildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
-  const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements(activeBuildingId);
-  const { data: votesRaw = [], isLoading: votesLoading } = useVotes(activeBuildingId);
-  const { data: requestsRaw = [], isLoading: requestsLoading } = useRequests(activeBuildingId);
+  const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements(activeBuildingId ?? undefined);
+  const { data: votesRaw = [], isLoading: votesLoading } = useVotes(activeBuildingId ?? undefined, {
+    refetchOnMount: false,
+  });
+  const { data: requestsRaw = [], isLoading: requestsLoading } = useRequests(activeBuildingId ?? undefined);
 
-  // Use the new centralized dashboard data hook
-  const { data: dashboardData, isLoading: dashboardLoading, isError, error: dashboardError } = useDashboardData();
-  const { data: buildingDashboardData, isLoading: buildingDashboardLoading } = useDashboardData(activeBuildingId ?? undefined);
+  const shouldLoadPortfolioOverview = !selectedBuilding;
+  const shouldLoadBuildingOverview = !!selectedBuilding && !!activeBuildingId;
 
-  const isLoading = authLoading || buildingsLoading || dashboardLoading;
+  // Use the centralized dashboard data hook with scoped loading
+  const {
+    data: dashboardData,
+    isLoading: dashboardLoading,
+    isError: dashboardIsError,
+    error: dashboardError,
+  } = useDashboardData(undefined, { enabled: shouldLoadPortfolioOverview });
+  const {
+    data: buildingDashboardData,
+    isLoading: buildingDashboardLoading,
+    isError: buildingDashboardIsError,
+    error: buildingDashboardError,
+  } = useDashboardData(activeBuildingId ?? undefined, { enabled: shouldLoadBuildingOverview });
+
+  const effectiveDashboardData = selectedBuilding ? buildingDashboardData : dashboardData;
+  const effectiveDashboardLoading = selectedBuilding ? buildingDashboardLoading : dashboardLoading;
+  const effectiveDashboardError = selectedBuilding ? buildingDashboardError : dashboardError;
+  const effectiveDashboardIsError = selectedBuilding ? buildingDashboardIsError : dashboardIsError;
+
+  const isLoading = authLoading || buildingsLoading || effectiveDashboardLoading;
 
   // Don't render dashboard for residents - they're being redirected
   if (isAuthReady && user && isResident(user)) {
@@ -170,11 +188,11 @@ function DashboardContent() {
     );
   }
 
-  if (isError && dashboardError) {
-    console.error('Dashboard error:', dashboardError);
+  if (effectiveDashboardIsError && effectiveDashboardError) {
+    console.error('Dashboard error:', effectiveDashboardError);
   }
 
-  const effectiveBuildings = buildingsData || buildings || [];
+  const effectiveBuildings = buildings || [];
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -270,8 +288,8 @@ function DashboardContent() {
           className="md:col-span-12"
           header={
             <HeroSection
-              data={selectedBuilding ? buildingDashboardData : dashboardData}
-              loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
+              data={effectiveDashboardData}
+              loading={effectiveDashboardLoading}
               showWelcome={!selectedBuilding}
             />
           }
@@ -324,8 +342,8 @@ function DashboardContent() {
           description="Έσοδα και Έξοδα τρέχοντος έτους"
           header={
             <FinancialOverview
-              data={selectedBuilding ? buildingDashboardData : dashboardData}
-              loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
+              data={effectiveDashboardData}
+              loading={effectiveDashboardLoading}
             />
           }
         />
@@ -337,8 +355,8 @@ function DashboardContent() {
           description="Συντομεύσεις για καθημερινές εργασίες"
           header={
             <QuickActionsGrid
-              data={dashboardData}
-              loading={dashboardLoading}
+              data={effectiveDashboardData}
+              loading={effectiveDashboardLoading}
             />
           }
         />
@@ -492,8 +510,8 @@ function DashboardContent() {
           description="Τι άλλαξε το τελευταίο διάστημα"
           header={
             <ActivityFeed
-              data={dashboardData}
-              loading={dashboardLoading}
+              data={effectiveDashboardData}
+              loading={effectiveDashboardLoading}
             />
           }
         />
@@ -506,8 +524,8 @@ function DashboardContent() {
             description="Συνοπτική εικόνα των κτιρίων σας"
             header={
               <BuildingHealthCards
-                data={selectedBuilding ? buildingDashboardData : dashboardData}
-                loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
+                data={effectiveDashboardData}
+                loading={effectiveDashboardLoading}
               />
             }
           />

@@ -12,6 +12,7 @@ from .views import (
     OfficeIncomeViewSet,
     OfficeFinanceDashboardView,
     OfficeFinanceYearlySummaryView,
+    OfficeFinanceWarmCacheView,
     InitializeDefaultCategoriesView,
 )
 
@@ -25,9 +26,9 @@ urlpatterns = [
     # Dashboard & Summary
     path('dashboard/', OfficeFinanceDashboardView.as_view(), name='office-finance-dashboard'),
     path('yearly-summary/', OfficeFinanceYearlySummaryView.as_view(), name='yearly-summary'),
+    path('warm-cache/', OfficeFinanceWarmCacheView.as_view(), name='office-finance-warm-cache'),
     path('init-categories/', InitializeDefaultCategoriesView.as_view(), name='init-categories'),
     
     # Router URLs
     path('', include(router.urls)),
 ]
-

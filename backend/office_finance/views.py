@@ -18,6 +18,10 @@ from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.conf import settings
+from django.core.cache import cache
+from django.db import connection
+from django.utils import timezone
 import logging
 
 from .models import (
@@ -37,6 +41,22 @@ from .serializers import (
 from .services import office_finance_service
 
 logger = logging.getLogger(__name__)
+
+
+def _office_finance_dashboard_cache_ttl() -> int:
+    return int(getattr(settings, 'OFFICE_FINANCE_DASHBOARD_CACHE_TTL', 30) or 30)
+
+
+def _office_finance_yearly_cache_ttl() -> int:
+    return int(getattr(settings, 'OFFICE_FINANCE_YEARLY_CACHE_TTL', 300) or 300)
+
+
+def _office_finance_dashboard_cache_key(schema_name: str, user_id: int) -> str:
+    return f"office-finance:dashboard:v1:{schema_name}:{user_id}"
+
+
+def _office_finance_yearly_cache_key(schema_name: str, user_id: int, year: int) -> str:
+    return f"office-finance:yearly-summary:v1:{schema_name}:{user_id}:{year}"
 
 
 class IsOfficeStaff(BasePermission):
@@ -272,7 +292,19 @@ class OfficeFinanceDashboardView(APIView):
     
     def get(self, request):
         try:
+            force_refresh = str(request.query_params.get('force_refresh', '')).lower() in {'1', 'true', 'yes'}
+            schema_name = connection.schema_name
+            cache_ttl = _office_finance_dashboard_cache_ttl()
+            cache_key = _office_finance_dashboard_cache_key(schema_name, request.user.id)
+
+            if cache_ttl > 0 and not force_refresh:
+                cached_data = cache.get(cache_key)
+                if cached_data is not None:
+                    return Response(cached_data, status=status.HTTP_200_OK)
+
             data = office_finance_service.get_dashboard_data()
+            if cache_ttl > 0:
+                cache.set(cache_key, data, cache_ttl)
             return Response(data, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -295,9 +327,21 @@ class OfficeFinanceYearlySummaryView(APIView):
     def get(self, request):
         try:
             year = request.query_params.get('year')
-            data = office_finance_service.get_yearly_summary(
-                year=int(year) if year else None
-            )
+            target_year = int(year) if year else timezone.now().year
+            force_refresh = str(request.query_params.get('force_refresh', '')).lower() in {'1', 'true', 'yes'}
+
+            schema_name = connection.schema_name
+            cache_ttl = _office_finance_yearly_cache_ttl()
+            cache_key = _office_finance_yearly_cache_key(schema_name, request.user.id, target_year)
+
+            if cache_ttl > 0 and not force_refresh:
+                cached_data = cache.get(cache_key)
+                if cached_data is not None:
+                    return Response(cached_data, status=status.HTTP_200_OK)
+
+            data = office_finance_service.get_yearly_summary(year=target_year)
+            if cache_ttl > 0:
+                cache.set(cache_key, data, cache_ttl)
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error in OfficeFinanceYearlySummaryView: {e}")
@@ -305,6 +349,44 @@ class OfficeFinanceYearlySummaryView(APIView):
                 {'error': 'Σφάλμα κατά την ανάκτηση δεδομένων'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class OfficeFinanceWarmCacheView(APIView):
+    """
+    POST /api/office-finance/warm-cache/
+
+    Queue async warm-up για dashboard και yearly-summary caches.
+    """
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
+
+    def post(self, request):
+        from .tasks import warm_office_finance_cache
+
+        target_year = request.data.get('year')
+        year_value = None
+        if target_year not in (None, ''):
+            try:
+                year_value = int(target_year)
+            except (TypeError, ValueError):
+                return Response(
+                    {'error': 'Invalid year'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        async_result = warm_office_finance_cache.delay(
+            schema_name=connection.schema_name,
+            year=year_value,
+        )
+
+        return Response(
+            {
+                'queued': True,
+                'task_id': async_result.id,
+                'schema_name': connection.schema_name,
+                'year': year_value or timezone.now().year,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class InitializeDefaultCategoriesView(APIView):
@@ -337,4 +419,3 @@ class InitializeDefaultCategoriesView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-

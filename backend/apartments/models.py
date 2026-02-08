@@ -222,6 +222,9 @@ class Apartment(models.Model):
         ordering = ['building', 'number']
         verbose_name = 'Διαμέρισμα'
         verbose_name_plural = 'Διαμερίσματα'
+        indexes = [
+            models.Index(fields=['building', 'current_balance'], name='apt_bldg_balance_idx'),
+        ]
 
     def __str__(self):
         return f"{self.building.name} - {self.number}"

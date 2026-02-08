@@ -20,7 +20,10 @@ import {
   Package,
   Receipt,
   Wrench,
-  Clock
+  Clock,
+  Play,
+  RotateCcw,
+  Layers
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardErrorBoundary } from '@/components/dashboard/DashboardErrorBoundary';
@@ -47,12 +50,21 @@ import {
   useDeleteIncome,
   useExpenseCategories,
   useIncomeCategories,
+  useWarmOfficeFinanceCache,
   EXPENSE_GROUP_LABELS,
   INCOME_GROUP_LABELS,
   type ExpenseCategory,
   type IncomeCategory
 } from '@/hooks/useOfficeFinance';
 import { useBuildings } from '@/hooks/useBuildings';
+import {
+  useCreateOfficeBulkJob,
+  useExecuteOfficeBulkJob,
+  useOfficeBulkJobs,
+  useRetryOfficeBulkJob,
+  type BulkJob,
+  type BulkOperationType,
+} from '@/hooks/useOfficeOpsBulk';
 import { formatCurrency } from '@/lib/utils';
 
 // Helper function to group categories
@@ -216,6 +228,38 @@ const FREQUENT_EXPENSE_CATEGORY_NAMES = [
   'Λογιστής',
 ];
 
+const BULK_OPERATION_OPTIONS: Array<{ value: BulkOperationType; label: string; description: string }> = [
+  {
+    value: 'issue_monthly_charges',
+    label: 'Έκδοση μηνιαίων χρεώσεων',
+    description: 'Δημιουργία management fees + reserve charges ανά κτίριο',
+  },
+  {
+    value: 'create_management_fee_incomes',
+    label: 'Καταχώρηση αμοιβών γραφείου',
+    description: 'Αυτόματη δημιουργία office incomes από αμοιβές διαχείρισης',
+  },
+  {
+    value: 'export_debt_report',
+    label: 'Export debt report',
+    description: 'Συγκεντρωτική εικόνα οφειλών και buckets ανά κτίριο',
+  },
+];
+
+const BULK_STATUS_META: Record<string, { label: string; className: string }> = {
+  draft: { label: 'Draft', className: 'bg-slate-100 text-slate-700' },
+  previewed: { label: 'Dry-run OK', className: 'bg-blue-100 text-blue-700' },
+  running: { label: 'Running', className: 'bg-amber-100 text-amber-700' },
+  completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700' },
+  partial: { label: 'Partial', className: 'bg-orange-100 text-orange-700' },
+  failed: { label: 'Failed', className: 'bg-rose-100 text-rose-700' },
+  cancelled: { label: 'Cancelled', className: 'bg-slate-200 text-slate-700' },
+};
+
+function getBulkStatusMeta(status: string) {
+  return BULK_STATUS_META[status] || { label: status, className: 'bg-slate-100 text-slate-700' };
+}
+
 function AccordionSection({
   title,
   description,
@@ -342,6 +386,10 @@ function OfficeFinanceContent() {
     is_paid: false,
   });
 
+  const [bulkOperation, setBulkOperation] = useState<BulkOperationType>('issue_monthly_charges');
+  const [bulkBuildingId, setBulkBuildingId] = useState('');
+  const [bulkMonth, setBulkMonth] = useState(new Date().toISOString().slice(0, 7));
+
   const {
     data: dashboardData,
     isLoading: isDashboardLoading,
@@ -364,11 +412,16 @@ function OfficeFinanceContent() {
   const updateIncomeMutation = useUpdateIncome();
   const deleteExpenseMutation = useDeleteExpense();
   const deleteIncomeMutation = useDeleteIncome();
+  const warmOfficeFinanceCacheMutation = useWarmOfficeFinanceCache();
 
   // Categories & Buildings for dropdowns
   const { data: expenseCategories } = useExpenseCategories();
   const { data: incomeCategories } = useIncomeCategories();
   const { buildings } = useBuildings();
+  const { data: bulkJobs, isLoading: isBulkJobsLoading } = useOfficeBulkJobs();
+  const createBulkJobMutation = useCreateOfficeBulkJob();
+  const executeBulkJobMutation = useExecuteOfficeBulkJob();
+  const retryBulkJobMutation = useRetryOfficeBulkJob();
 
   const frequentExpenseCategories = useMemo(() => {
     if (!expenseCategories?.length) return [];
@@ -734,6 +787,51 @@ function OfficeFinanceContent() {
     toast.success('Η εξαγωγή ολοκληρώθηκε');
   };
 
+  const handleWarmOfficeFinanceCache = async () => {
+    try {
+      await warmOfficeFinanceCacheMutation.mutateAsync(selectedYear);
+      toast.success('Ξεκίνησε cache warm-up στο backend');
+    } catch (error) {
+      console.error('Failed to warm office finance cache:', error);
+      toast.error('Αποτυχία warm-up');
+    }
+  };
+
+  const handleCreateBulkDryRun = async () => {
+    try {
+      await createBulkJobMutation.mutateAsync({
+        operation_type: bulkOperation,
+        building_id: bulkBuildingId ? parseInt(bulkBuildingId, 10) : undefined,
+        month: bulkMonth || undefined,
+        auto_dry_run: true,
+      });
+      toast.success('Το dry-run δημιουργήθηκε επιτυχώς');
+    } catch (error) {
+      console.error('Failed to create bulk dry-run:', error);
+      toast.error('Αποτυχία δημιουργίας dry-run');
+    }
+  };
+
+  const handleExecuteBulkJob = async (job: BulkJob) => {
+    try {
+      await executeBulkJobMutation.mutateAsync(job.id);
+      toast.success('Η μαζική εργασία μπήκε σε ουρά εκτέλεσης');
+    } catch (error) {
+      console.error('Failed to execute bulk job:', error);
+      toast.error('Αποτυχία εκτέλεσης bulk job');
+    }
+  };
+
+  const handleRetryBulkJob = async (job: BulkJob) => {
+    try {
+      await retryBulkJobMutation.mutateAsync(job.id);
+      toast.success('Το retry μπήκε σε ουρά');
+    } catch (error) {
+      console.error('Failed to retry bulk job:', error);
+      toast.error('Αποτυχία retry');
+    }
+  };
+
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -795,6 +893,16 @@ function OfficeFinanceContent() {
             <span className="hidden sm:inline">Εξαγωγή</span>
           </button>
 
+          <button
+            onClick={handleWarmOfficeFinanceCache}
+            disabled={warmOfficeFinanceCacheMutation.isPending}
+            className="px-3 py-2 text-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+            title="Προθέρμανση cache για dashboard και yearly summary"
+          >
+            <Clock className={`w-4 h-4 ${warmOfficeFinanceCacheMutation.isPending ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Warm Cache</span>
+          </button>
+
           <div className="flex gap-2">
             <button
               onClick={() => setShowIncomeModal(true)}
@@ -813,6 +921,145 @@ function OfficeFinanceContent() {
           </div>
         </div>
       </div>
+
+      <AccordionSection
+        title="Bulk Center"
+        description="Dry-run -> execute -> retry για μαζικές εργασίες γραφείου"
+        defaultOpen
+      >
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-3">
+            <div className="xl:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Operation
+              </label>
+              <select
+                value={bulkOperation}
+                onChange={(event) => setBulkOperation(event.target.value as BulkOperationType)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+              >
+                {BULK_OPERATION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {BULK_OPERATION_OPTIONS.find((option) => option.value === bulkOperation)?.description}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Scope
+              </label>
+              <select
+                value={bulkBuildingId}
+                onChange={(event) => setBulkBuildingId(event.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+              >
+                <option value="">Όλα τα κτίρια</option>
+                {buildings?.map((building) => (
+                  <option key={building.id} value={building.id}>
+                    {building.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Μήνας
+              </label>
+              <input
+                type="month"
+                value={bulkMonth}
+                onChange={(event) => setBulkMonth(event.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <button
+              onClick={handleCreateBulkDryRun}
+              disabled={createBulkJobMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Layers className="w-4 h-4" />
+              {createBulkJobMutation.isPending ? 'Δημιουργία...' : 'Dry-run Preview'}
+            </button>
+
+            <p className="text-xs text-muted-foreground">
+              Η εκτέλεση επιτρέπεται μόνο αφού ολοκληρωθεί dry-run.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Πρόσφατα Bulk Jobs</h3>
+              {isBulkJobsLoading && <span className="text-xs text-muted-foreground">Φόρτωση...</span>}
+            </div>
+
+            {!bulkJobs?.length ? (
+              <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                Δεν υπάρχουν bulk jobs ακόμη.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {bulkJobs.slice(0, 8).map((job) => {
+                  const statusMeta = getBulkStatusMeta(job.status);
+                  const canExecute = job.dry_run_completed && ['previewed', 'partial', 'failed'].includes(job.status);
+                  const canRetry = ['partial', 'failed'].includes(job.status) || (job.counts?.failed || 0) > 0;
+
+                  return (
+                    <div
+                      key={job.id}
+                      className="rounded-lg border border-border bg-card/60 p-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${statusMeta.className}`}>
+                            {statusMeta.label}
+                          </span>
+                          <span className="text-sm font-medium text-foreground">
+                            {BULK_OPERATION_OPTIONS.find((option) => option.value === job.operation_type)?.label || job.operation_type}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {job.month} • {job.building_name || 'All buildings'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          validated: {job.counts?.validated ?? 0} • executed: {job.counts?.executed ?? 0} • failed: {job.counts?.failed ?? 0}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleExecuteBulkJob(job)}
+                          disabled={!canExecute || executeBulkJobMutation.isPending}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted disabled:opacity-50"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          Execute
+                        </button>
+                        <button
+                          onClick={() => handleRetryBulkJob(job)}
+                          disabled={!canRetry || retryBulkJobMutation.isPending}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted disabled:opacity-50"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          Retry
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </AccordionSection>
 
       <AccordionSection
         title="Σύνοψη Μήνα"

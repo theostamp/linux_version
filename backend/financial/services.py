@@ -3,7 +3,7 @@ from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 from typing import Dict, Any, List, Optional
-from django.db.models import Sum
+from django.db.models import Sum, OuterRef, Subquery
 from datetime import datetime, date
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -1280,6 +1280,91 @@ class FinancialDashboardService:
             available = Decimal('0.00')
         return available
 
+    @staticmethod
+    def _build_apartment_expense_allocations(
+        expenses: List[Expense],
+        apartment_ids: List[int],
+        apartment_weights: Dict[int, Decimal],
+        apartment_count: int,
+    ) -> Dict[int, Dict[str, Decimal]]:
+        """
+        Υπολογίζει σε memory την κατανομή δαπανών ανά διαμέρισμα.
+
+        Στόχος: να αποφευχθούν επαναλαμβανόμενα per-apartment queries/loops με την ίδια λογική.
+        """
+        zero = Decimal('0.00')
+        allocations = {
+            apartment_id: {
+                'expense_share': zero,
+                'resident_expenses': zero,
+                'owner_expenses': zero,
+                'reserve_fund_share': zero,
+            }
+            for apartment_id in apartment_ids
+        }
+        if not expenses or not apartment_ids:
+            return allocations
+
+        apartment_count_safe = apartment_count if apartment_count > 0 else 1
+        apartment_count_decimal = Decimal(str(apartment_count_safe))
+        one = Decimal('1.0')
+
+        management_total = zero
+        management_owner_total = zero
+        management_resident_total = zero
+        management_reserve_total = zero
+
+        mills_total = zero
+        mills_owner_total = zero
+        mills_resident_total = zero
+        mills_reserve_total = zero
+
+        for expense in expenses:
+            amount = expense.amount or zero
+            split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
+            is_management_fee = expense.category == 'management_fees'
+
+            owner_component = zero
+            resident_component = zero
+            if expense.payer_responsibility == 'owner':
+                owner_component = amount
+            elif expense.payer_responsibility == 'shared':
+                owner_component = amount * split_ratio
+                resident_component = amount * (one - split_ratio)
+            else:
+                resident_component = amount
+
+            if is_management_fee:
+                management_total += amount
+                management_owner_total += owner_component
+                management_resident_total += resident_component
+            else:
+                mills_total += amount
+                mills_owner_total += owner_component
+                mills_resident_total += resident_component
+
+            if expense.category == 'reserve_fund':
+                if is_management_fee:
+                    management_reserve_total += amount
+                else:
+                    mills_reserve_total += amount
+
+        management_share_per_apartment = management_total / apartment_count_decimal
+        management_owner_share_per_apartment = management_owner_total / apartment_count_decimal
+        management_resident_share_per_apartment = management_resident_total / apartment_count_decimal
+        management_reserve_share_per_apartment = management_reserve_total / apartment_count_decimal
+
+        for apartment_id in apartment_ids:
+            weight = apartment_weights.get(apartment_id, zero)
+            allocations[apartment_id] = {
+                'expense_share': management_share_per_apartment + (weight * mills_total),
+                'resident_expenses': management_resident_share_per_apartment + (weight * mills_resident_total),
+                'owner_expenses': management_owner_share_per_apartment + (weight * mills_owner_total),
+                'reserve_fund_share': management_reserve_share_per_apartment + (weight * mills_reserve_total),
+            }
+
+        return allocations
+
     def get_apartment_balances(self, month: str | None = None) -> List[Dict[str, Any]]:
         """Επιστρέφει την κατάσταση οφειλών για όλα τα διαμερίσματα
 
@@ -1288,239 +1373,181 @@ class FinancialDashboardService:
         """
         from .balance_service import BalanceCalculationService
 
-        apartments = Apartment.objects.filter(building_id=self.building_id)
-        apartment_count_total = apartments.count()
-        total_participation_mills = apartments.aggregate(total=Sum('participation_mills'))['total'] or 0
-        safe_apartment_count = apartment_count_total if apartment_count_total > 0 else 1
-        balances = []
-
-        # Υπολογισμός end_date αν δοθεί month
         month_start = None
         end_date = None
+        today = date.today()
         if month:
             try:
                 year, mon = parse_month_string(month)
             except ValueError:
-                today = date.today()
                 year, mon = today.year, today.month
             month = f"{year:04d}-{mon:02d}"
             month_start, end_date = get_month_date_range(month)
 
-        for apartment in apartments:
-            # ΔΙΟΡΘΩΣΗ: Πάντα υπολογίζω το balance από transactions για συνέπεια
-            # ✅ REFACTORED: Using centralized BalanceCalculationService
-            # ✅ FIX 2025-10-10: Added include_reserve_fund=True for proper carryover
-            if end_date:
-                # Για snapshot view, υπολογίζουμε το balance μέχρι την αρχή του μήνα (πριν τον επιλεγμένο μήνα)
-                calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                    apartment, month_start,
-                    include_management_fees=True,
-                    include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
-                )
-                # Τελευταία πληρωμή μέχρι την ημερομηνία
-                last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
-            else:
-                # Για current view, χρησιμοποίησε current date
-                calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                    apartment, date.today(),
-                    include_management_fees=True,
-                    include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
-                )
-                # Τελευταία πληρωμή συνολικά
-                last_payment = apartment.payments.order_by('-date').first()
+        payment_subquery = Payment.objects.filter(apartment_id=OuterRef('pk'))
+        if end_date:
+            payment_subquery = payment_subquery.filter(date__lt=end_date)
 
-            # ΔΙΟΡΘΩΣΗ: Υπολογισμός κατάστασης βασισμένη στο υπόλοιπο
-            if calculated_balance > 100:  # More than 100€ debt
+        apartments = list(
+            Apartment.objects.filter(building_id=self.building_id)
+            .select_related('building')
+            .annotate(
+                last_payment_date=Subquery(
+                    payment_subquery.order_by('-date', '-created_at').values('date')[:1]
+                ),
+                last_payment_amount=Subquery(
+                    payment_subquery.order_by('-date', '-created_at').values('amount')[:1]
+                ),
+            )
+            .order_by('number')
+        )
+
+        apartment_ids = [apartment.id for apartment in apartments]
+        apartment_count_total = len(apartments)
+        safe_apartment_count = apartment_count_total if apartment_count_total > 0 else 1
+
+        total_participation_mills = sum(apartment.participation_mills or 0 for apartment in apartments)
+        total_mills = Decimal(str(total_participation_mills or 1000))
+        apartment_weights = {
+            apartment.id: Decimal(apartment.participation_mills or 0) / total_mills
+            for apartment in apartments
+        }
+
+        if month and end_date and month_start:
+            payment_period_start = month_start
+            payment_period_end = end_date
+        else:
+            payment_period_start = date(today.year, today.month, 1)
+            payment_period_end = (
+                date(today.year + 1, 1, 1)
+                if today.month == 12
+                else date(today.year, today.month + 1, 1)
+            )
+
+        total_payments_qs = Payment.objects.filter(apartment_id__in=apartment_ids)
+        if end_date:
+            total_payments_qs = total_payments_qs.filter(date__lt=end_date)
+        total_payments_map = {
+            row['apartment_id']: row['total'] or Decimal('0.00')
+            for row in total_payments_qs.values('apartment_id').annotate(total=Sum('amount'))
+        }
+
+        month_payments_map = {
+            row['apartment_id']: row['total'] or Decimal('0.00')
+            for row in Payment.objects.filter(
+                apartment_id__in=apartment_ids,
+                date__gte=payment_period_start,
+                date__lt=payment_period_end,
+            )
+            .values('apartment_id')
+            .annotate(total=Sum('amount'))
+        }
+
+        if month and end_date and month_start:
+            previous_expenses = list(
+                Expense.objects.filter(
+                    building_id=self.building_id,
+                    date__gte=self.building.financial_system_start_date or month_start,
+                    date__lt=month_start,
+                )
+                .only('amount', 'category', 'payer_responsibility', 'split_ratio')
+            )
+            month_expenses = list(
+                Expense.objects.filter(
+                    building_id=self.building_id,
+                    date__gte=month_start,
+                    date__lt=end_date,
+                )
+                .only('amount', 'category', 'payer_responsibility', 'split_ratio')
+            )
+            previous_allocations = self._build_apartment_expense_allocations(
+                previous_expenses,
+                apartment_ids=apartment_ids,
+                apartment_weights=apartment_weights,
+                apartment_count=safe_apartment_count,
+            )
+            month_allocations = self._build_apartment_expense_allocations(
+                month_expenses,
+                apartment_ids=apartment_ids,
+                apartment_weights=apartment_weights,
+                apartment_count=safe_apartment_count,
+            )
+        else:
+            current_month_expenses = list(
+                Expense.objects.filter(
+                    building_id=self.building_id,
+                    date__gte=payment_period_start,
+                    date__lt=payment_period_end,
+                )
+                .only('amount', 'category', 'payer_responsibility', 'split_ratio')
+            )
+            previous_allocations = {}
+            month_allocations = self._build_apartment_expense_allocations(
+                current_month_expenses,
+                apartment_ids=apartment_ids,
+                apartment_weights=apartment_weights,
+                apartment_count=safe_apartment_count,
+            )
+
+        historical_balances = BalanceCalculationService.calculate_historical_balances_bulk(
+            apartments=apartments,
+            end_date=month_start if (month and end_date and month_start) else today,
+            include_management_fees=True,
+            include_reserve_fund=True,
+        )
+
+        balances = []
+        for apartment in apartments:
+            calculated_balance = historical_balances.get(apartment.id, Decimal('0.00'))
+
+            if calculated_balance > 100:
                 status = 'Κρίσιμο'
-            elif calculated_balance > 0:  # Any debt > 0€
+            elif calculated_balance > 0:
                 status = 'Οφειλή'
-            elif calculated_balance < 0:  # Credit balance
+            elif calculated_balance < 0:
                 status = 'Πιστωτικό'
-            else:  # Exactly 0€
+            else:
                 status = 'Ενήμερο'
 
-            # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous_balance, reserve_fund_share και net_obligation για snapshot view
             previous_balance = Decimal('0.00')
             reserve_fund_share = Decimal('0.00')
             net_obligation = Decimal('0.00')
             expense_share = Decimal('0.00')
-            # ΝΕΑ FIELDS: Διαχωρισμός δαπανών ιδιοκτήτη/ενοίκου
             resident_expenses = Decimal('0.00')
             owner_expenses = Decimal('0.00')
+            previous_resident_expenses = Decimal('0.00')
+            previous_owner_expenses = Decimal('0.00')
 
-            if month and end_date:
-                # Για snapshot view, υπολογίζουμε previous balance και net obligation
+            month_payments = month_payments_map.get(apartment.id, Decimal('0.00'))
+            total_payments_apartment = total_payments_map.get(apartment.id, Decimal('0.00'))
+
+            if month and end_date and month_start:
                 previous_balance = calculated_balance
+                previous_snapshot = previous_allocations.get(apartment.id, {})
+                month_snapshot = month_allocations.get(apartment.id, {})
 
-                # 1.1. Υπολογισμός previous balance διαχωρισμένο σε resident/owner
-                previous_resident_expenses = Decimal('0.00')
-                previous_owner_expenses = Decimal('0.00')
+                previous_resident_expenses = previous_snapshot.get('resident_expenses', Decimal('0.00'))
+                previous_owner_expenses = previous_snapshot.get('owner_expenses', Decimal('0.00'))
+                expense_share = month_snapshot.get('expense_share', Decimal('0.00'))
+                resident_expenses = month_snapshot.get('resident_expenses', Decimal('0.00'))
+                owner_expenses = month_snapshot.get('owner_expenses', Decimal('0.00'))
+                reserve_fund_share = month_snapshot.get('reserve_fund_share', Decimal('0.00'))
 
-                # Βρες όλες τις δαπάνες πριν τον τρέχοντα μήνα
-                previous_expenses = Expense.objects.filter(
-                    building_id=apartment.building_id,
-                    date__gte=self.building.financial_system_start_date or month_start,
-                    date__lt=month_start
-                )
-
-                total_mills = total_participation_mills or 1000
-                apartment_count = safe_apartment_count
-
-                for expense in previous_expenses:
-                    # Υπολογισμός μεριδίου διαμερίσματος
-                    if expense.category == 'management_fees':
-                        apartment_share = expense.amount / apartment_count
-                    else:
-                        apartment_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills) * expense.amount
-
-                    # Διαχωρισμός ανά payer_responsibility
-                    if expense.payer_responsibility == 'owner':
-                        previous_owner_expenses += apartment_share
-                    elif expense.payer_responsibility == 'shared':
-                        # Αν υπάρχει split_ratio, χρησιμοποιούμε αυτό, αλλιώς 50-50
-                        split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
-                        previous_owner_expenses += apartment_share * split_ratio
-                        previous_resident_expenses += apartment_share * (Decimal('1.0') - split_ratio)
-                    else:  # resident
-                        previous_resident_expenses += apartment_share
-
-                # 2. Current month expense share (για net_obligation)
-                month_expenses = Expense.objects.filter(
-                    building_id=apartment.building_id,
-                    date__gte=month_start,
-                    date__lt=end_date
-                )
-
-                # Υπολογισμός μεριδίου διαμερίσματος από τις δαπάνες του μήνα
-                current_resident_expenses = Decimal('0.00')
-                current_owner_expenses = Decimal('0.00')
-
-                for expense in month_expenses:
-                    # ΔΙΟΡΘΩΣΗ: Management fees είναι ισόποσα, άλλες δαπάνες ανά χιλιοστά
-                    if expense.category == 'management_fees':
-                        apartment_share = expense.amount / apartment_count
-                    else:
-                        apartment_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills) * expense.amount
-
-                    expense_share += apartment_share
-
-                    # ΝΕΟ: Διαχωρισμός ανά payer_responsibility
-                    if expense.payer_responsibility == 'owner':
-                        current_owner_expenses += apartment_share
-                    elif expense.payer_responsibility == 'shared':
-                        # Αν υπάρχει split_ratio, χρησιμοποιούμε αυτό, αλλιώς 50-50
-                        split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
-                        current_owner_expenses += apartment_share * split_ratio
-                        current_resident_expenses += apartment_share * (Decimal('1.0') - split_ratio)
-                    else:  # resident
-                        current_resident_expenses += apartment_share
-
-                # ✅ ΔΙΟΡΘΩΣΗ 2025-11-19: ΔΕΝ προσθέτουμε previous στα totals!
-                # Το previous_balance είναι ξεχωριστό πεδίο
-                # Τα resident_expenses και owner_expenses είναι ΜΟΝΟ για τον τρέχοντα μήνα
-                resident_expenses = current_resident_expenses
-                owner_expenses = current_owner_expenses
-
-                # ✅ ΔΙΟΡΘΩΣΗ: Υπολογισμός reserve_fund_share ξεχωριστά
-                # Ψάχνουμε για Expense records με category='reserve_fund' για τον μήνα
-                reserve_fund_expenses = month_expenses.filter(category='reserve_fund')
-                if reserve_fund_expenses.exists():
-                    # Αν υπάρχουν Expense records, υπολογίζουμε το μερίδιο από αυτά
-                    for reserve_expense in reserve_fund_expenses:
-                        # Reserve fund καταμερίζεται ανά χιλιοστά (όχι ισόποσα)
-                        reserve_share = (
-                            Decimal(apartment.participation_mills or 0) / Decimal(total_mills)
-                        ) * reserve_expense.amount
-                        reserve_fund_share += reserve_share
-                # ✅ ΔΙΟΡΘΩΣΗ 2025-10-10: Management fees & Reserve fund είναι ΗΔΗ Expense records!
-                # ΣΗΜΕΙΩΣΗ: Αν το reserve fund υπολογίζεται δυναμικά (χωρίς Expense records),
-                # προστίθεται στο owner_expenses παραπάνω
-                # Δεν χρειάζεται δυναμική προσθήκη - περιλαμβάνονται στο loop παραπάνω (γραμμές 1073-1089)
-                # Αφαιρέθηκε η διπλή χρέωση management fees & reserve fund
-
-                # 3. Υπολογισμός πληρωμών του μήνα
-                month_payments = Payment.objects.filter(
-                    apartment=apartment,
-                    date__gte=month_start,
-                    date__lt=end_date
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
-                # 4. Net Obligation = Previous Balance + Current Month Expenses - Payments this month
-                # Το expense_share ΗΔΗ περιλαμβάνει ΟΛΑ (management fees + reserve fund + άλλες δαπάνες)
                 net_obligation = previous_balance + expense_share - month_payments
 
                 logger.debug(f"📊 Apartment {apartment.number} - {month}:")
                 logger.debug(f"   Previous Balance: €{previous_balance:.2f}")
                 logger.debug(f"   Current Month Expenses: €{expense_share:.2f}")
-                logger.debug(f"     - Resident: €{current_resident_expenses:.2f}")
-                logger.debug(f"     - Owner: €{current_owner_expenses:.2f}")
+                logger.debug(f"     - Resident: €{resident_expenses:.2f}")
+                logger.debug(f"     - Owner: €{owner_expenses:.2f}")
                 logger.debug(f"   Reserve Fund Share: €{reserve_fund_share:.2f}")
                 logger.debug(f"   Payments This Month: €{month_payments:.2f}")
                 logger.debug(f"   Net Obligation: €{net_obligation:.2f}")
             else:
-                # ✅ ΔΙΟΡΘΩΣΗ: Για current view (χωρίς month), υπολογίζουμε reserve_fund_share για τον τρέχοντα μήνα
-                today = date.today()
-                current_month_start = date(today.year, today.month, 1)
-
-                # Ψάχνουμε για Expense records με category='reserve_fund' για τον τρέχοντα μήνα
-                current_month_expenses = Expense.objects.filter(
-                    building_id=apartment.building_id,
-                    date__gte=current_month_start,
-                    date__lt=end_date if end_date else date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
-                )
-
-                total_mills_current = total_participation_mills or 1000
-                apartment_count_current = safe_apartment_count
-
-                # ✅ ΔΙΟΡΘΩΣΗ: Για current view, υπολογίζουμε owner_expenses και resident_expenses από Expense records
-                if not month and not end_date:
-                    current_owner_expenses_current = Decimal('0.00')
-                    current_resident_expenses_current = Decimal('0.00')
-
-                    for expense in current_month_expenses:
-                        if expense.category == 'management_fees':
-                            apartment_share = expense.amount / apartment_count_current
-                        else:
-                            apartment_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills_current) * expense.amount
-
-                        if expense.payer_responsibility == 'owner':
-                            current_owner_expenses_current += apartment_share
-                        elif expense.payer_responsibility == 'shared':
-                            split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
-                            current_owner_expenses_current += apartment_share * split_ratio
-                            current_resident_expenses_current += apartment_share * (Decimal('1.0') - split_ratio)
-                        else:  # resident
-                            current_resident_expenses_current += apartment_share
-
-                    owner_expenses = current_owner_expenses_current
-                    resident_expenses = current_resident_expenses_current
-
-                # ✅ Υπολογισμός reserve_fund_share για current view
-                reserve_fund_expenses_current = current_month_expenses.filter(category='reserve_fund')
-                if reserve_fund_expenses_current.exists():
-                    # Αν υπάρχουν Expense records, υπολογίζουμε το μερίδιο από αυτά
-                    for reserve_expense in reserve_fund_expenses_current:
-                        reserve_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills_current) * reserve_expense.amount
-                        reserve_fund_share += reserve_share
-                    # ΣΗΜΕΙΩΣΗ: Αν υπάρχουν Expense records, το reserve_fund_share περιλαμβάνεται ήδη στο owner_expenses
-                    # μέσω του loop παραπάνω, οπότε ΔΕΝ χρειάζεται να το προσθέσουμε ξανά
-                # Υπολογισμός πληρωμών τρέχοντος μήνα (για current view)
-                month_payments = Payment.objects.filter(
-                    apartment=apartment,
-                    date__gte=current_month_start,
-                    date__lt=end_date if end_date else date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
-            # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
-            if end_date:
-                # Για historical view, μόνο πληρωμές μέχρι την ημερομηνία
-                apartment_payments = apartment.payments.filter(date__lt=end_date)
-            else:
-                # Για current view, όλες οι πληρωμές
-                apartment_payments = apartment.payments.all()
-
-            total_payments_apartment = apartment_payments.aggregate(
-                total=Sum('amount'))['total'] or Decimal('0.00')
+                current_snapshot = month_allocations.get(apartment.id, {})
+                resident_expenses = current_snapshot.get('resident_expenses', Decimal('0.00'))
+                owner_expenses = current_snapshot.get('owner_expenses', Decimal('0.00'))
+                reserve_fund_share = current_snapshot.get('reserve_fund_share', Decimal('0.00'))
 
             balances.append({
                 'id': apartment.id,
@@ -1530,22 +1557,20 @@ class FinancialDashboardService:
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'tenant_name': apartment.tenant_name or None,
                 'current_balance': calculated_balance,
-                'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
-                'reserve_fund_share': reserve_fund_share,  # ← ΝΕΟ FIELD - Αποθεματικό
-                'expense_share': expense_share,        # ← ΝΕΟ FIELD
-                # ΝΕΑ FIELDS: Διαχωρισμός δαπανών ιδιοκτήτη/ενοίκου (τρέχων μήνας)
-                'resident_expenses': resident_expenses,  # Δαπάνες Ενοίκου (τρέχων μήνας)
-                'owner_expenses': owner_expenses,        # Δαπάνες Ιδιοκτήτη (τρέχων μήνας)
-                # 🔧 ΝΕΑ FIELDS 2025-11-24: Διαχωρισμός προηγούμενων οφειλών
-                'previous_resident_expenses': previous_resident_expenses if month else Decimal('0.00'),  # Δαπάνες Ενοίκου (προηγούμενοι)
-                'previous_owner_expenses': previous_owner_expenses if month else Decimal('0.00'),        # Δαπάνες Ιδιοκτήτη (προηγούμενοι)
-                'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
-                'month_payments': month_payments,      # ← ΝΕΟ FIELD: Πληρωμές τρέχοντος μήνα/περιόδου
-                'total_payments': total_payments_apartment,  # ← ΝΕΟ FIELD - Διόρθωση!
+                'previous_balance': previous_balance,
+                'reserve_fund_share': reserve_fund_share,
+                'expense_share': expense_share,
+                'resident_expenses': resident_expenses,
+                'owner_expenses': owner_expenses,
+                'previous_resident_expenses': previous_resident_expenses if month else Decimal('0.00'),
+                'previous_owner_expenses': previous_owner_expenses if month else Decimal('0.00'),
+                'net_obligation': net_obligation,
+                'month_payments': month_payments,
+                'total_payments': total_payments_apartment,
                 'participation_mills': apartment.participation_mills or 0,
                 'status': status,
-                'last_payment_date': last_payment.date if last_payment else None,
-                'last_payment_amount': last_payment.amount if last_payment else None
+                'last_payment_date': apartment.last_payment_date,
+                'last_payment_amount': apartment.last_payment_amount,
             })
 
         return balances

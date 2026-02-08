@@ -11,14 +11,16 @@ Purpose: Eliminate balance calculation bugs and code duplication
 
 import logging
 import time
+from collections import defaultdict
 from decimal import Decimal
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Dict, Iterable
 
-from django.db.models import Sum
+from django.db.models import Sum, Min, Count
 from django.utils import timezone
 
 from apartments.models import Apartment
+from buildings.models import Building
 from .models import Expense, Transaction, Payment
 from .transaction_types import TransactionType
 
@@ -43,6 +45,199 @@ class BalanceCalculationService:
     """
 
     @staticmethod
+    def calculate_historical_balances_bulk(
+        apartments: Iterable[Apartment],
+        end_date: date,
+        include_management_fees: bool = True,
+        include_reserve_fund: bool = False
+    ) -> Dict[int, Decimal]:
+        """
+        Bulk version του ιστορικού υπολοίπου για πολλά διαμερίσματα.
+        Επιστρέφει map apartment_id -> balance.
+        """
+        if isinstance(end_date, datetime):
+            end_date = end_date.date()
+
+        apartments = list(apartments)
+        if not apartments:
+            return {}
+
+        apartment_ids = [apartment.id for apartment in apartments]
+        apartments_by_id = {apartment.id: apartment for apartment in apartments}
+        apartments_by_building: Dict[int, list[Apartment]] = defaultdict(list)
+        for apartment in apartments:
+            apartments_by_building[apartment.building_id].append(apartment)
+
+        month_start = end_date.replace(day=1)
+        building_ids = list(apartments_by_building.keys())
+        buildings = Building.objects.in_bulk(building_ids)
+        apartment_stats_by_building = {
+            row['building_id']: {
+                'total_apartments': row['total_apartments'] or 0,
+                'total_mills': row['total_mills'] or 0,
+            }
+            for row in Apartment.objects.filter(
+                building_id__in=building_ids
+            ).values('building_id').annotate(
+                total_apartments=Count('id'),
+                total_mills=Sum('participation_mills'),
+            )
+        }
+
+        oldest_expenses = Expense.objects.filter(
+            building_id__in=building_ids
+        ).values('building_id').annotate(oldest_date=Min('date'))
+        oldest_expense_month_by_building = {
+            row['building_id']: row['oldest_date'].replace(day=1)
+            for row in oldest_expenses
+            if row.get('oldest_date')
+        }
+
+        system_start_by_building: Dict[int, date | None] = {}
+        for building_id in building_ids:
+            building = buildings.get(building_id)
+            if building is None:
+                system_start_by_building[building_id] = None
+                continue
+
+            system_start_date = building.financial_system_start_date
+            earliest_month = oldest_expense_month_by_building.get(building_id)
+
+            if system_start_date is None or (earliest_month and system_start_date > earliest_month):
+                if earliest_month:
+                    system_start_date = earliest_month
+                    building.financial_system_start_date = system_start_date
+                    building.save(update_fields=['financial_system_start_date'])
+                    logger.info(
+                        "✅ Set financial_system_start_date for building %s to %s based on earliest expense.",
+                        building.id,
+                        system_start_date
+                    )
+                else:
+                    logger.warning(
+                        "⚠️ Building %s has no financial_system_start_date and no expenses. Returning 0.",
+                        building.id
+                    )
+                    system_start_by_building[building_id] = None
+                    continue
+
+            system_start_by_building[building_id] = system_start_date
+
+        payments_by_apartment = {
+            row['apartment_id']: row['total'] or Decimal('0.00')
+            for row in Payment.objects.filter(
+                apartment_id__in=apartment_ids,
+                date__lt=end_date
+            ).values('apartment_id').annotate(total=Sum('amount'))
+        }
+
+        total_charges_by_apartment: Dict[int, Decimal] = defaultdict(lambda: Decimal('0.00'))
+        charge_types = TransactionType.get_charge_types()
+
+        for building_id, building_apartments in apartments_by_building.items():
+            system_start_date = system_start_by_building.get(building_id)
+            if system_start_date is None:
+                continue
+
+            building_apartment_ids = [apartment.id for apartment in building_apartments]
+            building_stats = apartment_stats_by_building.get(
+                building_id,
+                {'total_apartments': 0, 'total_mills': 0}
+            )
+            building_apartment_count = building_stats['total_apartments']
+            building_total_mills = building_stats['total_mills']
+
+            expenses_before_month = list(
+                Expense.objects.filter(
+                    building_id=building_id,
+                    date__gte=system_start_date,
+                    date__lt=month_start
+                ).only(
+                    'id',
+                    'building_id',
+                    'amount',
+                    'category',
+                    'distribution_type',
+                    'payer_responsibility',
+                    'split_ratio',
+                )
+            )
+
+            if not expenses_before_month:
+                continue
+
+            management_expenses = [expense for expense in expenses_before_month if expense.category == 'management_fees']
+            reserve_expenses = [expense for expense in expenses_before_month if expense.category == 'reserve_fund']
+            regular_expenses = [
+                expense for expense in expenses_before_month
+                if expense.category not in {'management_fees', 'reserve_fund'}
+            ]
+
+            regular_expense_ids = [expense.id for expense in regular_expenses]
+            if regular_expense_ids:
+                regular_expense_ids_as_str = [str(expense_id) for expense_id in regular_expense_ids]
+                transaction_rows = list(
+                    Transaction.objects.filter(
+                        apartment_id__in=building_apartment_ids,
+                        reference_type='expense',
+                        reference_id__in=regular_expense_ids_as_str,
+                        type__in=charge_types
+                    ).values('apartment_id', 'reference_id').annotate(total=Sum('amount'))
+                )
+
+                transaction_totals_by_key: Dict[tuple[int, int], Decimal] = {}
+                for row in transaction_rows:
+                    apartment_id = row['apartment_id']
+                    reference_id = row['reference_id']
+                    if apartment_id is None or not str(reference_id).isdigit():
+                        continue
+                    expense_id = int(reference_id)
+                    total = row['total'] or Decimal('0.00')
+                    transaction_totals_by_key[(apartment_id, expense_id)] = total
+                    total_charges_by_apartment[apartment_id] += total
+
+                expected_pairs = len(regular_expenses) * len(building_apartments)
+                if len(transaction_totals_by_key) < expected_pairs:
+                    for expense in regular_expenses:
+                        for apartment in building_apartments:
+                            key = (apartment.id, expense.id)
+                            if key in transaction_totals_by_key:
+                                continue
+                            try:
+                                share_amount = expense._calculate_apartment_share(apartment)
+                            except Exception:
+                                share_amount = Decimal('0.00')
+                            if share_amount:
+                                total_charges_by_apartment[apartment.id] += share_amount
+
+            if include_management_fees and management_expenses and building_apartment_count > 0:
+                management_total = sum((expense.amount or Decimal('0.00')) for expense in management_expenses)
+                management_share = management_total / Decimal(str(building_apartment_count))
+                for apartment in building_apartments:
+                    total_charges_by_apartment[apartment.id] += management_share
+
+            if include_reserve_fund and reserve_expenses:
+                if building_total_mills > 0:
+                    reserve_total = sum((expense.amount or Decimal('0.00')) for expense in reserve_expenses)
+                    total_mills_decimal = Decimal(str(building_total_mills))
+                    for apartment in building_apartments:
+                        apartment_mills = Decimal(str(apartment.participation_mills or 0))
+                        reserve_share = reserve_total * apartment_mills / total_mills_decimal
+                        total_charges_by_apartment[apartment.id] += reserve_share
+
+        balances_by_apartment: Dict[int, Decimal] = {}
+        for apartment_id in apartment_ids:
+            apartment = apartments_by_id[apartment_id]
+            if system_start_by_building.get(apartment.building_id) is None:
+                balances_by_apartment[apartment_id] = Decimal('0.00')
+                continue
+            charges = total_charges_by_apartment.get(apartment_id, Decimal('0.00'))
+            payments = payments_by_apartment.get(apartment_id, Decimal('0.00'))
+            balances_by_apartment[apartment_id] = charges - payments
+
+        return balances_by_apartment
+
+    @staticmethod
     def calculate_historical_balance(
         apartment: Apartment,
         end_date: date,
@@ -50,218 +245,15 @@ class BalanceCalculationService:
         include_reserve_fund: bool = False
     ) -> Decimal:
         """
-        Υπολογισμός ιστορικού υπολοίπου διαμερίσματος μέχρι συγκεκριμένη ημερομηνία
-
-        ΣΗΜΑΝΤΙΚΟ: Για "Previous Months' Obligations", πρέπει να υπολογίζουμε μόνο
-        τις οφειλές από δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα.
-
-        Βασισμένο στην BalanceTransferService._calculate_historical_balance()
-        που είναι η ΣΩΣΤΗ implementation.
-
-        Args:
-            apartment: Το διαμέρισμα για το οποίο υπολογίζουμε το υπόλοιπο
-            end_date: Η ημερομηνία μέχρι την οποία υπολογίζουμε (exclusive)
-            include_management_fees: Αν θα συμπεριλαμβάνονται τα management fees
-            include_reserve_fund: Αν θα συμπεριλαμβάνεται η εισφορά αποθεματικού
-
-        Returns:
-            Decimal: Το υπόλοιπο του διαμερίσματος μέχρι την δοθείσα ημερομηνία
-                    (θετικό = χρέος, αρνητικό = πίστωση)
-
-        Example:
-            >>> apartment = Apartment.objects.get(number="Α1")
-            >>> balance = BalanceCalculationService.calculate_historical_balance(
-            ...     apartment, date(2025, 11, 1)
-            ... )
-            >>> print(f"Balance: {balance}")
-            Balance: 150.00
+        Υπολογισμός ιστορικού υπολοίπου διαμερίσματος μέχρι συγκεκριμένη ημερομηνία.
         """
-        # Type checking and normalization
-        if isinstance(end_date, datetime):
-            end_date = end_date.date()
-
-        # Υπολογισμός αρχής του μήνα
-        month_start = end_date.replace(day=1)
-
-        # Έλεγχος financial_system_start_date
-        building = apartment.building
-        system_start_date = building.financial_system_start_date
-
-        # Infer/repair start date from earliest expense when missing or too recent.
-        oldest_expense = Expense.objects.filter(
-            building_id=apartment.building_id
-        ).order_by('date').first()
-        earliest_month = oldest_expense.date.replace(day=1) if oldest_expense and oldest_expense.date else None
-
-        if system_start_date is None or (earliest_month and system_start_date > earliest_month):
-            if earliest_month:
-                system_start_date = earliest_month
-                building.financial_system_start_date = system_start_date
-                building.save(update_fields=['financial_system_start_date'])
-                logger.info(
-                    "✅ Set financial_system_start_date for building %s to %s based on earliest expense.",
-                    building.id,
-                    system_start_date
-                )
-            else:
-                # No expenses, keep safe zero balance.
-                logger.warning(
-                    "⚠️ Building %s has no financial_system_start_date and no expenses. Returning 0.",
-                    building.id
-                )
-                return Decimal('0.00')
-
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # ⚠️ ΚΡΙΣΙΜΟ: BALANCE TRANSFER LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        #
-        # Βρίσκουμε δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα
-        #
-        # ΠΑΡΑΔΕΙΓΜΑ:
-        # - Αν month_start = 2025-11-01 (Νοέμβριος)
-        # - Θα βρούμε δαπάνες με date < 2025-11-01
-        # - Δηλαδή: 2025-10-31 ✅, 2025-11-01 ❌
-        #
-        # ΠΡΟΣΟΧΗ: Το date__lt (όχι date__lte) είναι ΣΚΟΠΙΜΟ!
-        # Αν αλλάξει σε date__lte, θα υπάρχει διπλή χρέωση!
-        #
-        # Βλέπε: BALANCE_TRANSFER_ARCHITECTURE.md
-        # Tests: financial/tests/test_balance_transfer_logic.py
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        expenses_before_month = Expense.objects.filter(
-            building_id=apartment.building_id,
-            date__gte=system_start_date,  # Από την ημερομηνία έναρξης συστήματος
-            date__lt=month_start  # ⚠️ ΚΡΙΣΙΜΟ: < όχι <= !!!
+        balances = BalanceCalculationService.calculate_historical_balances_bulk(
+            apartments=[apartment],
+            end_date=end_date,
+            include_management_fees=include_management_fees,
+            include_reserve_fund=include_reserve_fund,
         )
-
-        expense_ids_before_month = list(expenses_before_month.values_list('id', flat=True))
-
-        # Υπολογισμός χρεώσεων μόνο από αυτές τις δαπάνες
-        # ΔΙΟΡΘΩΣΗ: Αφαιρούμε τα management_fees expenses από τα transactions
-        # γιατί θα τα υπολογίσουμε ξεχωριστά παρακάτω
-        total_charges = Decimal('0.00')
-
-        if expense_ids_before_month:
-            # Βρίσκουμε τα management_fees και reserve_fund expense IDs για να τα αφαιρέσουμε
-            # γιατί θα τα υπολογίσουμε ξεχωριστά παρακάτω
-            special_category_expense_ids = list(Expense.objects.filter(
-                id__in=expense_ids_before_month,
-                category__in=['management_fees', 'reserve_fund']  # ✅ ΚΡΙΣΙΜΟ: Και τα δύο!
-            ).values_list('id', flat=True))
-
-            # Αφαιρούμε τα management_fees και reserve_fund από τα expense_ids
-            regular_expense_ids = [
-                exp_id for exp_id in expense_ids_before_month
-                if exp_id not in special_category_expense_ids
-            ]
-
-            if regular_expense_ids:
-                # ✅ ΔΙΟΡΘΩΣΗ: Χρήση apartment object (FK) αντί για apartment_number
-                # ✅ ΒΕΛΤΙΩΣΗ: Χρήση TransactionType.get_charge_types() για validation
-                expense_transactions = Transaction.objects.filter(
-                    apartment=apartment,  # ✅ ΣΩΣΤΟ! (όχι apartment_number)
-                    reference_type='expense',
-                    reference_id__in=[str(exp_id) for exp_id in regular_expense_ids],  # ✅ ΔΙΟΡΘΩΣΗ: Όχι mgmt/reserve!
-                    type__in=TransactionType.get_charge_types()  # ✅ VALIDATED!
-                )
-                transactions_by_ref = {
-                    int(item['reference_id']): item['total']
-                    for item in expense_transactions.values('reference_id').annotate(total=Sum('amount'))
-                    if str(item['reference_id']).isdigit()
-                }
-                # Merge transactions and fallback shares per expense to avoid gaps.
-                fallback_expenses = Expense.objects.filter(id__in=regular_expense_ids)
-                for expense in fallback_expenses:
-                    tx_total = transactions_by_ref.get(expense.id)
-                    if tx_total is not None:
-                        total_charges += tx_total
-                        continue
-                    try:
-                        share_amount = expense._calculate_apartment_share(apartment)
-                    except Exception:
-                        share_amount = Decimal('0.00')
-                    if share_amount:
-                        total_charges += share_amount
-
-        # Υπολογισμός πληρωμών μέχρι την ημερομηνία
-        # ✅ ΔΙΟΡΘΩΣΗ: Μόνο Payment model (ΟΧΙ διπλή μέτρηση)
-        total_payments = Payment.objects.filter(
-            apartment=apartment,
-            date__lt=end_date
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
-        # Υπολογισμός management fees (αν include_management_fees=True)
-        management_fee_charges = Decimal('0.00')
-
-        if include_management_fees:
-            # ✅ SIMPLIFIED 2025-10-10: Management fees come from EXPENSE records!
-            # MonthlyChargeService creates Expense records with category='management_fees'
-            
-            # Βρίσκουμε ΟΛΑ τα management fee expenses (ΧΩΡΙΣ exclude!)
-            # Αφού τα αφαιρέσαμε από το transaction calculation παραπάνω, δεν υπάρχει διπλό μέτρημα
-            management_expenses = Expense.objects.filter(
-                building_id=apartment.building_id,
-                category='management_fees',
-                date__gte=system_start_date,
-                date__lt=month_start
-            )
-
-            if management_expenses.exists():
-                # Κάθε management fee expense χρεώνεται με equal_share στα διαμερίσματα
-                total_apartments = apartment.building.apartments.count()
-
-                if total_apartments > 0:
-                    total_management_expenses = management_expenses.aggregate(
-                        total=Sum('amount')
-                    )['total'] or Decimal('0.00')
-
-                    # Equal share distribution
-                    management_fee_charges = total_management_expenses / total_apartments
-
-        # Υπολογισμός reserve fund (αν include_reserve_fund=True)
-        reserve_fund_charges = Decimal('0.00')
-
-        if include_reserve_fund:
-            # ✅ SIMPLIFIED 2025-10-10: Reserve fund comes from EXPENSE records!
-            # MonthlyChargeService creates Expense records with category='reserve_fund'
-            
-            # Βρίσκουμε ΟΛΑ τα reserve fund expenses (ΧΩΡΙΣ exclude!)
-            # Αφού τα αφαιρέσαμε από το transaction calculation παραπάνω, δεν υπάρχει διπλό μέτρημα
-            reserve_expenses = Expense.objects.filter(
-                building_id=apartment.building_id,
-                category='reserve_fund',
-                date__gte=system_start_date,
-                date__lt=month_start
-            )
-
-            if reserve_expenses.exists():
-                # Reserve fund expenses κατανέμονται με by_participation_mills
-                total_mills = sum(
-                    apt.participation_mills or 0 
-                    for apt in building.apartments.all()
-                )
-                
-                if total_mills > 0:
-                    total_reserve_expenses = reserve_expenses.aggregate(
-                        total=Sum('amount')
-                    )['total'] or Decimal('0.00')
-                    
-                    # Υπολογισμός μεριδίου διαμερίσματος
-                    apartment_mills = apartment.participation_mills or 0
-                    apartment_share = Decimal(str(apartment_mills)) / Decimal(str(total_mills))
-                    reserve_fund_charges = total_reserve_expenses * apartment_share
-
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # ΤΕΛΙΚΟΣ ΥΠΟΛΟΓΙΣΜΟΣ
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # Υπόλοιπο = Χρεώσεις - Πληρωμές
-        # Θετικό = Χρέος (apartment owes money)
-        # Αρνητικό = Πίστωση (apartment has credit)
-
-        balance = (total_charges + management_fee_charges + reserve_fund_charges) - total_payments
-
-        return balance
+        return balances.get(apartment.id, Decimal('0.00'))
 
     @staticmethod
     def calculate_current_balance(apartment: Apartment) -> Decimal:

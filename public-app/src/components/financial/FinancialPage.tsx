@@ -2,24 +2,14 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid'; // Import BentoGrid
-import {
-  CommonExpenseCalculatorNew,
-  ExpenseForm,
-  TransactionHistory,
-  ChartsContainer,
-  BulkImportWizard,
-  ExpenseList,
-  BuildingOverviewSection
-} from './index';
+import { ExpenseList, BuildingOverviewSection } from './index';
 // ScheduledMaintenanceOverviewModal - TODO: Create when maintenance components are migrated
 // import ScheduledMaintenanceOverviewModal from '../maintenance/ScheduledMaintenanceOverviewModal';
-import { ApartmentBalancesTab } from './ApartmentBalancesTab';
-
-import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
 import {
   AlertTriangle,
@@ -39,7 +29,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useFinancialPermissions, type FinancialPermission } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { fetchApartments, ApartmentList, api, invalidateApiCache } from '@/lib/api';
+import { api, invalidateApiCache } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -85,6 +75,47 @@ const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 round
 const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
 const MOBILE_LABEL_BASE_CLASSES = 'font-medium text-xs whitespace-nowrap transition-colors duration-200';
 const DESCRIPTION_BASE_CLASSES = 'text-[10px] text-muted-foreground text-center mt-0.5 transition-colors duration-200';
+
+const FinancialTabLoader = () => (
+  <div className="flex items-center justify-center rounded-lg border border-border/50 bg-card/40 p-6 text-sm text-muted-foreground">
+    Φόρτωση ενότητας...
+  </div>
+);
+
+const CommonExpenseCalculatorNew = dynamic(
+  () => import('./calculator/CommonExpenseCalculatorNew').then((mod) => mod.CommonExpenseCalculatorNew),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
+
+const ApartmentBalancesTab = dynamic(
+  () => import('./ApartmentBalancesTab').then((mod) => mod.ApartmentBalancesTab),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
+
+const MeterReadingList = dynamic(
+  () => import('./MeterReadingList').then((mod) => mod.MeterReadingList),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
+
+const BulkImportWizard = dynamic(
+  () => import('./BulkImportWizard').then((mod) => mod.BulkImportWizard),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
+
+const TransactionHistory = dynamic(
+  () => import('./TransactionHistory').then((mod) => mod.TransactionHistory),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
+
+const ChartsContainer = dynamic(
+  () => import('./charts/ChartsContainer').then((mod) => mod.ChartsContainer),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
+
+const ExpenseForm = dynamic(
+  () => import('./ExpenseForm').then((mod) => mod.ExpenseForm),
+  { ssr: false, loading: () => <FinancialTabLoader /> }
+);
 
 const FINANCIAL_TABS: FinancialTabDefinition[] = [
   {
@@ -279,7 +310,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     console.log('🔍 FinancialPage selectedMonth initialization: Using current month', result);
     return result;
   });
-  const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(0); // No hardcoded default - will be set from building data
 
   // State for maintenance overview modal
@@ -294,7 +324,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
-  const initialMonthChangeRef = useRef(true);
 
   // Event listener for opening maintenance overview modal
   useEffect(() => {
@@ -385,30 +414,12 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     // ✅ Clear API cache FIRST, then React Query cache
     invalidateApiCache(/\/financial\//);
 
-    await queryClient.invalidateQueries({
-      queryKey: ['financial']
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ['apartment-balances']
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ['expenses']
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ['transactions']
-    });
-    await queryClient.refetchQueries({
-      queryKey: ['financial']
-    });
-    await queryClient.refetchQueries({
-      queryKey: ['apartment-balances']
-    });
-    await queryClient.refetchQueries({
-      queryKey: ['expenses']
-    });
-    await queryClient.refetchQueries({
-      queryKey: ['transactions']
-    });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['financial'], refetchType: 'active' }),
+      queryClient.invalidateQueries({ queryKey: ['apartment-balances'], refetchType: 'active' }),
+      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'active' }),
+      queryClient.invalidateQueries({ queryKey: ['transactions'], refetchType: 'active' }),
+    ]);
 
     if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
     if (expenseListRef.current) expenseListRef.current.refresh();
@@ -430,19 +441,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     if (buildingOverviewRef.current) {
       buildingOverviewRef.current.refresh();
     }
-
-    // Load apartments for the new building
-    const loadApartments = async () => {
-      try {
-        const apartmentsData = await fetchApartments(activeBuildingId);
-        setApartments(apartmentsData);
-      } catch (error) {
-        console.error('Error loading apartments:', error);
-        setApartments([]);
-      }
-    };
-
-    loadApartments();
   }, [activeBuildingId]);
 
   // Simplified auto-refresh system - removed complex event handling
@@ -450,53 +448,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
 
 
-  // Monitor selectedMonth changes and refresh components
-  useEffect(() => {
-    console.log('Selected month changed to:', selectedMonth);
-
-    if (initialMonthChangeRef.current) {
-      initialMonthChangeRef.current = false;
-      return;
-    }
-
-    if (selectedMonth) {
-      refreshFinancialData(selectedMonth, { notify: true, compact: true });
-    }
-
-    // Αφαιρέθηκε το notification για αλλαγή μήνα
-    // Show a brief notification for month change
-    // const showNotification = () => {
-    //   const notification = document.createElement('div');
-    //   notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
-    //   notification.innerHTML = `
-    //     <div class="flex items-center gap-2">
-    //       <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-    //       <span>Ενημέρωση δεδομένων για ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}</span>
-    //     </div>
-    //   `;
-    //   document.body.appendChild(notification);
-    //
-    //   // Animate in
-    //   requestAnimationFrame(() => {
-    //     notification.classList.remove('translate-x-full');
-    //   });
-    //
-    //   // Remove after 3 seconds
-    //   setTimeout(() => {
-    //     notification.classList.add('translate-x-full');
-    //     setTimeout(() => {
-    //       if (document.body.contains(notification)) {
-    //         document.body.removeChild(notification);
-    //       }
-    //     }, 300);
-    //   }, 3000);
-    // };
-
-    // Only show notification if month actually changed (not on initial load)
-    // if (selectedMonth) {
-    //   showNotification();
-    // }
-  }, [selectedMonth, refreshFinancialData]);
+  // selectedMonth propagates directly to child components that fetch month-scoped data.
+  // Avoid auto-triggering expensive recalculation on every month switch.
 
   // Handle URL parameters for browser navigation (not initial load - that's handled in useState)
   useEffect(() => {
@@ -596,13 +549,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const handleExpenseCancel = () => {
     expenseModal.closeModal();
   };
-
-
-
-  useEffect(() => {
-    fetchApartments(activeBuildingId).then(setApartments).catch(() => setApartments([]));
-  }, [activeBuildingId]);
-
   // Get current building name
   const currentBuildingName = (selectedBuilding || currentBuilding)?.name || 'Άγνωστο Κτίριο';
 
