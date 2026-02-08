@@ -59,6 +59,21 @@ def _office_finance_yearly_cache_key(schema_name: str, user_id: int, year: int) 
     return f"office-finance:yearly-summary:v1:{schema_name}:{user_id}:{year}"
 
 
+def _cache_get_safe(key: str):
+    try:
+        return cache.get(key)
+    except Exception as exc:
+        logger.warning("Office finance cache get failed for key %s: %s", key, exc)
+        return None
+
+
+def _cache_set_safe(key: str, value, timeout: int) -> None:
+    try:
+        cache.set(key, value, timeout)
+    except Exception as exc:
+        logger.warning("Office finance cache set failed for key %s: %s", key, exc)
+
+
 class IsOfficeStaff(BasePermission):
     """
     Permission class για πρόσβαση στα Οικονομικά Γραφείου.
@@ -298,13 +313,13 @@ class OfficeFinanceDashboardView(APIView):
             cache_key = _office_finance_dashboard_cache_key(schema_name, request.user.id)
 
             if cache_ttl > 0 and not force_refresh:
-                cached_data = cache.get(cache_key)
+                cached_data = _cache_get_safe(cache_key)
                 if cached_data is not None:
                     return Response(cached_data, status=status.HTTP_200_OK)
 
             data = office_finance_service.get_dashboard_data()
             if cache_ttl > 0:
-                cache.set(cache_key, data, cache_ttl)
+                _cache_set_safe(cache_key, data, cache_ttl)
             return Response(data, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -335,13 +350,13 @@ class OfficeFinanceYearlySummaryView(APIView):
             cache_key = _office_finance_yearly_cache_key(schema_name, request.user.id, target_year)
 
             if cache_ttl > 0 and not force_refresh:
-                cached_data = cache.get(cache_key)
+                cached_data = _cache_get_safe(cache_key)
                 if cached_data is not None:
                     return Response(cached_data, status=status.HTTP_200_OK)
 
             data = office_finance_service.get_yearly_summary(year=target_year)
             if cache_ttl > 0:
-                cache.set(cache_key, data, cache_ttl)
+                _cache_set_safe(cache_key, data, cache_ttl)
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error in OfficeFinanceYearlySummaryView: {e}")

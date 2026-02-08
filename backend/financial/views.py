@@ -7,6 +7,7 @@ from django_filters import DateFilter
 from datetime import datetime, date, time, timedelta
 import io
 import json
+import logging
 from decimal import Decimal
 import mimetypes
 from django.core.exceptions import ValidationError
@@ -21,6 +22,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 
 def get_query_params(request):
@@ -44,6 +47,21 @@ def _dashboard_shared_cache_key(kind: str, tenant_schema: str, building_id, mont
 
 def _overview_building_component_cache_key(tenant_schema: str, building_id: int, month: str) -> str:
     return f"financial:dashboard:overview-building:v1:{tenant_schema}:{building_id}:{month}"
+
+
+def _cache_get_safe(key: str):
+    try:
+        return cache.get(key)
+    except Exception as exc:
+        logger.warning("Cache get failed for key %s: %s", key, exc)
+        return None
+
+
+def _cache_set_safe(key: str, value, timeout: int) -> None:
+    try:
+        cache.set(key, value, timeout)
+    except Exception as exc:
+        logger.warning("Cache set failed for key %s: %s", key, exc)
 
 
 def _build_apartment_balances_payload(apartment_balances: list[dict], month: str | None):
@@ -1809,12 +1827,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             user_cache_key = _dashboard_user_cache_key('summary', tenant_schema, request.user.id, building_id, month)
             shared_cache_key = _dashboard_shared_cache_key('summary', tenant_schema, building_id, month)
             if cache_ttl_seconds > 0:
-                cached_payload = cache.get(user_cache_key)
+                cached_payload = _cache_get_safe(user_cache_key)
                 if cached_payload is not None:
                     return Response(cached_payload)
-                shared_payload = cache.get(shared_cache_key)
+                shared_payload = _cache_get_safe(shared_cache_key)
                 if shared_payload is not None:
-                    cache.set(user_cache_key, shared_payload, cache_ttl_seconds)
+                    _cache_set_safe(user_cache_key, shared_payload, cache_ttl_seconds)
                     return Response(shared_payload)
 
             service = FinancialDashboardService(int(building_id))
@@ -1823,8 +1841,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             payload = serializer.data
 
             if cache_ttl_seconds > 0:
-                cache.set(shared_cache_key, payload, cache_ttl_seconds)
-                cache.set(user_cache_key, payload, cache_ttl_seconds)
+                _cache_set_safe(shared_cache_key, payload, cache_ttl_seconds)
+                _cache_set_safe(user_cache_key, payload, cache_ttl_seconds)
 
             return Response(payload)
         except Exception as e:
@@ -2310,12 +2328,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
             shared_cache_key = _dashboard_shared_cache_key('apartment-balances', tenant_schema, building_id, month)
             if cache_ttl_seconds > 0:
-                cached_payload = cache.get(user_cache_key)
+                cached_payload = _cache_get_safe(user_cache_key)
                 if cached_payload is not None:
                     return Response(cached_payload)
-                shared_payload = cache.get(shared_cache_key)
+                shared_payload = _cache_get_safe(shared_cache_key)
                 if shared_payload is not None:
-                    cache.set(user_cache_key, shared_payload, cache_ttl_seconds)
+                    _cache_set_safe(user_cache_key, shared_payload, cache_ttl_seconds)
                     return Response(shared_payload)
 
             # ΔΙΟΡΘΩΣΗ: Χρησιμοποιούμε το FinancialDashboardService που έχει τη σωστή λογική
@@ -2326,8 +2344,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             payload = _build_apartment_balances_payload(apartment_balances, month)
 
             if cache_ttl_seconds > 0:
-                cache.set(shared_cache_key, payload, cache_ttl_seconds)
-                cache.set(user_cache_key, payload, cache_ttl_seconds)
+                _cache_set_safe(shared_cache_key, payload, cache_ttl_seconds)
+                _cache_set_safe(user_cache_key, payload, cache_ttl_seconds)
 
             return Response(payload)
 
@@ -2362,12 +2380,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
             shared_cache_key = _dashboard_shared_cache_key('debt-report', tenant_schema, building_id, month)
             if cache_ttl_seconds > 0:
-                cached_payload = cache.get(user_cache_key)
+                cached_payload = _cache_get_safe(user_cache_key)
                 if cached_payload is not None:
                     return Response(cached_payload)
-                shared_payload = cache.get(shared_cache_key)
+                shared_payload = _cache_get_safe(shared_cache_key)
                 if shared_payload is not None:
-                    cache.set(user_cache_key, shared_payload, cache_ttl_seconds)
+                    _cache_set_safe(user_cache_key, shared_payload, cache_ttl_seconds)
                     return Response(shared_payload)
 
             from .services import FinancialDashboardService
@@ -2375,8 +2393,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             service = FinancialDashboardService(building_id=building_id)
             report = service.get_debt_report(month=month)
             if cache_ttl_seconds > 0:
-                cache.set(shared_cache_key, report, cache_ttl_seconds)
-                cache.set(user_cache_key, report, cache_ttl_seconds)
+                _cache_set_safe(shared_cache_key, report, cache_ttl_seconds)
+                _cache_set_safe(user_cache_key, report, cache_ttl_seconds)
             return Response(report)
         except Exception as e:
             return Response(
@@ -2679,7 +2697,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             cache_ttl_seconds = _dashboard_cache_ttl_seconds()
 
             if cache_ttl_seconds > 0 and not force_refresh:
-                cached_payload = cache.get(cache_key)
+                cached_payload = _cache_get_safe(cache_key)
                 if cached_payload is not None:
                     return Response(cached_payload)
 
@@ -2710,7 +2728,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     )
 
                     if cache_ttl_seconds > 0 and not force_refresh:
-                        component_payload = cache.get(component_cache_key)
+                        component_payload = _cache_get_safe(component_cache_key)
                         if component_payload:
                             summary = component_payload.get('summary') or {}
                             apt_balances = component_payload.get('apartment_balances') or []
@@ -2720,7 +2738,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         summary = service.get_summary(month=current_month)  # Με μήνα για consistent data
                         apt_balances = service.get_apartment_balances(month=current_month)
                         if cache_ttl_seconds > 0:
-                            cache.set(
+                            _cache_set_safe(
                                 component_cache_key,
                                 {
                                     'summary': summary,
@@ -2886,7 +2904,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             }
 
             if cache_ttl_seconds > 0:
-                cache.set(cache_key, payload, cache_ttl_seconds)
+                _cache_set_safe(cache_key, payload, cache_ttl_seconds)
 
             return Response(payload)
 
