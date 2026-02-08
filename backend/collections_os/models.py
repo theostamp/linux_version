@@ -48,7 +48,7 @@ class DunningPolicy(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["building", "name"], name="collections_policy_unique_name_per_building"),
             models.CheckConstraint(
-                check=Q(max_days_overdue__isnull=True) | Q(max_days_overdue__gte=F("min_days_overdue")),
+                condition=Q(max_days_overdue__isnull=True) | Q(max_days_overdue__gte=F("min_days_overdue")),
                 name="collections_policy_max_days_gte_min_days",
             ),
         ]
@@ -234,4 +234,3 @@ class PromiseToPay(models.Model):
 
     def __str__(self):
         return f"{self.apartment.number} / {self.amount} / {self.status}"
-

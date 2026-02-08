@@ -280,7 +280,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="dunningpolicy",
             constraint=models.CheckConstraint(
-                check=models.Q(max_days_overdue__isnull=True) | models.Q(
+                condition=models.Q(max_days_overdue__isnull=True) | models.Q(
                     max_days_overdue__gte=models.F("min_days_overdue")
                 ),
                 name="collections_policy_max_days_gte_min_days",
